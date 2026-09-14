@@ -1,0 +1,5 @@
+import { useEffect, useState } from "react";
+import { api } from "../../services/client";
+import { Order, User } from "../../types/domain";
+import { money } from "../../lib/format";
+export function AccountPage({ token, user, onError }: { token: string; user: User | null; onError(error: unknown): void }) { const [orders, setOrders] = useState<Order[]>([]); useEffect(() => { if (token) api.orders(token).then(setOrders).catch(onError); }, [token, onError]); if (!user) return <section className="cart-page narrow"><h1>Entre para ver sua conta.</h1></section>; return <section className="cart-page"><p className="eyebrow">MINHA CONTA</p><h1>Olá, {user.full_name || user.email}</h1><div className="account-grid"><article><h2>Seus pedidos</h2>{orders.length ? orders.map((order) => <div className="account-row" key={order.id}><span>{order.order_code}<small>{order.status}</small></span><strong>{money(order.total_amount)}</strong></div>) : <p>Você ainda não tem pedidos.</p>}</article><article><h2>Configurações</h2><p>Use seus endereços salvos no carrinho para calcular a entrega.</p><p>Seu e-mail: <strong>{user.email}</strong></p></article></div></section>; }

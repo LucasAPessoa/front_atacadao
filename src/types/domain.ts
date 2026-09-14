@@ -1,0 +1,10 @@
+export type Role = "admin" | "user";
+export type User = { id: string; email: string; full_name?: string; role: { name: Role } };
+export type Variant = { id: string; variation_name: string; base_price: string; stock_quantity: number; is_active: boolean };
+export type Product = { id: string; name: string; description?: string | null; brand?: string | null; is_active: boolean; categories: Category[]; variants: Variant[] };
+export type Category = { id: string; name: string; is_active: boolean };
+export type CartItem = { id: string; variant_id: string; quantity: number; unit_price?: string; subtotal?: string; variant: Variant };
+export type Cart = { id: string; items: CartItem[]; total_items: number; total_amount?: string };
+export type Address = { id: string; zip_code: string; street: string; number?: string; city: string; state: string; is_default: boolean };
+export type CheckoutPreview = { subtotal_amount: string; shipping_options: Array<{ service_id: number; service_name?: string; company_name?: string; delivery_time_days?: number; total_amount: string }> };
+export type Order = { id: string; order_code: string; status: string; total_amount: string; transactions: Array<{ status: string }> };
