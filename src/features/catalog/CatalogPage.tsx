@@ -1,38 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
+import { navigate } from "../../components/Layout";
+import { store } from "../../config/store";
+import { money } from "../../lib/format";
 import { api } from "../../services/client";
 import { Cart, Category, Product } from "../../types/domain";
-import { money } from "../../lib/format";
 
-export function CatalogPage({ token, onLogin, onCart, onError }: { token: string; onLogin(): void; onCart(cart: Cart): void; onError(error: unknown): void }) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [search, setSearch] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [unavailable, setUnavailable] = useState(false);
-
-  useEffect(() => {
-    setLoading(true);
-    Promise.all([api.products(), api.categories()])
-      .then(([productList, categoryList]) => {
-        setProducts(productList.filter((item) => item.is_active));
-        setCategories(categoryList.filter((item) => item.is_active));
-        setUnavailable(false);
-      })
-      .catch((error) => {
-        setUnavailable(true);
-        onError(error);
-      })
-      .finally(() => setLoading(false));
-  }, [onError]);
-  const visible = useMemo(() => products.filter((product) => {
-    const matchesSearch = `${product.name} ${product.brand ?? ""}`.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = !categoryId || product.categories.some((category) => category.id === categoryId);
-    return matchesSearch && matchesCategory;
-  }), [products, search, categoryId]);
-  async function add(product: Product) { const variant = product.variants.find((item) => item.is_active); if (!variant) return; if (!token) return onLogin(); try { onCart(await api.addCartItem(token, variant.id)); } catch (error) { onError(error); } }
+type Props = { token: string; onLogin(): void; onCart(cart: Cart): void; onError(error: unknown): void; mode: "home" | "catalog"; query: string };
+export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Props) {
+  const [products, setProducts] = useState<Product[]>([]); const [categories, setCategories] = useState<Category[]>([]); const [search, setSearch] = useState(""); const [categoryId, setCategoryId] = useState(""); const [loading, setLoading] = useState(true); const [unavailable, setUnavailable] = useState(false); const [adding, setAdding] = useState("");
+  useEffect(() => { setLoading(true); Promise.all([api.products(), api.categories()]).then(([list, categoryList]) => { setProducts(list.filter((item) => item.is_active)); setCategories(categoryList.filter((item) => item.is_active)); setUnavailable(false); }).catch((error) => { setUnavailable(true); onError(error); }).finally(() => setLoading(false)); }, [onError]);
+  useEffect(() => { if (mode === "catalog") setCategoryId(new URLSearchParams(query).get("categoria") ?? ""); }, [mode, query]);
+  const selectCategory = (id: string) => { const params = new URLSearchParams(); if (id) params.set("categoria", id); navigate(`/produtos${params.size ? `?${params.toString()}` : ""}`); };
+  const visible = useMemo(() => products.filter((product) => (`${product.name} ${product.brand ?? ""} ${product.description ?? ""}`).toLowerCase().includes(search.toLowerCase()) && (!categoryId || product.categories.some((category) => category.id === categoryId))), [products, search, categoryId]);
+  const add = async (product: Product) => { const variant = product.variants.find((item) => item.is_active && item.stock_quantity > 0); if (!variant) return; if (!token) return onLogin(); setAdding(product.id); try { onCart(await api.addCartItem(token, variant.id)); } catch (error) { onError(error); } finally { setAdding(""); } };
+  const ProductGrid = () => <>{loading ? <div className="state-panel" role="status">Preparando a vitrine…</div> : unavailable ? <div className="state-panel" role="alert">Não foi possível abrir o catálogo agora. Atualize a página para tentar novamente.</div> : <><div className="product-grid">{visible.map((product, index) => { const variant = product.variants.find((item) => item.is_active && item.stock_quantity > 0); const unavailableProduct = !variant; return <article className={`product-card tint-${index % 5}`} key={product.id}><div className="product-image"><span>{product.name.slice(0, 2).toUpperCase()}</span><small>{product.categories[0]?.name ?? "Seleção"}</small></div><div className="product-meta"><p>{product.brand || "Curadoria da loja"}</p><h3>{product.name}</h3><span>{variant?.variation_name ?? "Produto indisponível"}</span><strong>a partir de {money(variant?.base_price ?? 0)}</strong><button className="add-button" disabled={unavailableProduct || adding === product.id} onClick={() => add(product)}>{unavailableProduct ? "Indisponível" : adding === product.id ? "Adicionando…" : "Adicionar"}</button></div></article>; })}</div>{!visible.length && <div className="state-panel"><h2>Nenhum item encontrado</h2><p>Ajuste a busca ou escolha outra categoria.</p></div>}</>}</>;
   return <>
-    <section className="hero"><div><p className="eyebrow">COMPRE DO SEU JEITO</p><h1>Quantidade que rende<br /><em>mais para você.</em></h1><p>Produtos, entrega e pagamento em uma jornada simples e segura.</p><button className="primary" onClick={() => document.getElementById("catalog")?.scrollIntoView()}>Ver produtos →</button></div><div className="hero-art" aria-hidden="true"><strong>COMPRA<br />SIMPLES,<br />ESCOLHA BOA</strong></div></section>
-    <section className="catalog" id="catalog"><div className="section-heading"><div><p className="eyebrow">PRODUTOS</p><h2>Encontre o que precisa</h2></div><label className="search compact"><span aria-hidden="true">⌕</span><input aria-label="Buscar produtos" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar produtos" /></label></div><div className="category-chips"><button className={!categoryId ? "active" : ""} onClick={() => setCategoryId("")}>Todos</button>{categories.map((item) => <button className={categoryId === item.id ? "active" : ""} onClick={() => setCategoryId(item.id)} key={item.id}>{item.name}</button>)}</div>{loading ? <div className="state-panel" role="status">Carregando produtos…</div> : unavailable ? <div className="state-panel" role="alert">A loja está indisponível agora. Atualize a página para tentar novamente.</div> : <><div className="product-grid">{visible.map((product, index) => <article className={`product-card shade-${index % 4}`} key={product.id}><div className="product-image"><span>{product.name.slice(0, 2).toUpperCase()}</span></div><div className="product-meta"><p>{product.brand || "Seleção Atacadão"}</p><h3>{product.name}</h3><span>{product.variants.find((v) => v.is_active)?.variation_name || "Indisponível"}</span><strong>a partir de {money(product.variants.find((v) => v.is_active)?.base_price ?? 0)}</strong><button className="add-button" onClick={() => add(product)}>Adicionar ao carrinho</button></div></article>)}</div>{!visible.length && <div className="state-panel">Nenhum produto corresponde à busca ou à categoria escolhida.</div>}</>}</section>
+    {mode === "home" && <><section className="hero"><div className="hero-copy"><p className="eyebrow">CURADORIA PARA O DIA A DIA</p><h1>{store.tagline.split(" ").slice(0, 3).join(" ")} <em>{store.tagline.split(" ").slice(3).join(" ")}</em></h1><p>Uma experiência de compra pensada para ser clara, rápida e confiável do primeiro clique ao pagamento.</p><div className="hero-actions"><button className="primary" onClick={() => document.getElementById("destaques")?.scrollIntoView()}>Ver destaques <span>→</span></button><button className="link-button" onClick={() => navigate("/produtos")}>Explorar catálogo</button></div><div className="hero-numbers"><div><strong>+100</strong><span>produtos prontos para sua vitrine</span></div><div><strong>100%</strong><span>pagamento no ambiente Mercado Pago</span></div></div></div><div className="hero-art" aria-hidden="true"><div className="art-card art-one">ENTREGA<br/>DESCOMPLICADA</div><div className="art-card art-two">ESCOLHAS<br/>QUE REND<span>EM</span></div><i/><i/></div></section>
+    <section className="benefits"><article><span>◌</span><div><strong>Compra protegida</strong><p>Você finaliza no Checkout Pro do Mercado Pago.</p></div></article><article><span>⌁</span><div><strong>Frete transparente</strong><p>Escolha a entrega depois de informar seu endereço.</p></div></article><article><span>✦</span><div><strong>Conta em um lugar</strong><p>Acompanhe seus pedidos e dados de compra.</p></div></article></section>
+    <section className="home-categories"><div className="section-heading"><div><p className="eyebrow">COMPRE POR CATEGORIA</p><h2>O que você procura hoje?</h2></div><button className="link-button" onClick={() => navigate("/produtos")}>Ver todos os produtos →</button></div><div className="category-cards">{categories.slice(0, 4).map((category, index) => <button key={category.id} className={`category-card cat-${index}`} onClick={() => navigate(`/produtos?categoria=${encodeURIComponent(category.id)}`)}><span>0{index + 1}</span><strong>{category.name}</strong><small>Explorar seleção →</small></button>)}</div></section></>}
+    <section className="catalog" id="destaques"><div className="section-heading"><div><p className="eyebrow">{mode === "home" ? "DESTAQUES DA SEMANA" : "CATÁLOGO"}</p><h2>{mode === "home" ? "Seleção para a sua casa" : "Encontre o que você precisa"}</h2></div>{mode === "home" && <button className="link-button" onClick={() => navigate("/produtos")}>Catálogo completo →</button>}</div>{mode === "catalog" && <><label className="catalog-search"><span aria-hidden="true">⌕</span><input aria-label="Buscar produtos" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Busque por produto, marca ou necessidade" /></label><div className="filter-row" aria-label="Filtros de categoria"><button className={!categoryId ? "active" : ""} onClick={() => selectCategory("")}>Tudo</button>{categories.map((item) => <button className={categoryId === item.id ? "active" : ""} onClick={() => selectCategory(item.id)} key={item.id}>{item.name}</button>)}</div></>}<ProductGrid /></section>
+    {mode === "home" && <section className="trust-band"><div><p className="eyebrow">UMA JORNADA SEM SURPRESAS</p><h2>Escolha, revise e pague com tranquilidade.</h2></div><ol><li><span>01</span><strong>Monte seu carrinho</strong><p>Escolha itens e ajuste quantidades.</p></li><li><span>02</span><strong>Escolha a entrega</strong><p>O frete é recalculado pelo servidor.</p></li><li><span>03</span><strong>Pague com segurança</strong><p>O Mercado Pago cuida dos dados de pagamento.</p></li></ol></section>}
   </>;
 }

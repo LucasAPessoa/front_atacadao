@@ -1,5 +1,6 @@
 import { FormEvent, ReactNode, useState } from "react";
 import { navigate } from "../../components/Layout";
+import { store } from "../../config/store";
 import { ApiError, api, Registration } from "../../services/client";
 
 type LoginPageProps = {
@@ -174,6 +175,7 @@ type AuthShellProps = {
 function AuthShell({ title, description, children }: AuthShellProps) {
   return (
     <section className="auth-page" aria-labelledby="auth-title">
+      <button className="auth-brand" onClick={() => navigate("/")} aria-label={`Ir para ${store.name}`}><span>{store.shortName}</span><strong>{store.name}</strong></button>
       <div className="auth-card">
         <p className="eyebrow">SUA CONTA</p>
         <h1 id="auth-title">{title}</h1>

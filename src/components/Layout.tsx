@@ -1,4 +1,5 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
+import { store } from "../config/store";
 import { User } from "../types/domain";
 
 export function navigate(path: string) {
@@ -6,70 +7,43 @@ export function navigate(path: string) {
   window.dispatchEvent(new PopStateEvent("popstate"));
 }
 
-type LayoutProps = {
-  children: ReactNode;
-  user: User | null;
-  cartCount: number;
-  onLogout(): void;
-};
+type LayoutProps = { children: ReactNode; user: User | null; cartCount: number; onLogout(destination?: string): void; path: string };
 
-export function Layout({ children, user, cartCount, onLogout }: LayoutProps) {
+export function Layout({ children, user, cartCount, onLogout, path }: LayoutProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const isAdmin = user?.role.name === "admin";
+  const go = (target: string) => { setMenuOpen(false); navigate(target); };
+  const authRoute = path === "/entrar" || path === "/cadastro";
 
-  return (
-    <div className="page-shell">
-      <a className="skip-link" href="#conteudo">
-        Pular para o conteúdo
-      </a>
-      <header className="site-header">
-        <div className="topbar">Entrega calculada para seu endereço antes do pagamento.</div>
-        <div className="header">
-          <button className="brand brand-button" onClick={() => navigate("/")}>
-            <span>EA</span>
-            <strong>
-              Ecommerce
-              <br />
-              Atacadão
-            </strong>
-          </button>
-          <nav className="header-nav" aria-label="Navegação principal">
-            <button onClick={() => navigate("/")}>Produtos</button>
-            <button onClick={() => navigate("/carrinho")}>Carrinho</button>
-            {isAdmin && <button onClick={() => navigate("/admin")}>Administração</button>}
-          </nav>
-          <div className="header-actions">
-            {user ? (
-              <>
-                <button className="account-button" onClick={() => navigate("/conta")}>
-                  Minha conta
-                </button>
-                <button className="account-button" onClick={onLogout}>
-                  Sair
-                </button>
-              </>
-            ) : (
-              <button className="account-button" onClick={() => navigate("/entrar")}>
-                Entrar
-              </button>
-            )}
-            <button className="cart-button" onClick={() => navigate("/carrinho")}>
-              <span aria-hidden="true">🛒</span>
-              <span>Carrinho</span>
-              <b>{cartCount}</b>
-            </button>
-          </div>
-        </div>
-      </header>
-      <main id="conteudo">{children}</main>
-      <footer>
-        <button className="brand brand-button" onClick={() => navigate("/")}>
-          <span>EA</span>
-          <strong>Ecommerce Atacadão</strong>
+  if (authRoute) return <main id="conteudo" className="auth-layout">{children}</main>;
+
+  return <div className="page-shell" style={{ "--accent": store.theme.accent, "--ink": store.theme.ink, "--leaf": store.theme.leaf } as React.CSSProperties}>
+    <a className="skip-link" href="#conteudo">Pular para o conteúdo</a>
+    <div className="announcement"><span>✦</span>{store.announcement}<span>Compra protegida pelo Checkout Pro</span></div>
+    <header className="site-header">
+      <div className="header-inner">
+        <button className="brand brand-button" onClick={() => go("/")} aria-label={`Ir para ${store.name}`}>
+          <span className="brand-mark">{store.shortName}</span><span><strong>{store.name}</strong><small>para toda a rotina</small></span>
         </button>
-        <p>Compra simples, pagamento seguro.</p>
-        <button onClick={() => navigate("/")}>Produtos</button>
-        <button onClick={() => navigate("/carrinho")}>Carrinho</button>
-      </footer>
-    </div>
-  );
+        <nav className={menuOpen ? "main-nav open" : "main-nav"} aria-label="Navegação principal">
+          <button className={path === "/" ? "active" : ""} onClick={() => go("/")}>Início</button>
+          <button className={path === "/produtos" ? "active" : ""} onClick={() => go("/produtos")}>Produtos</button>
+          <button className={path === "/carrinho" ? "active" : ""} onClick={() => go("/carrinho")}>Carrinho</button>
+          {isAdmin && <button className={path === "/admin" ? "active" : ""} onClick={() => go("/admin")}>Administração</button>}
+        </nav>
+        <div className="header-actions">
+          {user ? <button className="icon-action" onClick={() => go("/conta")} aria-label="Minha conta"><span aria-hidden="true">◉</span><b>Conta</b></button> : <button className="icon-action" onClick={() => go("/entrar")} aria-label="Entrar"><span aria-hidden="true">◉</span><b>Entrar</b></button>}
+          <button className="cart-button" onClick={() => go("/carrinho")}><span aria-hidden="true">⌑</span><b>Carrinho</b><em>{cartCount}</em></button>
+          <button className="mobile-menu" onClick={() => setMenuOpen((value) => !value)} aria-expanded={menuOpen} aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}>☰</button>
+        </div>
+      </div>
+    </header>
+    <main id="conteudo">{children}</main>
+    <footer className="site-footer">
+      <div><button className="brand brand-button" onClick={() => go("/")}><span className="brand-mark">{store.shortName}</span><strong>{store.name}</strong></button><p>{store.description}</p></div>
+      <div><h2>Navegue</h2><button onClick={() => go("/")}>Início</button><button onClick={() => go("/produtos")}>Produtos</button><button onClick={() => go("/carrinho")}>Carrinho</button></div>
+      <div><h2>Atendimento</h2><p>Segunda a sexta, 9h às 18h</p><a href={`mailto:${store.supportEmail}`}>{store.supportEmail}</a>{user && <button className="footer-logout" onClick={() => onLogout("/")}>Sair da conta</button>}</div>
+      <small>© {new Date().getFullYear()} {store.name}. Vitrine de portfólio customizável.</small>
+    </footer>
+  </div>;
 }
