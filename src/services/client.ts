@@ -20,7 +20,7 @@ export type Session = {
 export type Registration = {
   email: string;
   password: string;
-  full_name?: string;
+  full_name: string;
   user_type: "INDIVIDUAL" | "COMPANY";
   cpf?: string;
   cnpj?: string;
@@ -63,7 +63,7 @@ async function request<T>(path: string, init: RequestInit = {}, token?: string):
     );
   }
 
-  return (body as Envelope<T>).data;
+  return body === null ? (undefined as T) : (body as Envelope<T>).data;
 }
 
 export const api = {
@@ -72,6 +72,8 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ email, password }),
     }),
+  logout: (token: string, refreshToken: string) =>
+    request<{ revoked: boolean }>("/auth/logout", { method: "POST", body: JSON.stringify({ refresh_token: refreshToken }) }, token),
   register: (payload: Registration) =>
     request<User>("/auth/register", { method: "POST", body: JSON.stringify(payload) }),
   me: (token: string) => request<User>("/users/me", {}, token),
@@ -112,4 +114,12 @@ export const api = {
   orders: (token: string) => request<Order[]>("/sales/orders/", {}, token),
   order: (token: string, id: string) => request<Order>(`/sales/orders/${id}`, {}, token),
   adminUsers: (token: string) => request<User[]>("/users/list", {}, token),
+  adminResource: <T>(token: string, resource: string) => request<T[]>(`/catalog/${resource}/`, {}, token),
+  createAdminResource: <T>(token: string, resource: string, payload: Record<string, unknown>) =>
+    request<T>(`/catalog/${resource}/`, { method: "POST", body: JSON.stringify(payload) }, token),
+  updateAdminResource: <T>(token: string, resource: string, id: string, payload: Record<string, unknown>) =>
+    request<T>(`/catalog/${resource}/${id}`, { method: "PATCH", body: JSON.stringify(payload) }, token),
+  deleteAdminResource: (token: string, resource: string, id: string) =>
+    request<void>(`/catalog/${resource}/${id}`, { method: "DELETE" }, token),
+  cancelOrder: (token: string, id: string) => request<Order>(`/sales/orders/${id}/cancel`, { method: "POST" }, token),
 };

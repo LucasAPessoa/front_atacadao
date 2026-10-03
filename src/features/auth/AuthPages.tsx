@@ -8,6 +8,29 @@ type LoginPageProps = {
   onLogin(email: string, password: string): Promise<void>;
 };
 
+function registrationMessage(error: unknown) {
+  if (!(error instanceof ApiError)) return "Não foi possível concluir seu cadastro. Tente novamente.";
+  const detail = error.message.toLowerCase();
+
+  if (error.status === 503) {
+    return "O cadastro está temporariamente indisponível. Tente novamente mais tarde ou fale com o atendimento.";
+  }
+  if (detail.includes("role") && (detail.includes("config") || detail.includes("default"))) {
+    return "O cadastro está temporariamente indisponível. Tente novamente mais tarde.";
+  }
+  if (error.status === 409 || detail.includes("email already")) {
+    return "Este e-mail já possui cadastro. Entre na sua conta ou use outro e-mail.";
+  }
+  if (error.status === 422) return "Revise os dados informados e tente novamente.";
+  if (error.status === 400) {
+    if (detail.includes("password") || detail.includes("senha")) return "Use uma senha com 8 ou mais caracteres, incluindo maiúscula, minúscula, número e símbolo.";
+    if (detail.includes("cpf")) return "Informe o CPF para concluir o cadastro.";
+    if (detail.includes("cnpj") || detail.includes("corporate")) return "Informe CNPJ e razão social para concluir o cadastro da empresa.";
+    return "Não foi possível validar seu cadastro. Revise os dados e tente novamente.";
+  }
+  return "Não foi possível concluir seu cadastro. Tente novamente.";
+}
+
 export function LoginPage({ notice, onLogin }: LoginPageProps) {
   const [busy, setBusy] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -86,9 +109,7 @@ export function RegisterPage() {
       await api.register(payload);
       navigate("/entrar?cadastro=concluido");
     } catch (error) {
-      setErrorMessage(
-        error instanceof ApiError ? error.message : "Não foi possível concluir seu cadastro.",
-      );
+      setErrorMessage(registrationMessage(error));
     } finally {
       setBusy(false);
     }
@@ -152,7 +173,7 @@ export function RegisterPage() {
         )}
         <label>
           Senha
-          <input name="password" type="password" autoComplete="new-password" minLength={8} required />
+          <input name="password" type="password" autoComplete="new-password" minLength={8} pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}" title="Use maiúscula, minúscula, número e símbolo." required />
         </label>
         <button className="primary wide" disabled={busy}>
           {busy ? "Criando conta…" : "Criar conta"}
