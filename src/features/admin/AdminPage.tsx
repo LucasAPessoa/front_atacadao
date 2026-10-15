@@ -16,8 +16,8 @@ const resources: Resource[] = [
   { key: "product-listings", label: "Anúncios", example: { product_id: "UUID_DO_PRODUTO", title: "Título do anúncio", status: 1 } },
   { key: "listing-attributes", label: "Atributos", example: { listing_id: "UUID_DA_LISTAGEM", name: "Cor", attribute_type: "text", value: "Azul" } },
   { key: "listing-images", label: "Imagens anúncio", example: { listing_id: "UUID_DA_LISTAGEM", url: "https://exemplo.com/imagem.jpg", sort_order: 0, image_type: "primary" } },
-  { key: "product-reviews", label: "Avaliações", example: { product_id: "UUID_DO_PRODUTO", user_id: "UUID_DO_USUARIO", rating: 5, comment: "Ótimo", is_approved: true } },
-  { key: "product-questions", label: "Perguntas", example: { product_id: "UUID_DO_PRODUTO", user_id: "UUID_DO_USUARIO", question_text: "Qual o prazo?", answer_text: "Consulte o frete." } },
+  { key: "product-reviews", label: "Avaliações", example: { product_id: "UUID_DO_PRODUTO", rating: 5, comment: "Ótimo" } },
+  { key: "product-questions", label: "Perguntas", example: { product_id: "UUID_DO_PRODUTO", question_text: "Qual o prazo?" } },
 ];
 const display = (item: Item) => String(item.name ?? item.title ?? item.variation_name ?? item.question_text ?? item.url ?? item.id);
 const updatePayload = (item: Item) => Object.fromEntries(Object.entries(item).filter(([key]) => !["id", "created_at", "updated_at", "deleted_at", "product_id", "variant_id", "listing_id", "user_id"].includes(key)));
