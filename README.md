@@ -35,3 +35,9 @@ Entre em **Minha conta** com credenciais existentes do backend. O access token f
 ```bash
 npm run build
 ```
+
+## CI
+
+O GitHub Actions (`.github/workflows/ci.yml`) roda em PRs e em push para `main`.
+Checks obrigatórios: `Typecheck e testes` e `Build`; `Report - npm audit` não bloqueia.
+Localmente: `npm ci && npm run typecheck && npm test && npm run build`.
