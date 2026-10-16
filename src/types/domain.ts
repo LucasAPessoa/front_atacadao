@@ -7,4 +7,12 @@ export type CartItem = { id: string; variant_id: string; quantity: number; unit_
 export type Cart = { id: string; items: CartItem[]; total_items: number; total_amount?: string };
 export type Address = { id: string; zip_code: string; street: string; number?: string; city: string; state: string; is_default: boolean };
 export type CheckoutPreview = { subtotal_amount: string; shipping_options: Array<{ service_id: number; service_name?: string; company_name?: string; delivery_time_days?: number; total_amount: string }> };
-export type Order = { id: string; order_code: string; status: string; total_amount: string; transactions: Array<{ status: string }> };
+export type PaymentStatus = "PENDING" | "PROCESSING" | "APPROVED" | "REJECTED" | "CANCELED" | "REFUNDED" | "PARTIALLY_REFUNDED" | "CHARGEBACK";
+export type FulfillmentStatus = "PENDING_PAYMENT" | "PAYMENT_RECONCILIATION" | "PAID" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELED" | "EXPIRED";
+export type Reconciliation = {
+  status: "PENDING" | "IN_REVIEW" | "RESOLVED";
+  reason: "STOCK_COMMIT_FAILED";
+  outcome: "FULFILLMENT_CONFIRMED" | "REFUND_REQUESTED" | "REFUNDED" | "MANUAL_REVIEW" | null;
+  next_poll_after_seconds: number | null;
+};
+export type Order = { id: string; order_code: string; status: string; payment_status: PaymentStatus; fulfillment_status: FulfillmentStatus; reconciliation?: Reconciliation | null; total_amount: string; transactions: Array<{ status: string }> };

@@ -32,8 +32,14 @@ export type CheckoutInput = {
   address_id: string;
   shipping_service_id: number;
   expected_total_amount: string;
-  payment_method: "PIX";
-  installments: 1;
+  coupon_code?: string;
+};
+
+export type MercadoPagoCheckout = {
+  order_id: string;
+  order_code: string;
+  checkout_url: string;
+  payment_status: string;
 };
 
 type Envelope<T> = { data: T; message?: string };
@@ -102,7 +108,7 @@ export const api = {
       token,
     ),
   mercadoPago: (token: string, input: CheckoutInput, key: string) =>
-    request<{ checkout_url: string }>(
+    request<MercadoPagoCheckout>(
       "/sales/checkout/mercado-pago",
       {
         method: "POST",
