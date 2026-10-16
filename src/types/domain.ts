@@ -11,7 +11,7 @@ export type PaymentStatus = "PENDING" | "PROCESSING" | "APPROVED" | "REJECTED" |
 export type FulfillmentStatus = "PENDING_PAYMENT" | "PAYMENT_RECONCILIATION" | "PAID" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELED" | "EXPIRED";
 export type Reconciliation = {
   status: "PENDING" | "IN_REVIEW" | "RESOLVED";
-  reason: "STOCK_COMMIT_FAILED";
+  reason: "STOCK_COMMIT_FAILED" | "CANCELED_ORDER_APPROVED" | "PAYMENT_REFUNDED" | "PAYMENT_PARTIALLY_REFUNDED" | "PAYMENT_CHARGEBACK";
   outcome: "FULFILLMENT_CONFIRMED" | "REFUND_REQUESTED" | "REFUNDED" | "MANUAL_REVIEW" | null;
   next_poll_after_seconds: number | null;
 };
