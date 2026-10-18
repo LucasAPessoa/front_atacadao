@@ -28,11 +28,20 @@ export function PaymentReturn({ token, onError }: PaymentReturnProps) {
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
-    try { await loadOrder(); } catch (error) { onError(error); } finally { setRefreshing(false); }
+    try {
+      await loadOrder();
+    } catch (error) {
+      onError(error);
+    } finally {
+      setRefreshing(false);
+    }
   }, [loadOrder, onError]);
 
   useEffect(() => {
-    if (!orderId || !token) { setLoading(false); return; }
+    if (!orderId || !token) {
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     let timer: number | undefined;
 
@@ -42,7 +51,8 @@ export function PaymentReturn({ token, onError }: PaymentReturnProps) {
         if (cancelled || !nextOrder || orderPresentation(nextOrder).terminal) return;
         const serverDelay = nextOrder.reconciliation?.next_poll_after_seconds;
         const delay = serverDelay ? serverDelay * 1_000 : pollDelays[attempt];
-        if (delay !== undefined && attempt < pollDelays.length) timer = window.setTimeout(() => void poll(attempt + 1), delay);
+        if (delay !== undefined && attempt < pollDelays.length)
+          timer = window.setTimeout(() => void poll(attempt + 1), delay);
       } catch (error) {
         if (!cancelled) onError(error);
       } finally {
@@ -51,7 +61,10 @@ export function PaymentReturn({ token, onError }: PaymentReturnProps) {
     };
 
     void poll(0);
-    return () => { cancelled = true; if (timer !== undefined) window.clearTimeout(timer); };
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
   }, [loadOrder, onError, orderId, token]);
 
   if (!token) {
@@ -61,7 +74,11 @@ export function PaymentReturn({ token, onError }: PaymentReturnProps) {
         <p className="eyebrow">PAGAMENTO</p>
         <h1>Entre para acompanhar seu pedido.</h1>
         <p>Use a mesma conta da compra para consultar a confirmação do pagamento.</p>
-        <button type="button" className="primary" onClick={() => navigate(`/entrar?returnTo=${encodeURIComponent(returnTo)}`)}>
+        <button
+          type="button"
+          className="primary"
+          onClick={() => navigate(`/entrar?returnTo=${encodeURIComponent(returnTo)}`)}
+        >
           Entrar na minha conta
         </button>
       </section>
@@ -69,7 +86,16 @@ export function PaymentReturn({ token, onError }: PaymentReturnProps) {
   }
 
   if (!orderId) {
-    return <section className="return-page"><p className="eyebrow">PAGAMENTO</p><h1>Não encontramos o pedido.</h1><p>Abra seus pedidos para consultar o pagamento com segurança.</p><button type="button" className="primary" onClick={() => navigate("/conta")}>Ver meus pedidos</button></section>;
+    return (
+      <section className="return-page">
+        <p className="eyebrow">PAGAMENTO</p>
+        <h1>Não encontramos o pedido.</h1>
+        <p>Abra seus pedidos para consultar o pagamento com segurança.</p>
+        <button type="button" className="primary" onClick={() => navigate("/conta")}>
+          Ver meus pedidos
+        </button>
+      </section>
+    );
   }
 
   const presentation = order ? orderPresentation(order) : null;
@@ -79,7 +105,9 @@ export function PaymentReturn({ token, onError }: PaymentReturnProps) {
       <p className="eyebrow">PAGAMENTO · MERCADO PAGO</p>
       <div className={`payment-result ${presentation?.tone ?? "pending"}`} aria-live="polite">
         <h1>{presentation?.title ?? "Consultando pagamento"}</h1>
-        <p>{presentation?.description ?? "Estamos buscando o estado mais recente do seu pedido."}</p>
+        <p>
+          {presentation?.description ?? "Estamos buscando o estado mais recente do seu pedido."}
+        </p>
         {order && (
           <div className="payment-order">
             <span>Pedido {order.order_code}</span>
@@ -87,10 +115,19 @@ export function PaymentReturn({ token, onError }: PaymentReturnProps) {
           </div>
         )}
         <div className="result-actions">
-          <button type="button" className="secondary" disabled={loading || refreshing} onClick={() => void refresh()}>
+          <button
+            type="button"
+            className="secondary"
+            disabled={loading || refreshing}
+            onClick={() => void refresh()}
+          >
             {loading || refreshing ? "Consultando…" : "Atualizar status"}
           </button>
-          <button type="button" className="primary" onClick={() => navigate(presentation?.canRetryPayment ? "/carrinho" : "/conta")}>
+          <button
+            type="button"
+            className="primary"
+            onClick={() => navigate(presentation?.canRetryPayment ? "/carrinho" : "/conta")}
+          >
             {presentation?.canRetryPayment ? "Revisar pedido" : "Ver meus pedidos"}
           </button>
         </div>

@@ -8,30 +8,355 @@ type Props = { token: string; user: User | null; onError(error: unknown): void }
 type Item = Record<string, unknown> & { id: string };
 type Resource = { key: string; label: string; example: Record<string, unknown> };
 const resources: Resource[] = [
-  { key: "categories", label: "Categorias", example: { name: "Limpeza", description: "Produtos para limpeza", is_active: true } },
-  { key: "products", label: "Produtos", example: { name: "Novo produto", code: "SKU-001", description: "Descrição", brand: "Marca", is_active: true } },
-  { key: "product-variants", label: "Variações", example: { product_id: "UUID_DO_PRODUTO", bling_sku: "SKU-001-UN", variation_name: "Unidade", base_price: "10.00", stock_quantity: 0, is_active: true } },
-  { key: "pricing-tiers", label: "Faixas", example: { product_id: "UUID_DO_PRODUTO", min_quantity: 10, unit_price: "9.50" } },
-  { key: "product-images", label: "Imagens", example: { variant_id: "UUID_DA_VARIACAO", image_url: "https://exemplo.com/imagem.jpg", is_main: true } },
-  { key: "product-listings", label: "Anúncios", example: { product_id: "UUID_DO_PRODUTO", title: "Título do anúncio", status: 1 } },
-  { key: "listing-attributes", label: "Atributos", example: { listing_id: "UUID_DA_LISTAGEM", name: "Cor", attribute_type: "text", value: "Azul" } },
-  { key: "listing-images", label: "Imagens anúncio", example: { listing_id: "UUID_DA_LISTAGEM", url: "https://exemplo.com/imagem.jpg", sort_order: 0, image_type: "primary" } },
-  { key: "product-reviews", label: "Avaliações", example: { product_id: "UUID_DO_PRODUTO", rating: 5, comment: "Ótimo" } },
-  { key: "product-questions", label: "Perguntas", example: { product_id: "UUID_DO_PRODUTO", question_text: "Qual o prazo?" } },
+  {
+    key: "categories",
+    label: "Categorias",
+    example: { name: "Limpeza", description: "Produtos para limpeza", is_active: true },
+  },
+  {
+    key: "products",
+    label: "Produtos",
+    example: {
+      name: "Novo produto",
+      code: "SKU-001",
+      description: "Descrição",
+      brand: "Marca",
+      is_active: true,
+    },
+  },
+  {
+    key: "product-variants",
+    label: "Variações",
+    example: {
+      product_id: "UUID_DO_PRODUTO",
+      bling_sku: "SKU-001-UN",
+      variation_name: "Unidade",
+      base_price: "10.00",
+      stock_quantity: 0,
+      is_active: true,
+    },
+  },
+  {
+    key: "pricing-tiers",
+    label: "Faixas",
+    example: { product_id: "UUID_DO_PRODUTO", min_quantity: 10, unit_price: "9.50" },
+  },
+  {
+    key: "product-images",
+    label: "Imagens",
+    example: {
+      variant_id: "UUID_DA_VARIACAO",
+      image_url: "https://exemplo.com/imagem.jpg",
+      is_main: true,
+    },
+  },
+  {
+    key: "product-listings",
+    label: "Anúncios",
+    example: { product_id: "UUID_DO_PRODUTO", title: "Título do anúncio", status: 1 },
+  },
+  {
+    key: "listing-attributes",
+    label: "Atributos",
+    example: { listing_id: "UUID_DA_LISTAGEM", name: "Cor", attribute_type: "text", value: "Azul" },
+  },
+  {
+    key: "listing-images",
+    label: "Imagens anúncio",
+    example: {
+      listing_id: "UUID_DA_LISTAGEM",
+      url: "https://exemplo.com/imagem.jpg",
+      sort_order: 0,
+      image_type: "primary",
+    },
+  },
+  {
+    key: "product-reviews",
+    label: "Avaliações",
+    example: { product_id: "UUID_DO_PRODUTO", rating: 5, comment: "Ótimo" },
+  },
+  {
+    key: "product-questions",
+    label: "Perguntas",
+    example: { product_id: "UUID_DO_PRODUTO", question_text: "Qual o prazo?" },
+  },
 ];
-const display = (item: Item) => String(item.name ?? item.title ?? item.variation_name ?? item.question_text ?? item.url ?? item.id);
-const updatePayload = (item: Item) => Object.fromEntries(Object.entries(item).filter(([key]) => !["id", "created_at", "updated_at", "deleted_at", "product_id", "variant_id", "listing_id", "user_id"].includes(key)));
+const display = (item: Item) =>
+  String(
+    item.name ?? item.title ?? item.variation_name ?? item.question_text ?? item.url ?? item.id,
+  );
+const updatePayload = (item: Item) =>
+  Object.fromEntries(
+    Object.entries(item).filter(
+      ([key]) =>
+        ![
+          "id",
+          "created_at",
+          "updated_at",
+          "deleted_at",
+          "product_id",
+          "variant_id",
+          "listing_id",
+          "user_id",
+        ].includes(key),
+    ),
+  );
 
 export function AdminPage({ token, user, onError }: Props) {
-  const [orders, setOrders] = useState<Order[]>([]), [users, setUsers] = useState<User[]>([]), [items, setItems] = useState<Item[]>([]), [key, setKey] = useState(resources[0].key), [loading, setLoading] = useState(true), [busy, setBusy] = useState(false), [error, setError] = useState(""), [notice, setNotice] = useState(""), [editing, setEditing] = useState<string | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]),
+    [users, setUsers] = useState<User[]>([]),
+    [items, setItems] = useState<Item[]>([]),
+    [key, setKey] = useState(resources[0].key),
+    [loading, setLoading] = useState(true),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState(""),
+    [notice, setNotice] = useState(""),
+    [editing, setEditing] = useState<string | null>(null);
   const resource = resources.find((entry) => entry.key === key) ?? resources[0];
   const [draft, setDraft] = useState(JSON.stringify(resource.example, null, 2));
-  const load = useCallback(async () => { if (!token || user?.role.name !== "admin") return; setLoading(true); try { const [a, b, c] = await Promise.all([api.orders(token), api.adminUsers(token), api.adminResource<Item>(token, key)]); setOrders(a); setUsers(b); setItems(c); setError(""); } catch (e) { setError(e instanceof ApiError ? e.message : "Não foi possível carregar os dados."); onError(e); } finally { setLoading(false); } }, [token, user, key, onError]);
-  useEffect(() => { void load(); }, [load]);
-  useEffect(() => { setEditing(null); setNotice(""); setDraft(JSON.stringify(resource.example, null, 2)); }, [resource]);
+  const load = useCallback(async () => {
+    if (!token || user?.role.name !== "admin") return;
+    setLoading(true);
+    try {
+      const [a, b, c] = await Promise.all([
+        api.orders(token),
+        api.adminUsers(token),
+        api.adminResource<Item>(token, key),
+      ]);
+      setOrders(a);
+      setUsers(b);
+      setItems(c);
+      setError("");
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Não foi possível carregar os dados.");
+      onError(e);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, user, key, onError]);
+  useEffect(() => {
+    void load();
+  }, [load]);
+  useEffect(() => {
+    setEditing(null);
+    setNotice("");
+    setDraft(JSON.stringify(resource.example, null, 2));
+  }, [resource]);
   const paid = useMemo(() => orders.filter((order) => order.status === "PAID"), [orders]);
-  const save = async () => { let payload: Record<string, unknown>; try { payload = JSON.parse(draft) as Record<string, unknown>; } catch { setError("Use JSON válido no formulário."); return; } setBusy(true); try { if (editing) await api.updateAdminResource(token, key, editing, payload); else await api.createAdminResource(token, key, payload); setNotice(editing ? "Registro atualizado." : "Registro criado."); setEditing(null); await load(); } catch (e) { setError(e instanceof ApiError ? e.message : "Não foi possível salvar."); onError(e); } finally { setBusy(false); } };
-  const remove = async (id: string) => { if (!window.confirm("Excluir este registro?")) return; setBusy(true); try { await api.deleteAdminResource(token, key, id); setNotice("Registro removido."); await load(); } catch (e) { setError(e instanceof ApiError ? e.message : "Não foi possível excluir."); onError(e); } finally { setBusy(false); } };
-  if (user?.role.name !== "admin") return <section className="admin-page gate-page"><p className="eyebrow">ÁREA RESTRITA</p><h1>Este painel é exclusivo da administração.</h1><button type="button" className="secondary" onClick={() => navigate("/")}>Voltar para a loja</button></section>;
-  return <section className="admin-page"><header className="admin-heading"><div><p className="eyebrow">ADMINISTRAÇÃO · CONTA MASTER</p><h1>Painel da loja</h1><p>Catálogo por rotas existentes; o servidor mantém preço, estoque e status como autoridade.</p></div><button type="button" className="secondary" disabled={loading || busy} onClick={() => void load()}>Atualizar</button></header><div className="metrics-grid"><article><span>Pedidos</span><strong>{loading ? "—" : orders.length}</strong></article><article><span>Pagamentos aprovados</span><strong>{loading ? "—" : paid.length}</strong></article><article><span>Faturamento aprovado</span><strong>{loading ? "—" : money(paid.reduce((sum, order) => sum + Number(order.total_amount), 0))}</strong></article><article><span>Clientes</span><strong>{loading ? "—" : users.length}</strong></article></div><div className="admin-columns"><section className="admin-panel"><p className="eyebrow">PEDIDOS</p><h2>Operação</h2>{loading ? <div className="inline-loading">Carregando…</div> : orders.slice(0, 8).map((order) => <article className="admin-order-row" key={order.id}><span><strong>{order.order_code}</strong><small>{order.status.replaceAll("_", " ")}</small></span><b>{money(order.total_amount)}</b></article>)}</section><aside className="admin-panel"><p className="eyebrow">USUÁRIOS</p><h2>Base de contas</h2>{users.slice(0, 6).map((account) => <p className="admin-user" key={account.id}><strong>{account.full_name || account.email}</strong><small>{account.email} · {account.role.name}</small></p>)}<p className="account-hint">Usuários e pedidos são consulta: não há endpoint para editá-los.</p></aside></div><section className="admin-panel admin-catalog"><p className="eyebrow">CATÁLOGO</p><h2>Gestão de entidades</h2><div className="admin-resource-tabs">{resources.map((entry) => <button type="button" key={entry.key} className={entry.key === key ? "active" : ""} onClick={() => setKey(entry.key)}>{entry.label}</button>)}</div><p className="account-hint">IDs de vínculo entram apenas na criação. Para editar, o vínculo existente é preservado pela API.</p>{error && <p className="admin-feedback error" role="alert">{error}</p>}{notice && <p className="admin-feedback" role="status">{notice}</p>}<div className="admin-editor"><div><h3>{editing ? `Editar ${resource.label}` : `Novo em ${resource.label}`}</h3><textarea aria-label={`Dados de ${resource.label}`} value={draft} onChange={(event) => setDraft(event.target.value)} spellCheck={false}/><div className="admin-editor-actions"><button type="button" className="primary" disabled={busy} onClick={() => void save()}>{busy ? "Salvando…" : editing ? "Salvar" : "Criar"}</button>{editing && <button type="button" className="secondary" onClick={() => { setEditing(null); setDraft(JSON.stringify(resource.example, null, 2)); }}>Cancelar</button>}</div></div><div className="admin-records">{loading ? <div className="inline-loading">Carregando {resource.label.toLowerCase()}…</div> : items.length ? items.map((item) => <article key={item.id}><span><strong>{display(item)}</strong><small>{item.id}</small></span><button type="button" className="link-button" onClick={() => { setEditing(item.id); setDraft(JSON.stringify(updatePayload(item), null, 2)); }}>Editar</button><button type="button" className="remove" disabled={busy} onClick={() => void remove(item.id)}>Excluir</button></article>) : <div className="empty-inline">Nenhum registro nesta entidade.</div>}</div></div></section></section>;
+  const save = async () => {
+    let payload: Record<string, unknown>;
+    try {
+      payload = JSON.parse(draft) as Record<string, unknown>;
+    } catch {
+      setError("Use JSON válido no formulário.");
+      return;
+    }
+    setBusy(true);
+    try {
+      if (editing) await api.updateAdminResource(token, key, editing, payload);
+      else await api.createAdminResource(token, key, payload);
+      setNotice(editing ? "Registro atualizado." : "Registro criado.");
+      setEditing(null);
+      await load();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Não foi possível salvar.");
+      onError(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const remove = async (id: string) => {
+    if (!window.confirm("Excluir este registro?")) return;
+    setBusy(true);
+    try {
+      await api.deleteAdminResource(token, key, id);
+      setNotice("Registro removido.");
+      await load();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Não foi possível excluir.");
+      onError(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+  if (user?.role.name !== "admin")
+    return (
+      <section className="admin-page gate-page">
+        <p className="eyebrow">ÁREA RESTRITA</p>
+        <h1>Este painel é exclusivo da administração.</h1>
+        <button type="button" className="secondary" onClick={() => navigate("/")}>
+          Voltar para a loja
+        </button>
+      </section>
+    );
+  return (
+    <section className="admin-page">
+      <header className="admin-heading">
+        <div>
+          <p className="eyebrow">ADMINISTRAÇÃO · CONTA MASTER</p>
+          <h1>Painel da loja</h1>
+          <p>
+            Catálogo por rotas existentes; o servidor mantém preço, estoque e status como
+            autoridade.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="secondary"
+          disabled={loading || busy}
+          onClick={() => void load()}
+        >
+          Atualizar
+        </button>
+      </header>
+      <div className="metrics-grid">
+        <article>
+          <span>Pedidos</span>
+          <strong>{loading ? "—" : orders.length}</strong>
+        </article>
+        <article>
+          <span>Pagamentos aprovados</span>
+          <strong>{loading ? "—" : paid.length}</strong>
+        </article>
+        <article>
+          <span>Faturamento aprovado</span>
+          <strong>
+            {loading
+              ? "—"
+              : money(paid.reduce((sum, order) => sum + Number(order.total_amount), 0))}
+          </strong>
+        </article>
+        <article>
+          <span>Clientes</span>
+          <strong>{loading ? "—" : users.length}</strong>
+        </article>
+      </div>
+      <div className="admin-columns">
+        <section className="admin-panel">
+          <p className="eyebrow">PEDIDOS</p>
+          <h2>Operação</h2>
+          {loading ? (
+            <div className="inline-loading">Carregando…</div>
+          ) : (
+            orders.slice(0, 8).map((order) => (
+              <article className="admin-order-row" key={order.id}>
+                <span>
+                  <strong>{order.order_code}</strong>
+                  <small>{order.status.replaceAll("_", " ")}</small>
+                </span>
+                <b>{money(order.total_amount)}</b>
+              </article>
+            ))
+          )}
+        </section>
+        <aside className="admin-panel">
+          <p className="eyebrow">USUÁRIOS</p>
+          <h2>Base de contas</h2>
+          {users.slice(0, 6).map((account) => (
+            <p className="admin-user" key={account.id}>
+              <strong>{account.full_name || account.email}</strong>
+              <small>
+                {account.email} · {account.role.name}
+              </small>
+            </p>
+          ))}
+          <p className="account-hint">
+            Usuários e pedidos são consulta: não há endpoint para editá-los.
+          </p>
+        </aside>
+      </div>
+      <section className="admin-panel admin-catalog">
+        <p className="eyebrow">CATÁLOGO</p>
+        <h2>Gestão de entidades</h2>
+        <div className="admin-resource-tabs">
+          {resources.map((entry) => (
+            <button
+              type="button"
+              key={entry.key}
+              className={entry.key === key ? "active" : ""}
+              onClick={() => setKey(entry.key)}
+            >
+              {entry.label}
+            </button>
+          ))}
+        </div>
+        <p className="account-hint">
+          IDs de vínculo entram apenas na criação. Para editar, o vínculo existente é preservado
+          pela API.
+        </p>
+        {error && (
+          <p className="admin-feedback error" role="alert">
+            {error}
+          </p>
+        )}
+        {notice && (
+          <p className="admin-feedback" role="status">
+            {notice}
+          </p>
+        )}
+        <div className="admin-editor">
+          <div>
+            <h3>{editing ? `Editar ${resource.label}` : `Novo em ${resource.label}`}</h3>
+            <textarea
+              aria-label={`Dados de ${resource.label}`}
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              spellCheck={false}
+            />
+            <div className="admin-editor-actions">
+              <button type="button" className="primary" disabled={busy} onClick={() => void save()}>
+                {busy ? "Salvando…" : editing ? "Salvar" : "Criar"}
+              </button>
+              {editing && (
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => {
+                    setEditing(null);
+                    setDraft(JSON.stringify(resource.example, null, 2));
+                  }}
+                >
+                  Cancelar
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="admin-records">
+            {loading ? (
+              <div className="inline-loading">Carregando {resource.label.toLowerCase()}…</div>
+            ) : items.length ? (
+              items.map((item) => (
+                <article key={item.id}>
+                  <span>
+                    <strong>{display(item)}</strong>
+                    <small>{item.id}</small>
+                  </span>
+                  <button
+                    type="button"
+                    className="link-button"
+                    onClick={() => {
+                      setEditing(item.id);
+                      setDraft(JSON.stringify(updatePayload(item), null, 2));
+                    }}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    className="remove"
+                    disabled={busy}
+                    onClick={() => void remove(item.id)}
+                  >
+                    Excluir
+                  </button>
+                </article>
+              ))
+            ) : (
+              <div className="empty-inline">Nenhum registro nesta entidade.</div>
+            )}
+          </div>
+        </div>
+      </section>
+    </section>
+  );
 }

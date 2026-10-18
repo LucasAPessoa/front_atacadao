@@ -8,8 +8,7 @@ import type {
   User,
 } from "../types/domain";
 
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000/api/v1";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000/api/v1";
 
 export type Session = {
   access_token: string;
@@ -55,7 +54,10 @@ export type MercadoPagoCheckout = {
 type Envelope<T> = { data: T; message?: string };
 
 export class ApiError extends Error {
-  constructor(public readonly status: number, message: string) {
+  constructor(
+    public readonly status: number,
+    message: string,
+  ) {
     super(message);
   }
 }
@@ -70,12 +72,18 @@ let onSessionExpired: () => void = () => undefined;
 let refreshInFlight: Promise<string> | null = null;
 
 // Remove o access token legado que versões anteriores gravavam no localStorage.
-try { localStorage.removeItem(legacyAccessTokenKey); } catch { /* sem storage */ }
+try {
+  localStorage.removeItem(legacyAccessTokenKey);
+} catch {
+  /* sem storage */
+}
 
 export const getAccessToken = () => accessToken;
 export const getRefreshToken = () => localStorage.getItem(refreshTokenKey);
 export const hasStoredSession = () => Boolean(getRefreshToken());
-export const setOnSessionExpired = (handler: () => void) => { onSessionExpired = handler; };
+export const setOnSessionExpired = (handler: () => void) => {
+  onSessionExpired = handler;
+};
 export function storeSession(session: Session) {
   accessToken = session.access_token;
   localStorage.setItem(refreshTokenKey, session.refresh_token);
@@ -123,10 +131,15 @@ export function refreshSession(notify = true): Promise<string> {
       return session.access_token;
     } catch (error) {
       // Falha de rede não encerra a sessão; só a rejeição do servidor.
-      if (error instanceof ApiError && [400, 401, 403].includes(error.status)) { clearSession(); if (notify) onSessionExpired(); }
+      if (error instanceof ApiError && [400, 401, 403].includes(error.status)) {
+        clearSession();
+        if (notify) onSessionExpired();
+      }
       throw error;
     }
-  })().finally(() => { refreshInFlight = null; });
+  })().finally(() => {
+    refreshInFlight = null;
+  });
   return refreshInFlight;
 }
 
@@ -141,7 +154,13 @@ async function request<T>(path: string, init: RequestInit = {}, token?: string):
   try {
     return await send<T>(path, init, bearerUsed);
   } catch (error) {
-    if (!(error instanceof ApiError) || error.status !== 401 || !authenticated || path.startsWith("/auth/")) throw error;
+    if (
+      !(error instanceof ApiError) ||
+      error.status !== 401 ||
+      !authenticated ||
+      path.startsWith("/auth/")
+    )
+      throw error;
     let fresh: string;
     if (accessToken && accessToken !== bearerUsed) {
       fresh = accessToken; // já houve rotação: só repete com o token atual
@@ -169,7 +188,11 @@ export const api = {
       body: JSON.stringify({ email, password }),
     }),
   logout: (token: string, refreshToken: string) =>
-    request<{ revoked: boolean }>("/auth/logout", { method: "POST", body: JSON.stringify({ refresh_token: refreshToken }) }, token),
+    request<{ revoked: boolean }>(
+      "/auth/logout",
+      { method: "POST", body: JSON.stringify({ refresh_token: refreshToken }) },
+      token,
+    ),
   register: (payload: Registration) =>
     request<User>("/auth/register", { method: "POST", body: JSON.stringify(payload) }),
   me: (token: string) => request<User>("/users/me", {}, token),
@@ -193,11 +216,20 @@ export const api = {
   addresses: (token: string) => request<Address[]>("/addresses/", {}, token),
   createAddress: (token: string, payload: AddressInput & { is_default?: boolean }) =>
     request<Address>("/addresses/", { method: "POST", body: JSON.stringify(payload) }, token),
-  updateAddress: (token: string, id: string, payload: Partial<Omit<AddressInput, "number" | "complement" | "neighborhood">> & { number?: string | null; complement?: string | null; neighborhood?: string | null }) =>
+  updateAddress: (
+    token: string,
+    id: string,
+    payload: Partial<Omit<AddressInput, "number" | "complement" | "neighborhood">> & {
+      number?: string | null;
+      complement?: string | null;
+      neighborhood?: string | null;
+    },
+  ) =>
     request<Address>(`/addresses/${id}`, { method: "PATCH", body: JSON.stringify(payload) }, token),
   setDefaultAddress: (token: string, id: string) =>
     request<Address>(`/addresses/${id}/default`, { method: "POST" }, token),
-  deleteAddress: (token: string, id: string) => request<Record<string, never>>(`/addresses/${id}`, { method: "DELETE" }, token),
+  deleteAddress: (token: string, id: string) =>
+    request<Record<string, never>>(`/addresses/${id}`, { method: "DELETE" }, token),
   preview: (token: string, address_id: string) =>
     request<CheckoutPreview>(
       "/sales/checkout/preview",
@@ -217,12 +249,23 @@ export const api = {
   orders: (token: string) => request<Order[]>("/sales/orders/", {}, token),
   order: (token: string, id: string) => request<Order>(`/sales/orders/${id}`, {}, token),
   adminUsers: (token: string) => request<User[]>("/users/list", {}, token),
-  adminResource: <T>(token: string, resource: string) => request<T[]>(`/catalog/${resource}/`, {}, token),
+  adminResource: <T>(token: string, resource: string) =>
+    request<T[]>(`/catalog/${resource}/`, {}, token),
   createAdminResource: <T>(token: string, resource: string, payload: Record<string, unknown>) =>
     request<T>(`/catalog/${resource}/`, { method: "POST", body: JSON.stringify(payload) }, token),
-  updateAdminResource: <T>(token: string, resource: string, id: string, payload: Record<string, unknown>) =>
-    request<T>(`/catalog/${resource}/${id}`, { method: "PATCH", body: JSON.stringify(payload) }, token),
+  updateAdminResource: <T>(
+    token: string,
+    resource: string,
+    id: string,
+    payload: Record<string, unknown>,
+  ) =>
+    request<T>(
+      `/catalog/${resource}/${id}`,
+      { method: "PATCH", body: JSON.stringify(payload) },
+      token,
+    ),
   deleteAdminResource: (token: string, resource: string, id: string) =>
     request<void>(`/catalog/${resource}/${id}`, { method: "DELETE" }, token),
-  cancelOrder: (token: string, id: string) => request<Order>(`/sales/orders/${id}/cancel`, { method: "POST" }, token),
+  cancelOrder: (token: string, id: string) =>
+    request<Order>(`/sales/orders/${id}/cancel`, { method: "POST" }, token),
 };
