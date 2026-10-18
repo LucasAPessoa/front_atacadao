@@ -22,7 +22,7 @@ O backend local padrão está em `http://127.0.0.1:8000`. Ajuste `VITE_API_BASE_
 
 `VITE_API_BASE_URL` é uma configuração pública incorporada ao bundle. Nunca use essa variável para tokens, chaves do Mercado Pago ou outros segredos.
 
-Entre em **Minha conta** com credenciais existentes do backend. O access token fica apenas no `localStorage` do navegador; a primeira versão ainda não conecta o refresh token.
+Entre em **Minha conta** com credenciais existentes do backend. O access token fica apenas em memória; o refresh token fica no `localStorage` (migração para cookie HttpOnly: front #17). Ao recarregar a página a sessão é restaurada por `/auth/refresh`, e um `401` em requisição autenticada dispara um refresh único e uma repetição da requisição (mesma `Idempotency-Key` no pagamento).
 
 ## Limites deliberados
 
