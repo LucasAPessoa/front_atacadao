@@ -3,7 +3,7 @@ import { navigate } from "../../components/Layout";
 import { money } from "../../lib/format";
 import { orderPresentation } from "../../lib/orderStatus";
 import { api } from "../../services/client";
-import { Order } from "../../types/domain";
+import type { Order } from "../../types/domain";
 
 type PaymentReturnProps = {
   token: string;
@@ -61,7 +61,7 @@ export function PaymentReturn({ token, onError }: PaymentReturnProps) {
         <p className="eyebrow">PAGAMENTO</p>
         <h1>Entre para acompanhar seu pedido.</h1>
         <p>Use a mesma conta da compra para consultar a confirmação do pagamento.</p>
-        <button className="primary" onClick={() => navigate(`/entrar?returnTo=${encodeURIComponent(returnTo)}`)}>
+        <button type="button" className="primary" onClick={() => navigate(`/entrar?returnTo=${encodeURIComponent(returnTo)}`)}>
           Entrar na minha conta
         </button>
       </section>
@@ -69,7 +69,7 @@ export function PaymentReturn({ token, onError }: PaymentReturnProps) {
   }
 
   if (!orderId) {
-    return <section className="return-page"><p className="eyebrow">PAGAMENTO</p><h1>Não encontramos o pedido.</h1><p>Abra seus pedidos para consultar o pagamento com segurança.</p><button className="primary" onClick={() => navigate("/conta")}>Ver meus pedidos</button></section>;
+    return <section className="return-page"><p className="eyebrow">PAGAMENTO</p><h1>Não encontramos o pedido.</h1><p>Abra seus pedidos para consultar o pagamento com segurança.</p><button type="button" className="primary" onClick={() => navigate("/conta")}>Ver meus pedidos</button></section>;
   }
 
   const presentation = order ? orderPresentation(order) : null;
@@ -87,10 +87,10 @@ export function PaymentReturn({ token, onError }: PaymentReturnProps) {
           </div>
         )}
         <div className="result-actions">
-          <button className="secondary" disabled={loading || refreshing} onClick={() => void refresh()}>
+          <button type="button" className="secondary" disabled={loading || refreshing} onClick={() => void refresh()}>
             {loading || refreshing ? "Consultando…" : "Atualizar status"}
           </button>
-          <button className="primary" onClick={() => navigate(presentation?.canRetryPayment ? "/carrinho" : "/conta")}>
+          <button type="button" className="primary" onClick={() => navigate(presentation?.canRetryPayment ? "/carrinho" : "/conta")}>
             {presentation?.canRetryPayment ? "Revisar pedido" : "Ver meus pedidos"}
           </button>
         </div>

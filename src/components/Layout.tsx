@@ -1,6 +1,6 @@
-import { ReactNode, useState } from "react";
+import { type ReactNode, useState } from "react";
 import { store } from "../config/store";
-import { User } from "../types/domain";
+import type { User } from "../types/domain";
 
 export function navigate(path: string) {
   window.history.pushState({}, "", path);
@@ -39,27 +39,27 @@ export function Layout({ children, user, cartCount, onLogout, path }: LayoutProp
     <div className="announcement"><span>Compra em quantidade, sem surpresa</span><b>{store.announcement}</b><span>Atendimento em horário comercial</span></div>
     <header className="site-header">
       <div className="header-inner">
-        <button className="brand brand-button" onClick={() => go("/")} aria-label={`Ir para ${store.name}`}>
+        <button type="button" className="brand brand-button" onClick={() => go("/")} aria-label={`Ir para ${store.name}`}>
           <span className="brand-mark">{store.shortName}</span><span><strong>{store.name}</strong><small>para toda a rotina</small></span>
         </button>
-        <button className="header-departments" onClick={() => go("/produtos")}><span aria-hidden="true">☰</span> Departamentos</button>
-        <label className="header-search"><span aria-hidden="true">⌕</span><input aria-label="Buscar no catálogo" value={headerSearch} onChange={(event) => setHeaderSearch(event.target.value)} placeholder="O que a sua rotina precisa?" onKeyDown={(event) => { if (event.key === "Enter") submitSearch(); }} /><button onClick={submitSearch} aria-label="Buscar">Buscar</button></label>
+        <button type="button" className="header-departments" onClick={() => go("/produtos")}><span aria-hidden="true">☰</span> Departamentos</button>
+        <label className="header-search"><span aria-hidden="true">⌕</span><input aria-label="Buscar no catálogo" value={headerSearch} onChange={(event) => setHeaderSearch(event.target.value)} placeholder="O que a sua rotina precisa?" onKeyDown={(event) => { if (event.key === "Enter") submitSearch(); }} /><button type="button" onClick={submitSearch} aria-label="Buscar">Buscar</button></label>
         <div className="header-actions">
-          <button className="support-action" onClick={() => window.location.href = `mailto:${store.supportEmail}`}><span>◌</span><b>Precisa de ajuda?</b><small>Fale com a gente</small></button>
-          {user ? <button className="icon-action" onClick={() => go("/conta")} aria-label="Minha conta"><span aria-hidden="true">◉</span><b>Olá!</b><small>Minha conta</small></button> : <button className="icon-action" onClick={() => go("/entrar")} aria-label="Entrar"><span aria-hidden="true">◉</span><b>Entre ou cadastre-se</b><small>Minha conta</small></button>}
-          <button className="cart-button" onClick={() => go("/carrinho")}><span aria-hidden="true">⌑</span><b>Carrinho</b><em>{cartCount}</em></button>
-          <button className="mobile-menu" onClick={() => setMenuOpen((value) => !value)} aria-expanded={menuOpen} aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}>☰</button>
+          <button type="button" className="support-action" onClick={() => window.location.href = `mailto:${store.supportEmail}`}><span>◌</span><b>Precisa de ajuda?</b><small>Fale com a gente</small></button>
+          {user ? <button type="button" className="icon-action" onClick={() => go("/conta")} aria-label="Minha conta"><span aria-hidden="true">◉</span><b>Olá!</b><small>Minha conta</small></button> : <button type="button" className="icon-action" onClick={() => go("/entrar")} aria-label="Entrar"><span aria-hidden="true">◉</span><b>Entre ou cadastre-se</b><small>Minha conta</small></button>}
+          <button type="button" className="cart-button" onClick={() => go("/carrinho")}><span aria-hidden="true">⌑</span><b>Carrinho</b><em>{cartCount}</em></button>
+          <button type="button" className="mobile-menu" onClick={() => setMenuOpen((value) => !value)} aria-expanded={menuOpen} aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}>☰</button>
         </div>
       </div>
       <nav className={menuOpen ? "main-nav open" : "main-nav"} aria-label="Navegação principal">
-        <div><button className={path === "/" ? "active" : ""} onClick={() => go("/")}>Início</button><button className={path === "/produtos" ? "active" : ""} onClick={() => go("/produtos")}>Catálogo</button><button onClick={() => document.getElementById("como-funciona")?.scrollIntoView()}>Como funciona</button>{isAdmin && <button className={path === "/admin" ? "active" : ""} onClick={() => go("/admin")}>Administração</button>}</div>
+        <div><button type="button" className={path === "/" ? "active" : ""} onClick={() => go("/")}>Início</button><button type="button" className={path === "/produtos" ? "active" : ""} onClick={() => go("/produtos")}>Catálogo</button><button type="button" onClick={() => document.getElementById("como-funciona")?.scrollIntoView()}>Como funciona</button>{isAdmin && <button type="button" className={path === "/admin" ? "active" : ""} onClick={() => go("/admin")}>Administração</button>}</div>
       </nav>
     </header>
     <main id="conteudo">{children}</main>
     <footer className="site-footer">
-      <div><button className="brand brand-button" onClick={() => go("/")}><span className="brand-mark">{store.shortName}</span><strong>{store.name}</strong></button><p>{store.description}</p></div>
-      <div><h2>Navegue</h2><button onClick={() => go("/")}>Início</button><button onClick={() => go("/produtos")}>Produtos</button><button onClick={() => go("/carrinho")}>Carrinho</button></div>
-      <div><h2>Atendimento</h2><p>Segunda a sexta, 9h às 18h</p><a href={`mailto:${store.supportEmail}`}>{store.supportEmail}</a>{user && <button className="footer-logout" onClick={() => onLogout("/")}>Sair da conta</button>}</div>
+      <div><button type="button" className="brand brand-button" onClick={() => go("/")}><span className="brand-mark">{store.shortName}</span><strong>{store.name}</strong></button><p>{store.description}</p></div>
+      <div><h2>Navegue</h2><button type="button" onClick={() => go("/")}>Início</button><button type="button" onClick={() => go("/produtos")}>Produtos</button><button type="button" onClick={() => go("/carrinho")}>Carrinho</button></div>
+      <div><h2>Atendimento</h2><p>Segunda a sexta, 9h às 18h</p><a href={`mailto:${store.supportEmail}`}>{store.supportEmail}</a>{user && <button type="button" className="footer-logout" onClick={() => onLogout("/")}>Sair da conta</button>}</div>
       <small>© {new Date().getFullYear()} {store.name}. Vitrine de portfólio customizável.</small>
     </footer>
   </div>;
