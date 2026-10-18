@@ -28,6 +28,16 @@ export type Registration = {
   ie?: string;
 };
 
+export type AddressInput = {
+  zip_code: string;
+  street: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  city: string;
+  state: string;
+};
+
 export type CheckoutInput = {
   address_id: string;
   shipping_service_id: number;
@@ -101,6 +111,13 @@ export const api = {
   removeCartItem: (token: string, id: string) =>
     request<Cart>(`/sales/cart/items/${id}`, { method: "DELETE" }, token),
   addresses: (token: string) => request<Address[]>("/addresses/", {}, token),
+  createAddress: (token: string, payload: AddressInput & { is_default?: boolean }) =>
+    request<Address>("/addresses/", { method: "POST", body: JSON.stringify(payload) }, token),
+  updateAddress: (token: string, id: string, payload: Partial<Omit<AddressInput, "number" | "complement" | "neighborhood">> & { number?: string | null; complement?: string | null; neighborhood?: string | null }) =>
+    request<Address>(`/addresses/${id}`, { method: "PATCH", body: JSON.stringify(payload) }, token),
+  setDefaultAddress: (token: string, id: string) =>
+    request<Address>(`/addresses/${id}/default`, { method: "POST" }, token),
+  deleteAddress: (token: string, id: string) => request<Record<string, never>>(`/addresses/${id}`, { method: "DELETE" }, token),
   preview: (token: string, address_id: string) =>
     request<CheckoutPreview>(
       "/sales/checkout/preview",
