@@ -1,7 +1,7 @@
-import { FormEvent, useRef, useState } from "react";
-import { AddressErrors, AddressFormValues, emptyAddress, toAddressPayload, validateAddress } from "../../lib/address";
+import { type FormEvent, useRef, useState } from "react";
+import { type AddressErrors, type AddressFormValues, emptyAddress, toAddressPayload, validateAddress } from "../../lib/address";
 import { ApiError, api } from "../../services/client";
-import { Address } from "../../types/domain";
+import type { Address } from "../../types/domain";
 
 const fromAddress = (a: Address): AddressFormValues => ({ zip_code: a.zip_code, street: a.street, number: a.number ?? "", complement: a.complement ?? "", neighborhood: a.neighborhood ?? "", city: a.city, state: a.state });
 const apiMessage = (error: unknown) => error instanceof ApiError ? (error.status === 422 || typeof error.message !== "string" ? "Revise os dados informados e tente novamente." : error.message) : "Não foi possível salvar o endereço. Tente novamente.";
@@ -22,5 +22,5 @@ export function AddressForm({ token, address, makeDefault, onSaved, onCancel, on
     catch (error) { if (error instanceof ApiError && error.status === 401) onSessionError(error); else setMessage(pending.current ? "Endereço salvo, mas não foi possível atualizar a lista. Tente novamente." : apiMessage(error)); }
     finally { setBusy(false); }
   }
-  return <form className="address-form" onSubmit={submit} noValidate>{field("zip_code", "CEP", { maxLength: 10, required: true })}{field("street", "Rua", { maxLength: 200, required: true })}{field("number", "Número", { maxLength: 20 })}{field("complement", "Complemento", { maxLength: 100 })}{field("neighborhood", "Bairro", { maxLength: 100 })}{field("city", "Cidade", { maxLength: 100, required: true })}{field("state", "UF", { maxLength: 2, required: true })}{message && <p className="auth-message" role="alert">{message}</p>}<div className="address-actions"><button className="primary" disabled={busy}>{busy ? "Salvando…" : address ? "Salvar alterações" : "Salvar endereço"}</button>{onCancel && <button type="button" className="secondary" disabled={busy} onClick={onCancel}>Cancelar</button>}</div></form>;
+  return <form className="address-form" onSubmit={submit} noValidate>{field("zip_code", "CEP", { maxLength: 10, required: true })}{field("street", "Rua", { maxLength: 200, required: true })}{field("number", "Número", { maxLength: 20 })}{field("complement", "Complemento", { maxLength: 100 })}{field("neighborhood", "Bairro", { maxLength: 100 })}{field("city", "Cidade", { maxLength: 100, required: true })}{field("state", "UF", { maxLength: 2, required: true })}{message && <p className="auth-message" role="alert">{message}</p>}<div className="address-actions"><button type="submit" className="primary" disabled={busy}>{busy ? "Salvando…" : address ? "Salvar alterações" : "Salvar endereço"}</button>{onCancel && <button type="button" className="secondary" disabled={busy} onClick={onCancel}>Cancelar</button>}</div></form>;
 }

@@ -1,4 +1,4 @@
-import { Order } from "../types/domain";
+import type { Order } from "../types/domain";
 
 export type OrderTone = "approved" | "failed" | "pending" | "attention";
 export type OrderPresentation = { tone: OrderTone; title: string; description: string; label: string; terminal: boolean; canRetryPayment: boolean };

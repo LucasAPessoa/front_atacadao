@@ -7,11 +7,11 @@ import { CartPage } from "./features/cart/CartPage";
 import { CatalogPage } from "./features/catalog/CatalogPage";
 import { PaymentReturn } from "./features/payment/PaymentReturn";
 import { ApiError, api, clearSession, getAccessToken, getRefreshToken, hasStoredSession, refreshSession, setOnSessionExpired, storeSession } from "./services/client";
-import { Address, Cart, User } from "./types/domain";
+import type { Address, Cart, User } from "./types/domain";
 
 const messageFor = (error: unknown) => error instanceof ApiError && error.status === 401 ? "Sua sessão expirou. Entre novamente para continuar." : error instanceof ApiError && error.status === 409 ? "O carrinho foi alterado. Revise os valores antes de continuar." : error instanceof ApiError ? error.message : "Não foi possível conectar à loja agora. Tente novamente.";
 
-function NotFoundPage() { return <section className="state-page"><p className="eyebrow">404 · CAMINHO NÃO ENCONTRADO</p><h1>Essa página saiu da rota.</h1><p>Volte à vitrine para continuar sua compra.</p><button className="primary" onClick={() => navigate("/")}>Ir para a loja</button></section>; }
+function NotFoundPage() { return <section className="state-page"><p className="eyebrow">404 · CAMINHO NÃO ENCONTRADO</p><h1>Essa página saiu da rota.</h1><p>Volte à vitrine para continuar sua compra.</p><button type="button" className="primary" onClick={() => navigate("/")}>Ir para a loja</button></section>; }
 
 export default function App() {
   const [location, setLocation] = useState(() => window.location.pathname + window.location.search);
@@ -32,5 +32,5 @@ export default function App() {
   const refreshAddresses = useCallback(async () => { setAddresses(await api.addresses(token)); }, [token]);
   const catalog = <CatalogPage token={token} onLogin={() => navigate("/entrar")} onCart={setCart} onError={handleError} mode={path === "/" ? "home" : "catalog"} query={window.location.search} />;
   const pages: Record<string, React.ReactNode> = { "/": catalog, "/produtos": catalog, "/carrinho": <CartPage token={token} cart={cart} addresses={addresses} onAddresses={refreshAddresses} onCart={setCart} onLogin={() => navigate("/entrar")} onError={handleError} />, "/pagamento/retorno": <PaymentReturn token={token} onError={handleError} />, "/conta": <AccountPage token={token} user={user} addresses={addresses} onAddresses={refreshAddresses} onError={handleError} onLogout={() => logout("/")} />, "/admin": <AdminPage token={token} user={user} onError={handleError} />, "/entrar": <LoginPage notice={new URLSearchParams(window.location.search).get("cadastro") === "concluido" ? "Cadastro concluído. Entre para continuar." : ""} onLogin={login} />, "/cadastro": <RegisterPage /> };
-  return <Layout user={user} cartCount={cart?.total_items ?? 0} onLogout={logout} path={path}>{notice && <div className="notice" role="status">{notice}<button aria-label="Fechar aviso" onClick={() => setNotice("")}>×</button></div>}{restoring ? <section className="state-page" role="status"><p>Restaurando sua sessão…</p></section> : pages[path] ?? <NotFoundPage />}</Layout>;
+  return <Layout user={user} cartCount={cart?.total_items ?? 0} onLogout={logout} path={path}>{notice && <div className="notice" role="status">{notice}<button type="button" aria-label="Fechar aviso" onClick={() => setNotice("")}>×</button></div>}{restoring ? <section className="state-page" role="status"><p>Restaurando sua sessão…</p></section> : pages[path] ?? <NotFoundPage />}</Layout>;
 }
