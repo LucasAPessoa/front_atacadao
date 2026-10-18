@@ -60,13 +60,39 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init: RequestInit = {}, token?: string): Promise<T> {
+const refreshTokenKey = "ecommerce-atacadao.refresh-token";
+const legacyAccessTokenKey = "ecommerce-atacadao.access-token";
+
+// Access token apenas em memória. O refresh token ainda fica no localStorage até
+// migrarmos para cookie HttpOnly (depende de domínio próprio; ver front #17).
+let accessToken = "";
+let onSessionExpired: () => void = () => undefined;
+let refreshInFlight: Promise<string> | null = null;
+
+// Remove o access token legado que versões anteriores gravavam no localStorage.
+try { localStorage.removeItem(legacyAccessTokenKey); } catch { /* sem storage */ }
+
+export const getAccessToken = () => accessToken;
+export const getRefreshToken = () => localStorage.getItem(refreshTokenKey);
+export const hasStoredSession = () => Boolean(getRefreshToken());
+export const setOnSessionExpired = (handler: () => void) => { onSessionExpired = handler; };
+export function storeSession(session: Session) {
+  accessToken = session.access_token;
+  localStorage.setItem(refreshTokenKey, session.refresh_token);
+}
+export function clearSession() {
+  accessToken = "";
+  localStorage.removeItem(refreshTokenKey);
+  localStorage.removeItem(legacyAccessTokenKey);
+}
+
+async function send<T>(path: string, init: RequestInit, bearer?: string): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers: {
       Accept: "application/json",
       ...(init.body ? { "Content-Type": "application/json" } : {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
       ...init.headers,
     },
   });
@@ -80,6 +106,60 @@ async function request<T>(path: string, init: RequestInit = {}, token?: string):
   }
 
   return body === null ? (undefined as T) : (body as Envelope<T>).data;
+}
+
+// Single-flight: o refresh token é rotacionado, então um segundo refresh concorrente
+// com o token antigo receberia 401 e derrubaria a sessão.
+export function refreshSession(notify = true): Promise<string> {
+  refreshInFlight ??= (async () => {
+    const refreshToken = getRefreshToken();
+    if (!refreshToken) throw new ApiError(401, "Sessão expirada.");
+    try {
+      const session = await send<Session>("/auth/refresh", {
+        method: "POST",
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+      storeSession(session);
+      return session.access_token;
+    } catch (error) {
+      // Falha de rede não encerra a sessão; só a rejeição do servidor.
+      if (error instanceof ApiError && [400, 401, 403].includes(error.status)) { clearSession(); if (notify) onSessionExpired(); }
+      throw error;
+    }
+  })().finally(() => { refreshInFlight = null; });
+  return refreshInFlight;
+}
+
+function expireSession() {
+  clearSession();
+  onSessionExpired();
+}
+
+async function request<T>(path: string, init: RequestInit = {}, token?: string): Promise<T> {
+  const authenticated = Boolean(token);
+  const bearerUsed = authenticated ? accessToken || token : undefined;
+  try {
+    return await send<T>(path, init, bearerUsed);
+  } catch (error) {
+    if (!(error instanceof ApiError) || error.status !== 401 || !authenticated || path.startsWith("/auth/")) throw error;
+    let fresh: string;
+    if (accessToken && accessToken !== bearerUsed) {
+      fresh = accessToken; // já houve rotação: só repete com o token atual
+    } else {
+      try {
+        fresh = await refreshSession();
+      } catch {
+        throw error;
+      }
+    }
+    try {
+      // Mesmo init: corpo e Idempotency-Key idênticos no reenvio.
+      return await send<T>(path, init, fresh);
+    } catch (retryError) {
+      if (retryError instanceof ApiError && retryError.status === 401) expireSession();
+      throw retryError;
+    }
+  }
 }
 
 export const api = {
