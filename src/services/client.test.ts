@@ -10,8 +10,13 @@ vi.stubGlobal("localStorage", {
 
 const json = (status: number, data?: unknown) =>
   new Response(JSON.stringify(status < 400 ? { data } : { detail: "erro" }), { status });
-const session = (n: number) => ({ access_token: `a${n}`, refresh_token: `r${n}`, token_type: "bearer" });
-const auth = (call: unknown[]) => (call[1] as RequestInit & { headers: Record<string, string> }).headers.Authorization;
+const session = (n: number) => ({
+  access_token: `a${n}`,
+  refresh_token: `r${n}`,
+  token_type: "bearer",
+});
+const auth = (call: unknown[]) =>
+  (call[1] as RequestInit & { headers: Record<string, string> }).headers.Authorization;
 const urls = (f: ReturnType<typeof vi.fn>) => f.mock.calls.map((c) => String(c[0]));
 const input = { address_id: "x", shipping_service_id: 1, expected_total_amount: "10.00" };
 
@@ -92,10 +97,12 @@ describe("refresh e retry", () => {
   });
 
   it("401 com bearer já rotacionado repete sem novo refresh", async () => {
-    fetchMock.mockImplementationOnce(async () => {
-      storeSession(session(1)); // outra request rotacionou durante o voo
-      return json(401);
-    }).mockResolvedValueOnce(json(200, { id: "u" }));
+    fetchMock
+      .mockImplementationOnce(async () => {
+        storeSession(session(1)); // outra request rotacionou durante o voo
+        return json(401);
+      })
+      .mockResolvedValueOnce(json(200, { id: "u" }));
     await expect(api.me("a0")).resolves.toEqual({ id: "u" });
     expect(urls(fetchMock).some((u) => u.endsWith("/auth/refresh"))).toBe(false);
     expect(auth(fetchMock.mock.calls[1])).toBe("Bearer a1");
