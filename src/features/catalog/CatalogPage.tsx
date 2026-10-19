@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { navigate } from "../../components/Layout";
-import { store } from "../../config/store";
 import { money } from "../../lib/format";
 import { api } from "../../services/client";
 import type { Cart, Category, Product } from "../../types/domain";
@@ -84,46 +83,48 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
         </div>
       ) : (
         <>
-          <div className="product-grid">
-            {visible.map((product, index) => {
+          <ul className="product-grid">
+            {visible.map((product) => {
               const variant = product.variants.find(
                 (item) => item.is_active && item.stock_quantity > 0,
               );
               const unavailableProduct = !variant;
               return (
-                <article className={`product-card tint-${index % 5}`} key={product.id}>
-                  <div className="product-image">
-                    <span>{product.name.slice(0, 2).toUpperCase()}</span>
-                    <small>{product.categories[0]?.name ?? "Seleção"}</small>
+                <li className="product-card" key={product.id}>
+                  <div className="product-top">
+                    <span>{product.categories[0]?.name ?? "Seleção"}</span>
+                    <span>{product.brand || "Seleção"}</span>
                   </div>
-                  <div className="product-meta">
-                    <p>{product.brand || "Seleção Atacadão"}</p>
-                    <h3>{product.name}</h3>
-                    <span>{variant?.variation_name ?? "Indisponível no momento"}</span>
-                    <div className="product-rail">
-                      <strong>{money(variant?.base_price ?? 0)}</strong>
+                  <div className="product-image" aria-hidden="true">
+                    {product.name.slice(0, 2).toUpperCase()}
+                  </div>
+                  <h3 className="product-name">{product.name}</h3>
+                  <span className="product-unit">
+                    {variant?.variation_name ?? "Indisponível no momento"}
+                  </span>
+                  <div className="product-buy">
+                    <span className="product-price">
+                      {variant ? money(variant.base_price) : "—"}
                       <small>valor unitário</small>
-                    </div>
-                    <small className="installments">
-                      Condições por quantidade são confirmadas no carrinho
-                    </small>
+                    </span>
                     <button
                       type="button"
-                      className="add-button"
+                      className="product-add"
                       disabled={unavailableProduct || adding === product.id}
                       onClick={() => add(product)}
+                      aria-label={
+                        unavailableProduct
+                          ? `${product.name} indisponível`
+                          : `Adicionar ${product.name} ao carrinho`
+                      }
                     >
-                      {unavailableProduct
-                        ? "Indisponível"
-                        : adding === product.id
-                          ? "Adicionando…"
-                          : "Adicionar ao carrinho"}
+                      {adding === product.id ? "…" : "+"}
                     </button>
                   </div>
-                </article>
+                </li>
               );
             })}
-          </div>
+          </ul>
           {!visible.length && (
             <div className="state-panel">
               <h2>Nenhum item encontrado</h2>
@@ -134,196 +135,202 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
       )}
     </>
   );
+  const hasCategories = categories.length > 0;
   return (
     <>
       {mode === "home" && (
         <>
-          <section className="hero">
-            <div className="hero-copy">
-              <p className="eyebrow">COMPRA INTELIGENTE PARA O SEU NEGÓCIO</p>
-              <h1>
-                O essencial para a sua rotina, <em>sem complicação.</em>
-              </h1>
-              <p>
-                Escolha produtos, monte seu pedido e veja a entrega antes de seguir para o
-                pagamento.
+          <section className="home-hero" aria-label="Destaque">
+            <div className="wrap">
+              <p className="meta-line">
+                <span>Compra em quantidade</span>
+                <span>Entrega calculada antes de pagar</span>
+                <span>Valores confirmados pelo servidor</span>
               </p>
-              <div className="hero-actions">
-                <button
-                  type="button"
-                  className="primary"
-                  onClick={() => document.getElementById("destaques")?.scrollIntoView()}
-                >
-                  Explorar produtos <span>→</span>
-                </button>
-                <button type="button" className="link-button" onClick={() => navigate("/produtos")}>
-                  Ver catálogo completo
-                </button>
-              </div>
-              <div className="hero-numbers">
-                <div>
-                  <strong>Compra em quantidade</strong>
-                  <span>valores confirmados pelo servidor</span>
-                </div>
-                <div>
-                  <strong>Entrega calculada</strong>
-                  <span>antes de pagar</span>
+              <h1 className="hero-title">
+                O essencial
+                <br />
+                para a sua
+                <br />
+                rotina<span className="dot">.</span>
+              </h1>
+              <div className="hero-foot">
+                <p>
+                  Escolha produtos, monte seu pedido e veja a entrega antes de seguir para o
+                  pagamento.
+                </p>
+                <div className="hero-actions">
+                  <button
+                    type="button"
+                    className="primary hero-cta"
+                    onClick={() => document.getElementById("destaques")?.scrollIntoView()}
+                  >
+                    Ver produtos <span aria-hidden="true">→</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="link-button"
+                    onClick={() => navigate("/produtos")}
+                  >
+                    Ver catálogo completo
+                  </button>
                 </div>
               </div>
             </div>
-            <section className="hero-art" aria-label="Compra em três passos">
-              <p>SEU PEDIDO, DO SEU JEITO</p>
-              <ol>
-                <li>
-                  <span>01</span>
-                  <strong>Escolha</strong>
-                  <small>o que precisa</small>
-                </li>
-                <li>
-                  <span>02</span>
-                  <strong>Revise</strong>
-                  <small>entrega e valores</small>
-                </li>
-                <li>
-                  <span>03</span>
-                  <strong>Confirme</strong>
-                  <small>no pagamento seguro</small>
-                </li>
-              </ol>
-            </section>
           </section>
-          <section className="benefits">
-            <article>
-              <span>◌</span>
+          {hasCategories && (
+            <section className="block" aria-labelledby="departamentos">
+              <div className="wrap">
+                <div className="block-head">
+                  <h2 id="departamentos">
+                    <span className="num">01</span>Departamentos
+                  </h2>
+                  <button type="button" className="mono-link" onClick={() => navigate("/produtos")}>
+                    Todos os produtos →
+                  </button>
+                </div>
+                <ol className="department-list">
+                  {categories.map((category, index) => (
+                    <li key={category.id}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate(`/produtos?categoria=${encodeURIComponent(category.id)}`)
+                        }
+                      >
+                        <span>
+                          <span className="idx">{String(index + 1).padStart(2, "0")}</span>
+                          {category.name}
+                        </span>
+                        <span aria-hidden="true">↗</span>
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </section>
+          )}
+        </>
+      )}
+      <section className="block catalog" id="destaques" aria-labelledby="titulo-produtos">
+        <div className="wrap">
+          {mode === "catalog" && (
+            <nav className="breadcrumbs" aria-label="Você está em">
+              <button type="button" onClick={() => navigate("/")}>
+                Início
+              </button>
+              <span aria-hidden="true">/</span>
+              <span aria-current="page">Catálogo</span>
+            </nav>
+          )}
+          <div className="block-head">
+            <h2 id="titulo-produtos">
+              {mode === "home" ? (
+                <>
+                  <span className="num">{hasCategories ? "02" : "01"}</span>Mais procurados
+                </>
+              ) : (
+                "Produtos"
+              )}
+            </h2>
+            {mode === "home" ? (
+              <button type="button" className="mono-link" onClick={() => navigate("/produtos")}>
+                Catálogo completo →
+              </button>
+            ) : (
+              <p className="catalog-count">{visible.length} produtos encontrados</p>
+            )}
+          </div>
+          {mode === "catalog" && (
+            <div className="catalog-layout">
+              <aside className="filter-side">
+                <label className="catalog-search">
+                  <span>Busca</span>
+                  <input
+                    type="search"
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="O que você procura?"
+                  />
+                </label>
+                <section className="filter-row" aria-label="Filtros de categoria">
+                  <button
+                    type="button"
+                    className={!categoryId ? "active" : ""}
+                    aria-pressed={!categoryId}
+                    onClick={() => selectCategory("")}
+                  >
+                    Todos os departamentos
+                  </button>
+                  {categories.map((item) => (
+                    <button
+                      type="button"
+                      className={categoryId === item.id ? "active" : ""}
+                      aria-pressed={categoryId === item.id}
+                      onClick={() => selectCategory(item.id)}
+                      key={item.id}
+                    >
+                      {item.name}
+                    </button>
+                  ))}
+                </section>
+              </aside>
               <div>
+                <ProductGrid />
+              </div>
+            </div>
+          )}
+          {mode === "home" && <ProductGrid />}
+        </div>
+      </section>
+      {mode === "home" && (
+        <>
+          <section className="block" aria-label="Vantagens">
+            <div className="wrap benefits">
+              <article>
+                <span className="big-num">01</span>
                 <strong>Compra protegida</strong>
                 <p>Você revisa valores antes de seguir para o pagamento.</p>
-              </div>
-            </article>
-            <article>
-              <span>⌁</span>
-              <div>
+              </article>
+              <article>
+                <span className="big-num">02</span>
                 <strong>Frete recalculado</strong>
                 <p>O servidor confirma a entrega para o seu endereço.</p>
-              </div>
-            </article>
-            <article>
-              <span>✦</span>
-              <div>
+              </article>
+              <article>
+                <span className="big-num">03</span>
                 <strong>Pedido acompanhável</strong>
                 <p>O status fica disponível na sua conta.</p>
-              </div>
-            </article>
-          </section>
-          <section className="home-categories">
-            <div className="section-heading">
-              <div>
-                <p className="eyebrow">NAVEGUE POR DEPARTAMENTO</p>
-                <h2>Encontre o que mantém sua rotina em movimento.</h2>
-              </div>
-              <button type="button" className="link-button" onClick={() => navigate("/produtos")}>
-                Ver todos os produtos →
-              </button>
+              </article>
             </div>
-            <div className="category-cards">
-              {categories.slice(0, 4).map((category, index) => (
-                <button
-                  type="button"
-                  key={category.id}
-                  className={`category-card cat-${index}`}
-                  onClick={() => navigate(`/produtos?categoria=${encodeURIComponent(category.id)}`)}
-                >
-                  <span>DEPARTAMENTO 0{index + 1}</span>
-                  <strong>{category.name}</strong>
-                  <small>Conferir opções →</small>
-                </button>
-              ))}
+          </section>
+          <section className="block" id="como-funciona" aria-labelledby="como">
+            <div className="wrap">
+              <div className="block-head">
+                <h2 id="como">
+                  <span className="num">{hasCategories ? "03" : "02"}</span>Como funciona
+                </h2>
+              </div>
+              <ol className="steps">
+                <li>
+                  <span className="idx">01</span>
+                  <strong>Monte seu carrinho</strong>
+                  <p>Escolha itens e ajuste quantidades.</p>
+                </li>
+                <li>
+                  <span className="idx">02</span>
+                  <strong>Escolha a entrega</strong>
+                  <p>O frete é recalculado pelo servidor.</p>
+                </li>
+                <li>
+                  <span className="idx">03</span>
+                  <strong>Pague com segurança</strong>
+                  <p>O Mercado Pago cuida dos dados de pagamento.</p>
+                </li>
+              </ol>
             </div>
           </section>
         </>
-      )}
-      <section className="catalog" id="destaques">
-        <div className="breadcrumbs">
-          Início <span>›</span> {mode === "home" ? "Destaques" : "Catálogo"}
-        </div>
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">{mode === "home" ? "SELEÇÃO EM DESTAQUE" : "CATÁLOGO"}</p>
-            <h2>
-              {mode === "home" ? "Mais procurados esta semana" : "Produtos para abastecer melhor"}
-            </h2>
-          </div>
-          {mode === "home" && (
-            <button type="button" className="link-button" onClick={() => navigate("/produtos")}>
-              Catálogo completo →
-            </button>
-          )}
-        </div>
-        {mode === "catalog" && (
-          <div className="catalog-layout">
-            <aside className="filter-side">
-              <strong>Filtre sua busca</strong>
-              <label className="catalog-search">
-                <span aria-hidden="true">⌕</span>
-                <input
-                  aria-label="Buscar produtos"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="O que você procura?"
-                />
-              </label>
-              <section className="filter-row" aria-label="Filtros de categoria">
-                <button
-                  type="button"
-                  className={!categoryId ? "active" : ""}
-                  onClick={() => selectCategory("")}
-                >
-                  Todos os departamentos
-                </button>
-                {categories.map((item) => (
-                  <button
-                    type="button"
-                    className={categoryId === item.id ? "active" : ""}
-                    onClick={() => selectCategory(item.id)}
-                    key={item.id}
-                  >
-                    {item.name}
-                  </button>
-                ))}
-              </section>
-            </aside>
-            <div>
-              <p className="catalog-count">{visible.length} produtos encontrados</p>
-              <ProductGrid />
-            </div>
-          </div>
-        )}
-        {mode === "home" && <ProductGrid />}
-      </section>
-      {mode === "home" && (
-        <section className="trust-band" id="como-funciona">
-          <div>
-            <p className="eyebrow">UMA JORNADA SEM SURPRESAS</p>
-            <h2>Escolha, revise e pague com tranquilidade.</h2>
-          </div>
-          <ol>
-            <li>
-              <span>01</span>
-              <strong>Monte seu carrinho</strong>
-              <p>Escolha itens e ajuste quantidades.</p>
-            </li>
-            <li>
-              <span>02</span>
-              <strong>Escolha a entrega</strong>
-              <p>O frete é recalculado pelo servidor.</p>
-            </li>
-            <li>
-              <span>03</span>
-              <strong>Pague com segurança</strong>
-              <p>O Mercado Pago cuida dos dados de pagamento.</p>
-            </li>
-          </ol>
-        </section>
       )}
     </>
   );

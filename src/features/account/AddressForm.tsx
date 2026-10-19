@@ -54,7 +54,7 @@ export function AddressForm({
     label: string,
     extra: { maxLength?: number; required?: boolean } = {},
   ) => (
-    <label>
+    <label className="field">
       {label}
       <input
         name={name}

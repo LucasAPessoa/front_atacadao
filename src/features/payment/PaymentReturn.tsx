@@ -10,6 +10,8 @@ type PaymentReturnProps = {
   onError(error: unknown): void;
 };
 
+const toneGlyph = { approved: "✓", failed: "✕", attention: "!", pending: "◌" } as const;
+
 const pollDelays = [2_000, 4_000, 8_000, ...Array(10).fill(10_000)];
 
 export function PaymentReturn({ token, onError }: PaymentReturnProps) {
@@ -104,15 +106,27 @@ export function PaymentReturn({ token, onError }: PaymentReturnProps) {
     <section className="return-page" aria-busy={loading || refreshing}>
       <p className="eyebrow">PAGAMENTO · MERCADO PAGO</p>
       <div className={`payment-result ${presentation?.tone ?? "pending"}`} aria-live="polite">
+        <p className="result-status">
+          <span className="status-glyph" aria-hidden="true">
+            {presentation ? toneGlyph[presentation.tone] : "◌"}
+          </span>
+          {presentation?.label ?? "Consultando"}
+        </p>
         <h1>{presentation?.title ?? "Consultando pagamento"}</h1>
         <p>
           {presentation?.description ?? "Estamos buscando o estado mais recente do seu pedido."}
         </p>
         {order && (
-          <div className="payment-order">
-            <span>Pedido {order.order_code}</span>
-            <strong>{money(order.total_amount)}</strong>
-          </div>
+          <dl className="payment-order">
+            <div>
+              <dt>Pedido</dt>
+              <dd>{order.order_code}</dd>
+            </div>
+            <div>
+              <dt>Total</dt>
+              <dd>{money(order.total_amount)}</dd>
+            </div>
+          </dl>
         )}
         <div className="result-actions">
           <button

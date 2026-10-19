@@ -14,6 +14,7 @@ type Props = {
   onError(error: unknown): void;
   onLogout(): void;
 };
+const toneGlyph = { approved: "✓", failed: "✕", attention: "!", pending: "◌" } as const;
 const statusLabel = (order: Order) => {
   const payment = orderPresentation(order);
   if (payment.tone !== "approved" || order.fulfillment_status === "PAID") return payment.label;
@@ -70,30 +71,30 @@ export function AccountPage({ token, user, addresses, onAddresses, onError, onLo
           <div className="account-avatar" aria-hidden="true">
             {firstName.slice(0, 1).toUpperCase()}
           </div>
-          <button type="button" className="secondary logout-button" onClick={onLogout}>
+          <button type="button" className="secondary" onClick={onLogout}>
             Sair da conta
           </button>
         </div>
       </header>
       <div className="account-overview">
         <article>
-          <small>Pedidos em andamento</small>
+          <h2>Pedidos em andamento</h2>
           <strong>{activeOrders.length}</strong>
-          <span>acompanhe o status por aqui</span>
+          <span className="sub">acompanhe o status por aqui</span>
         </article>
         <article>
-          <small>Pedidos realizados</small>
+          <h2>Pedidos realizados</h2>
           <strong>{orders.length}</strong>
-          <span>histórico da sua conta</span>
+          <span className="sub">histórico da sua conta</span>
         </article>
         <article>
-          <small>Perfil da conta</small>
+          <h2>Perfil da conta</h2>
           <strong>{user.role.name === "admin" ? "Admin" : "Cliente"}</strong>
-          <span>{user.email}</span>
+          <span className="sub">{user.email}</span>
         </article>
       </div>
       <div className="account-columns">
-        <section className="account-panel orders-panel">
+        <section className="account-panel">
           <div className="panel-title">
             <div>
               <p className="eyebrow">HISTÓRICO</p>
@@ -106,10 +107,15 @@ export function AccountPage({ token, user, addresses, onAddresses, onError, onLo
           {loading ? (
             <div className="inline-loading">Consultando pedidos…</div>
           ) : orders.length ? (
-            <div className="order-list">
+            <div>
               {orders.map((order) => (
                 <article key={order.id} className="order-row">
-                  <span className={`status-dot status-${orderPresentation(order).tone}`} />
+                  <span
+                    className={`status-dot status-${orderPresentation(order).tone}`}
+                    aria-hidden="true"
+                  >
+                    {toneGlyph[orderPresentation(order).tone]}
+                  </span>
                   <div>
                     <strong>{order.order_code}</strong>
                     <small>{statusLabel(order)}</small>
