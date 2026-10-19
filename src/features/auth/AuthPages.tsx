@@ -63,11 +63,11 @@ export function LoginPage({ notice, onLogin }: LoginPageProps) {
       description="Acompanhe pedidos, endereços e compras salvas."
     >
       <form onSubmit={submit}>
-        <label>
+        <label className="field">
           E-mail
           <input name="email" type="email" autoComplete="email" required />
         </label>
-        <label>
+        <label className="field">
           Senha
           <input name="password" type="password" autoComplete="current-password" required />
         </label>
@@ -152,36 +152,36 @@ export function RegisterPage() {
             Empresa
           </label>
         </fieldset>
-        <label>
+        <label className="field">
           {type === "COMPANY" ? "Nome do responsável" : "Nome completo"}
           <input name="full_name" autoComplete="name" required />
         </label>
-        <label>
+        <label className="field">
           E-mail
           <input name="email" type="email" autoComplete="email" required />
         </label>
         {type === "INDIVIDUAL" ? (
-          <label>
+          <label className="field">
             CPF
             <input name="cpf" inputMode="numeric" autoComplete="off" required />
           </label>
         ) : (
           <>
-            <label>
+            <label className="field">
               Razão social
               <input name="corporate_name" autoComplete="organization" required />
             </label>
-            <label>
+            <label className="field">
               CNPJ
               <input name="cnpj" inputMode="numeric" autoComplete="off" required />
             </label>
-            <label>
-              Inscrição estadual <span>(opcional)</span>
+            <label className="field">
+              Inscrição estadual <span className="opt">(opcional)</span>
               <input name="ie" />
             </label>
           </>
         )}
-        <label>
+        <label className="field">
           Senha
           <input
             name="password"
@@ -227,11 +227,11 @@ function AuthShell({ title, description, children }: AuthShellProps) {
         onClick={() => navigate("/")}
         aria-label={`Ir para ${store.name}`}
       >
-        <span>{store.shortName}</span>
+        <span className="auth-brand-mark" aria-hidden="true" />
         <strong>{store.name}</strong>
       </button>
       <div className="auth-card">
-        <p className="eyebrow">SUA CONTA</p>
+        <p className="eyebrow">Sua conta</p>
         <h1 id="auth-title">{title}</h1>
         <p>{description}</p>
         {children}

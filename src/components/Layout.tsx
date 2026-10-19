@@ -1,6 +1,14 @@
 import { type ReactNode, useState } from "react";
 import { store } from "../config/store";
+import { brandTokens } from "../lib/theme";
 import type { User } from "../types/domain";
+
+const tokens = brandTokens(store.theme.brand);
+const themeStyle = {
+  "--brand": tokens.brand,
+  "--on-brand": tokens.onBrand,
+  "--brand-text": tokens.brandText,
+} as React.CSSProperties;
 
 export function navigate(path: string) {
   window.history.pushState({}, "", path);
@@ -29,17 +37,8 @@ export function Layout({ children, user, cartCount, onLogout, path }: LayoutProp
     go(`/produtos${params.size ? `?${params}` : ""}`);
   };
   const authRoute = path === "/entrar" || path === "/cadastro";
-  const themeStyle = {
-    "--accent": store.theme.accent,
-    "--accent-strong": store.theme.accentStrong,
-    "--ink": store.theme.ink,
-    "--parchment": store.theme.parchment,
-    "--surface": store.theme.surface,
-    "--field": store.theme.field,
-    "--muted": store.theme.muted,
-    "--border": store.theme.border,
-    "--leaf": store.theme.leaf,
-  } as React.CSSProperties;
+  const count = String(cartCount).padStart(2, "0");
+  const hasLegal = Boolean(store.legalName || store.cnpj || store.address);
 
   if (authRoute)
     return (
@@ -53,11 +52,7 @@ export function Layout({ children, user, cartCount, onLogout, path }: LayoutProp
       <a className="skip-link" href="#conteudo">
         Pular para o conteúdo
       </a>
-      <div className="announcement">
-        <span>Compra em quantidade, sem surpresa</span>
-        <b>{store.announcement}</b>
-        <span>Atendimento em horário comercial</span>
-      </div>
+      <div className="announcement">{store.announcement}</div>
       <header className="site-header">
         <div className="header-inner">
           <button
@@ -66,19 +61,24 @@ export function Layout({ children, user, cartCount, onLogout, path }: LayoutProp
             onClick={() => go("/")}
             aria-label={`Ir para ${store.name}`}
           >
-            <span className="brand-mark">{store.shortName}</span>
-            <span>
-              <strong>{store.name}</strong>
-              <small>para toda a rotina</small>
-            </span>
+            <span className="brand-mark" aria-hidden="true" />
+            <span>{store.name}</span>
           </button>
-          <button type="button" className="header-departments" onClick={() => go("/produtos")}>
-            <span aria-hidden="true">☰</span> Departamentos
+          <button
+            type="button"
+            className="mobile-menu"
+            onClick={() => setMenuOpen((value) => !value)}
+            aria-expanded={menuOpen}
+            aria-controls="menu-principal"
+            aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
+          >
+            {menuOpen ? "×" : "☰"}
           </button>
-          <label className="header-search">
-            <span aria-hidden="true">⌕</span>
+          <div className="header-search">
+            <label htmlFor="busca-header">Busca</label>
             <input
-              aria-label="Buscar no catálogo"
+              id="busca-header"
+              type="search"
               value={headerSearch}
               onChange={(event) => setHeaderSearch(event.target.value)}
               placeholder="O que a sua rotina precisa?"
@@ -89,57 +89,44 @@ export function Layout({ children, user, cartCount, onLogout, path }: LayoutProp
             <button type="button" onClick={submitSearch} aria-label="Buscar">
               Buscar
             </button>
-          </label>
+          </div>
           <div className="header-actions">
             <button
               type="button"
-              className="support-action"
+              className="header-cell support-action"
               onClick={() => (window.location.href = `mailto:${store.supportEmail}`)}
             >
-              <span>◌</span>
-              <b>Precisa de ajuda?</b>
-              <small>Fale com a gente</small>
+              Ajuda
             </button>
             {user ? (
               <button
                 type="button"
-                className="icon-action"
+                className="header-cell"
                 onClick={() => go("/conta")}
                 aria-label="Minha conta"
               >
-                <span aria-hidden="true">◉</span>
-                <b>Olá!</b>
-                <small>Minha conta</small>
+                Conta
               </button>
             ) : (
               <button
                 type="button"
-                className="icon-action"
+                className="header-cell"
                 onClick={() => go("/entrar")}
                 aria-label="Entrar"
               >
-                <span aria-hidden="true">◉</span>
-                <b>Entre ou cadastre-se</b>
-                <small>Minha conta</small>
+                Entrar
               </button>
             )}
             <button type="button" className="cart-button" onClick={() => go("/carrinho")}>
-              <span aria-hidden="true">⌑</span>
-              <b>Carrinho</b>
-              <em>{cartCount}</em>
-            </button>
-            <button
-              type="button"
-              className="mobile-menu"
-              onClick={() => setMenuOpen((value) => !value)}
-              aria-expanded={menuOpen}
-              aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
-            >
-              ☰
+              Carrinho <span className="cart-count">[{count}]</span>
             </button>
           </div>
         </div>
-        <nav className={menuOpen ? "main-nav open" : "main-nav"} aria-label="Navegação principal">
+        <nav
+          id="menu-principal"
+          className={menuOpen ? "main-nav open" : "main-nav"}
+          aria-label="Navegação principal"
+        >
           <div>
             <button type="button" className={path === "/" ? "active" : ""} onClick={() => go("/")}>
               Início
@@ -153,7 +140,10 @@ export function Layout({ children, user, cartCount, onLogout, path }: LayoutProp
             </button>
             <button
               type="button"
-              onClick={() => document.getElementById("como-funciona")?.scrollIntoView()}
+              onClick={() => {
+                setMenuOpen(false);
+                document.getElementById("como-funciona")?.scrollIntoView();
+              }}
             >
               Como funciona
             </button>
@@ -171,37 +161,45 @@ export function Layout({ children, user, cartCount, onLogout, path }: LayoutProp
       </header>
       <main id="conteudo">{children}</main>
       <footer className="site-footer">
-        <div>
-          <button type="button" className="brand brand-button" onClick={() => go("/")}>
-            <span className="brand-mark">{store.shortName}</span>
-            <strong>{store.name}</strong>
-          </button>
-          <p>{store.description}</p>
-        </div>
-        <div>
-          <h2>Navegue</h2>
-          <button type="button" onClick={() => go("/")}>
-            Início
-          </button>
-          <button type="button" onClick={() => go("/produtos")}>
-            Produtos
-          </button>
-          <button type="button" onClick={() => go("/carrinho")}>
-            Carrinho
-          </button>
-        </div>
-        <div>
-          <h2>Atendimento</h2>
-          <p>Segunda a sexta, 9h às 18h</p>
-          <a href={`mailto:${store.supportEmail}`}>{store.supportEmail}</a>
-          {user && (
-            <button type="button" className="footer-logout" onClick={() => onLogout("/")}>
-              Sair da conta
+        <div className="footer-inner">
+          <div className="footer-brand">
+            <button type="button" className="footer-name" onClick={() => go("/")}>
+              {store.name}
             </button>
+            <p>{store.description}</p>
+          </div>
+          {hasLegal && (
+            <address className="footer-legal">
+              {store.legalName && <span>{store.legalName}</span>}
+              {store.cnpj && <span>CNPJ {store.cnpj}</span>}
+              {store.address && <span>{store.address}</span>}
+            </address>
           )}
+          <nav className="footer-col" aria-label="Rodapé">
+            <h2>Navegue</h2>
+            <button type="button" onClick={() => go("/")}>
+              Início
+            </button>
+            <button type="button" onClick={() => go("/produtos")}>
+              Produtos
+            </button>
+            <button type="button" onClick={() => go("/carrinho")}>
+              Carrinho
+            </button>
+          </nav>
+          <div className="footer-col">
+            <h2>Atendimento</h2>
+            <p>Segunda a sexta, 9h às 18h</p>
+            <a href={`mailto:${store.supportEmail}`}>{store.supportEmail}</a>
+            {user && (
+              <button type="button" onClick={() => onLogout("/")}>
+                Sair da conta
+              </button>
+            )}
+          </div>
         </div>
-        <small>
-          © {new Date().getFullYear()} {store.name}. Vitrine de portfólio customizável.
+        <small className="footer-copy">
+          © {new Date().getFullYear()} {store.name}
         </small>
       </footer>
     </div>

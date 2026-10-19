@@ -1,13 +1,5 @@
 export type StoreTheme = {
-  accent: string;
-  accentStrong: string;
-  ink: string;
-  parchment: string;
-  surface: string;
-  field: string;
-  muted: string;
-  border: string;
-  leaf: string;
+  brand: string;
 };
 
 export type StoreConfig = {
@@ -17,25 +9,31 @@ export type StoreConfig = {
   description: string;
   announcement: string;
   supportEmail: string;
+  legalName?: string;
+  cnpj?: string;
+  address?: string;
   theme: StoreTheme;
 };
 
+const env = import.meta.env;
+const read = (value: string | undefined, fallback: string) => value?.trim() || fallback;
+const optional = (value: string | undefined) => value?.trim() || undefined;
+
 export const store: StoreConfig = {
-  name: "Casa & Atacado",
-  shortName: "CA",
-  tagline: "Escolhas que abastecem a sua rotina.",
-  description: "Uma vitrine pronta para receber a identidade, o catálogo e as regras da sua loja.",
-  announcement: "Frete calculado com transparência antes do pagamento.",
-  supportEmail: "atendimento@sualoja.com",
-  theme: {
-    accent: "#e85d3f",
-    accentStrong: "#c9432b",
-    ink: "#1e2f31",
-    parchment: "#f8f4ee",
-    surface: "#fffdf9",
-    field: "#f0ece5",
-    muted: "#66706e",
-    border: "#ded8ce",
-    leaf: "#dfe9e0",
-  },
+  name: read(env.VITE_STORE_NAME, "Casa & Atacado"),
+  shortName: read(env.VITE_STORE_SHORT_NAME, "CA"),
+  tagline: read(env.VITE_STORE_TAGLINE, "Escolhas que abastecem a sua rotina."),
+  description: read(
+    env.VITE_STORE_DESCRIPTION,
+    "Uma vitrine pronta para receber a identidade, o catálogo e as regras da sua loja.",
+  ),
+  announcement: read(
+    env.VITE_STORE_ANNOUNCEMENT,
+    "Frete calculado com transparência antes do pagamento.",
+  ),
+  supportEmail: read(env.VITE_STORE_SUPPORT_EMAIL, "atendimento@sualoja.com"),
+  legalName: optional(env.VITE_STORE_LEGAL_NAME),
+  cnpj: optional(env.VITE_STORE_CNPJ),
+  address: optional(env.VITE_STORE_ADDRESS),
+  theme: { brand: read(env.VITE_STORE_BRAND_COLOR, "#FF3B00") },
 };

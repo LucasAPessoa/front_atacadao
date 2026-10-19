@@ -13,6 +13,19 @@ npm run dev
 
 O backend local padrão está em `http://127.0.0.1:8000`. Ajuste `VITE_API_BASE_URL` quando necessário.
 
+## Identidade da loja (white-label)
+
+Todas as variáveis são públicas (embutidas no bundle; nunca coloque segredos) e opcionais. Sem valor, vale o padrão de `src/config/store.ts`.
+
+| Variável | Uso |
+| --- | --- |
+| `VITE_STORE_NAME`, `VITE_STORE_SHORT_NAME` | Nome e sigla |
+| `VITE_STORE_TAGLINE`, `VITE_STORE_DESCRIPTION` | Frases institucionais |
+| `VITE_STORE_ANNOUNCEMENT` | Faixa superior |
+| `VITE_STORE_SUPPORT_EMAIL` | E-mail de atendimento |
+| `VITE_STORE_BRAND_COLOR` | Cor da marca em hex (padrão `#FF3B00`); texto e contraste derivam dela |
+| `VITE_STORE_LEGAL_NAME`, `VITE_STORE_CNPJ`, `VITE_STORE_ADDRESS` | Dados legais no rodapé (só aparecem se definidos) |
+
 ## Deploy na Vercel
 
 1. Importe este diretório como um projeto Vite na Vercel. O build é `npm run build` e o diretório publicado é `dist`.

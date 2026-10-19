@@ -211,15 +211,15 @@ export function AdminPage({ token, user, onError }: Props) {
       </header>
       <div className="metrics-grid">
         <article>
-          <span>Pedidos</span>
+          <span className="metric-label">Pedidos</span>
           <strong>{loading ? "—" : orders.length}</strong>
         </article>
         <article>
-          <span>Pagamentos aprovados</span>
+          <span className="metric-label">Pagamentos aprovados</span>
           <strong>{loading ? "—" : paid.length}</strong>
         </article>
         <article>
-          <span>Faturamento aprovado</span>
+          <span className="metric-label">Faturamento aprovado</span>
           <strong>
             {loading
               ? "—"
@@ -227,7 +227,7 @@ export function AdminPage({ token, user, onError }: Props) {
           </strong>
         </article>
         <article>
-          <span>Clientes</span>
+          <span className="metric-label">Clientes</span>
           <strong>{loading ? "—" : users.length}</strong>
         </article>
       </div>
@@ -240,7 +240,7 @@ export function AdminPage({ token, user, onError }: Props) {
           ) : (
             orders.slice(0, 8).map((order) => (
               <article className="admin-order-row" key={order.id}>
-                <span>
+                <span className="row-main">
                   <strong>{order.order_code}</strong>
                   <small>{order.status.replaceAll("_", " ")}</small>
                 </span>
@@ -327,7 +327,7 @@ export function AdminPage({ token, user, onError }: Props) {
             ) : items.length ? (
               items.map((item) => (
                 <article key={item.id}>
-                  <span>
+                  <span className="row-main">
                     <strong>{display(item)}</strong>
                     <small>{item.id}</small>
                   </span>
