@@ -2,6 +2,7 @@ export type Role = "admin" | "user";
 export type User = { id: string; email: string; full_name?: string; role: { name: Role } };
 export type Variant = {
   id: string;
+  product_id?: string;
   variation_name: string;
   base_price: string;
   stock_quantity: number;
@@ -39,11 +40,14 @@ export type Address = {
 };
 export type CheckoutPreview = {
   subtotal_amount: string;
+  items?: Array<{ variant_id: string; product_name: string; variation_name: string }>;
   shipping_options: Array<{
     service_id: number;
     service_name?: string;
     company_name?: string;
-    delivery_time_days?: number;
+    delivery_time_days?: number | null;
+    price: string;
+    discount_amount?: string;
     total_amount: string;
   }>;
 };
