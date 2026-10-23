@@ -2,6 +2,7 @@ export type Role = "admin" | "user";
 export type User = { id: string; email: string; full_name?: string; role: { name: Role } };
 export type Variant = {
   id: string;
+  product_id?: string;
   variation_name: string;
   base_price: string;
   stock_quantity: number;
@@ -39,11 +40,14 @@ export type Address = {
 };
 export type CheckoutPreview = {
   subtotal_amount: string;
+  items?: Array<{ variant_id: string; product_name: string; variation_name: string }>;
   shipping_options: Array<{
     service_id: number;
     service_name?: string;
     company_name?: string;
-    delivery_time_days?: number;
+    delivery_time_days?: number | null;
+    price: string;
+    discount_amount?: string;
     total_amount: string;
   }>;
 };
@@ -85,4 +89,31 @@ export type Order = {
   reconciliation?: Reconciliation | null;
   total_amount: string;
   transactions: Array<{ status: string }>;
+};
+export type ProductImage = {
+  id: string;
+  variant_id: string;
+  image_url: string;
+  is_main: boolean;
+};
+export type PricingTier = {
+  id: string;
+  product_id: string;
+  min_quantity: number;
+  unit_price: string;
+};
+export type ProductReview = {
+  id: string;
+  product_id: string;
+  rating: number;
+  comment?: string | null;
+  is_approved: boolean;
+  created_at?: string;
+};
+export type ProductQuestion = {
+  id: string;
+  product_id: string;
+  question_text: string;
+  answer_text?: string | null;
+  created_at?: string;
 };

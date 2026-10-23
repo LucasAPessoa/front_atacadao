@@ -1,4 +1,5 @@
 import { type FormEvent, useRef, useState } from "react";
+import { formatZip } from "../../lib/checkout";
 import {
   type AddressErrors,
   type AddressFormValues,
@@ -10,7 +11,7 @@ import { ApiError, api } from "../../services/client";
 import type { Address } from "../../types/domain";
 
 const fromAddress = (a: Address): AddressFormValues => ({
-  zip_code: a.zip_code,
+  zip_code: formatZip(a.zip_code),
   street: a.street,
   number: a.number ?? "",
   complement: a.complement ?? "",

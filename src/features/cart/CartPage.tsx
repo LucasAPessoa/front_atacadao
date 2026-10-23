@@ -2,8 +2,24 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "../../services/client";
 import type { Address, Cart, CartItem, CheckoutPreview } from "../../types/domain";
 import { money } from "../../lib/format";
+import {
+  cartItemName,
+  formatDeliveryTime,
+  formatZip,
+  shippingLabel,
+  summaryAmounts,
+} from "../../lib/checkout";
 import { navigate } from "../../components/Layout";
 import { AddressForm } from "../account/AddressForm";
+
+// Papéis explícitos: no celular a tabela vira grid e perderia a semântica no Safari/Firefox.
+const ROLE = {
+  table: { role: "table" },
+  rowgroup: { role: "rowgroup" },
+  row: { role: "row" },
+  columnheader: { role: "columnheader" },
+  cell: { role: "cell" },
+} as const;
 
 export function CartPage({
   token,
@@ -27,8 +43,15 @@ export function CartPage({
   const [shippingId, setShippingId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [productNames, setProductNames] = useState<Record<string, string>>({});
   const preferred = useRef("");
   const key = useRef(crypto.randomUUID());
+  useEffect(() => {
+    api
+      .products()
+      .then((list) => setProductNames(Object.fromEntries(list.map((p) => [p.id, p.name]))))
+      .catch(() => {});
+  }, []);
   useEffect(() => {
     const wanted = addresses.find((a) => a.id === preferred.current);
     preferred.current = "";
@@ -129,6 +152,13 @@ export function CartPage({
       .toFixed(2) ??
     "0";
   const selectedShipping = preview?.shipping_options.find((item) => item.service_id === shippingId);
+  const itemName = (item: CartItem) =>
+    cartItemName(
+      preview?.items?.find((p) => p.variant_id === item.variant_id)?.product_name ??
+        (item.variant.product_id ? productNames[item.variant.product_id] : undefined),
+      item.variant.variation_name,
+    );
+  const amounts = summaryAmounts(preview?.subtotal_amount ?? total, selectedShipping);
   const step = preview ? 2 : 1;
   const stepClass = (n: number) => (n === step ? "current" : "");
   const count = String(cart?.total_items ?? 0).padStart(2, "0");
@@ -159,41 +189,45 @@ export function CartPage({
       ) : (
         <div className="cart-layout">
           <div className="table-box">
-            <table className="cart-items">
+            <table className="cart-items" {...ROLE.table}>
               <caption className="sr-only">Itens do carrinho</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Produto</th>
-                  <th scope="col">Qtd.</th>
-                  <th scope="col" className="num-col">
+              <thead {...ROLE.rowgroup}>
+                <tr {...ROLE.row}>
+                  <th {...ROLE.columnheader} scope="col">
+                    Produto
+                  </th>
+                  <th {...ROLE.columnheader} scope="col">
+                    Qtd.
+                  </th>
+                  <th {...ROLE.columnheader} scope="col" className="num-col">
                     Total
                   </th>
-                  <th scope="col">
+                  <th {...ROLE.columnheader} scope="col">
                     <span className="sr-only">Remover</span>
                   </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody {...ROLE.rowgroup}>
                 {cart.items.map((item) => (
-                  <tr key={item.id}>
-                    <td>
+                  <tr {...ROLE.row} key={item.id}>
+                    <td {...ROLE.cell}>
                       <div className="cart-product">
                         <div className="cart-thumb" aria-hidden="true">
-                          {item.variant.variation_name.slice(0, 2)}
+                          {itemName(item).slice(0, 2)}
                         </div>
                         <div>
-                          <h2>{item.variant.variation_name}</h2>
+                          <h2>{itemName(item)}</h2>
                           <span className="unit-price">
                             {money(item.unit_price ?? item.variant.base_price)} / un.
                           </span>
                         </div>
                       </div>
                     </td>
-                    <td>
+                    <td {...ROLE.cell}>
                       <div className="quantity">
                         <button
                           type="button"
-                          aria-label={`Diminuir quantidade de ${item.variant.variation_name}`}
+                          aria-label={`Diminuir quantidade de ${itemName(item)}`}
                           disabled={busy}
                           onClick={() => quantity(item, item.quantity - 1)}
                         >
@@ -204,7 +238,7 @@ export function CartPage({
                         </span>
                         <button
                           type="button"
-                          aria-label={`Aumentar quantidade de ${item.variant.variation_name}`}
+                          aria-label={`Aumentar quantidade de ${itemName(item)}`}
                           disabled={busy}
                           onClick={() => quantity(item, item.quantity + 1)}
                         >
@@ -212,14 +246,14 @@ export function CartPage({
                         </button>
                       </div>
                     </td>
-                    <td className="line-total num-col">
+                    <td {...ROLE.cell} className="line-total num-col">
                       {money(item.subtotal ?? Number(item.variant.base_price) * item.quantity)}
                     </td>
-                    <td>
+                    <td {...ROLE.cell}>
                       <button
                         type="button"
                         className="remove"
-                        aria-label={`Remover ${item.variant.variation_name}`}
+                        aria-label={`Remover ${itemName(item)}`}
                         onClick={() => remove(item)}
                       >
                         ×
@@ -246,7 +280,7 @@ export function CartPage({
                   <option value="">Selecione</option>
                   {addresses.map((a) => (
                     <option value={a.id} key={a.id}>
-                      {a.street}, {a.number || "s/n"} · {a.zip_code}
+                      {a.street}, {a.number || "s/n"} · {formatZip(a.zip_code)}
                     </option>
                   ))}
                 </select>
@@ -295,12 +329,15 @@ export function CartPage({
                       onChange={() => setShippingId(item.service_id)}
                     />
                     <span className="ship-name">
-                      {item.company_name} · {item.service_name}
-                      {item.delivery_time_days !== undefined && (
-                        <span className="eta"> / {item.delivery_time_days} d</span>
+                      {shippingLabel(item)}
+                      {formatDeliveryTime(item.delivery_time_days) && (
+                        <span className="eta">
+                          {" "}
+                          / {formatDeliveryTime(item.delivery_time_days)}
+                        </span>
                       )}
                     </span>
-                    <strong>{money(item.total_amount)}</strong>
+                    <strong>{money(item.price)}</strong>
                   </label>
                 ))}
               </fieldset>
@@ -308,13 +345,19 @@ export function CartPage({
             <dl className="totals">
               <div>
                 <dt>Produtos</dt>
-                <dd>{money(total)}</dd>
+                <dd>{money(amounts.products)}</dd>
               </div>
-              {selectedShipping && (
-                <div className="grand">
-                  <dt className="grand-label">Total</dt>
-                  <dd className="grand-value">{money(selectedShipping.total_amount)}</dd>
-                </div>
+              {amounts.total !== null && (
+                <>
+                  <div>
+                    <dt>Frete</dt>
+                    <dd>{money(amounts.shipping ?? 0)}</dd>
+                  </div>
+                  <div className="grand">
+                    <dt className="grand-label">Total</dt>
+                    <dd className="grand-value">{money(amounts.total)}</dd>
+                  </div>
+                </>
               )}
             </dl>
             <button
