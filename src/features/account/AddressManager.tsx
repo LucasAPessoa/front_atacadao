@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatZip } from "../../lib/checkout";
 import { ApiError, api } from "../../services/client";
 import type { Address } from "../../types/domain";
 import { AddressForm } from "./AddressForm";
@@ -90,7 +91,7 @@ export function AddressManager({ token, addresses, onChanged, onError }: Props) 
                   </strong>
                   <small>
                     {a.neighborhood ? `${a.neighborhood} · ` : ""}
-                    {a.city}/{a.state} · {a.zip_code}
+                    {a.city}/{a.state} · {formatZip(a.zip_code)}
                   </small>
                 </div>
                 <div className="address-actions">
