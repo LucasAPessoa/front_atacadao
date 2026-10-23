@@ -13,6 +13,8 @@ const themeStyle = {
 export function navigate(path: string) {
   window.history.pushState({}, "", path);
   window.dispatchEvent(new PopStateEvent("popstate"));
+  // Nova página abre no topo; voltar/avançar do histórico deixa o navegador restaurar a rolagem.
+  window.scrollTo?.(0, 0);
 }
 
 type LayoutProps = {

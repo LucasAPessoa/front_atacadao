@@ -90,3 +90,30 @@ export type Order = {
   total_amount: string;
   transactions: Array<{ status: string }>;
 };
+export type ProductImage = {
+  id: string;
+  variant_id: string;
+  image_url: string;
+  is_main: boolean;
+};
+export type PricingTier = {
+  id: string;
+  product_id: string;
+  min_quantity: number;
+  unit_price: string;
+};
+export type ProductReview = {
+  id: string;
+  product_id: string;
+  rating: number;
+  comment?: string | null;
+  is_approved: boolean;
+  created_at?: string;
+};
+export type ProductQuestion = {
+  id: string;
+  product_id: string;
+  question_text: string;
+  answer_text?: string | null;
+  created_at?: string;
+};
