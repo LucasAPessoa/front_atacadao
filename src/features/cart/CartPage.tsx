@@ -12,6 +12,15 @@ import {
 import { navigate } from "../../components/Layout";
 import { AddressForm } from "../account/AddressForm";
 
+// Papéis explícitos: no celular a tabela vira grid e perderia a semântica no Safari/Firefox.
+const ROLE = {
+  table: { role: "table" },
+  rowgroup: { role: "rowgroup" },
+  row: { role: "row" },
+  columnheader: { role: "columnheader" },
+  cell: { role: "cell" },
+} as const;
+
 export function CartPage({
   token,
   cart,
@@ -180,24 +189,28 @@ export function CartPage({
       ) : (
         <div className="cart-layout">
           <div className="table-box">
-            <table className="cart-items">
+            <table className="cart-items" {...ROLE.table}>
               <caption className="sr-only">Itens do carrinho</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Produto</th>
-                  <th scope="col">Qtd.</th>
-                  <th scope="col" className="num-col">
+              <thead {...ROLE.rowgroup}>
+                <tr {...ROLE.row}>
+                  <th {...ROLE.columnheader} scope="col">
+                    Produto
+                  </th>
+                  <th {...ROLE.columnheader} scope="col">
+                    Qtd.
+                  </th>
+                  <th {...ROLE.columnheader} scope="col" className="num-col">
                     Total
                   </th>
-                  <th scope="col">
+                  <th {...ROLE.columnheader} scope="col">
                     <span className="sr-only">Remover</span>
                   </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody {...ROLE.rowgroup}>
                 {cart.items.map((item) => (
-                  <tr key={item.id}>
-                    <td>
+                  <tr {...ROLE.row} key={item.id}>
+                    <td {...ROLE.cell}>
                       <div className="cart-product">
                         <div className="cart-thumb" aria-hidden="true">
                           {itemName(item).slice(0, 2)}
@@ -210,7 +223,7 @@ export function CartPage({
                         </div>
                       </div>
                     </td>
-                    <td>
+                    <td {...ROLE.cell}>
                       <div className="quantity">
                         <button
                           type="button"
@@ -233,10 +246,10 @@ export function CartPage({
                         </button>
                       </div>
                     </td>
-                    <td className="line-total num-col">
+                    <td {...ROLE.cell} className="line-total num-col">
                       {money(item.subtotal ?? Number(item.variant.base_price) * item.quantity)}
                     </td>
-                    <td>
+                    <td {...ROLE.cell}>
                       <button
                         type="button"
                         className="remove"
