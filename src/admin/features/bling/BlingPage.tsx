@@ -1,7 +1,13 @@
+import { Tabs } from "../../ui/Tabs";
 import { toInt, useUrlState } from "../../ui/useUrlState";
 import { BlingConnection } from "./BlingConnection";
 import { CatalogSync } from "./CatalogSync";
 import { PendingList, toReason } from "./PendingList";
+
+const BLING_TABS = [
+  ["integracao", "Conexão e importação"],
+  ["pendencias", "Pendências"],
+] as const;
 
 /** Servida em /bling e em /integracoes/bling?resultado=... (retorno do OAuth). */
 export function BlingPage() {
@@ -10,25 +16,12 @@ export function BlingPage() {
   const tab = state.aba === "pendencias" ? "pendencias" : "integracao";
   return (
     <>
-      <div role="tablist" aria-label="Seções do Bling" className="adm-tabs">
-        {(
-          [
-            ["integracao", "Conexão e importação"],
-            ["pendencias", "Pendências"],
-          ] as const
-        ).map(([key, text]) => (
-          <button
-            key={key}
-            type="button"
-            role="tab"
-            aria-selected={tab === key}
-            className="adm-tab"
-            onClick={() => update({ aba: key, motivo: "", skip: "0" })}
-          >
-            {text}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        label="Seções do Bling"
+        tabs={BLING_TABS}
+        active={tab}
+        onSelect={(key) => update({ aba: key, motivo: "", skip: "0" })}
+      />
       {tab === "pendencias" ? (
         <PendingList
           reason={toReason(state.motivo)}

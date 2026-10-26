@@ -83,6 +83,9 @@
 }
 
 @media (max-width: 768px) {
+  .adm-dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .adm-shell {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -316,6 +319,13 @@
 }
 .adm-filterbar .adm-field {
   margin-bottom: 0;
+  min-width: 0;
+  max-width: 100%;
+}
+.adm-field input,
+.adm-field select,
+.adm-field textarea {
+  max-width: 100%;
 }
 .adm-pagination {
   display: flex;
@@ -429,6 +439,7 @@
 }
 .adm-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--adm-space-1);
   border-bottom: 1px solid var(--adm-border);
   margin-bottom: var(--adm-space-3);
@@ -475,7 +486,7 @@
 /* Aba Loja (apresentação) */
 .adm-override {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
   gap: var(--adm-space-3);
   margin-bottom: var(--adm-space-4);
 }
@@ -521,7 +532,7 @@
 /* Dashboard */
 .adm-kpis {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
   gap: var(--adm-space-4);
 }
 .adm-kpis .adm-card {
@@ -571,4 +582,16 @@
 }
 .adm-moderation-item p {
   margin: 0;
+}
+
+/* Acessibilidade: foco sobre a sidebar escura e alvos de toque nos botões só com ícone */
+.adm-sidebar :focus-visible {
+  outline-color: var(--adm-nav-text);
+}
+.adm-table-wrap:focus-visible {
+  outline-offset: -2px;
+}
+.adm-toast button {
+  min-width: 2rem;
+  min-height: 2rem;
 }

@@ -1,3 +1,4 @@
+import { Tabs } from "../../ui/Tabs";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { adminApi } from "../../api";
 import type { OrderListParams } from "../../api/types";
@@ -61,20 +62,12 @@ export function OrdersList() {
       <div className="adm-page-header">
         <h1 id="adm-page-title">Pedidos</h1>
       </div>
-      <div role="tablist" aria-label="Seções de pedidos" className="adm-tabs">
-        {TABS.map(([key, text]) => (
-          <button
-            key={key}
-            type="button"
-            role="tab"
-            aria-selected={tab === key}
-            className="adm-tab"
-            onClick={() => update({ aba: key })}
-          >
-            {text}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        label="Seções de pedidos"
+        tabs={TABS}
+        active={tab}
+        onSelect={(key) => update({ aba: key })}
+      />
       {tab === "fila" ? (
         <ReconciliationQueue />
       ) : (

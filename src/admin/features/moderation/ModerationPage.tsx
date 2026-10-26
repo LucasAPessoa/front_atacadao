@@ -1,3 +1,4 @@
+import { Tabs } from "../../ui/Tabs";
 import { useUrlState } from "../../ui/useUrlState";
 import { QuestionsQueue } from "./QuestionsQueue";
 import { ReviewsQueue } from "./ReviewsQueue";
@@ -36,20 +37,12 @@ export function ModerationPage() {
       <div className="adm-page-header">
         <h1 id="adm-page-title">Moderação</h1>
       </div>
-      <div role="tablist" aria-label="Seções de moderação" className="adm-tabs">
-        {TABS.map(([key, text]) => (
-          <button
-            key={key}
-            type="button"
-            role="tab"
-            aria-selected={tab === key}
-            className="adm-tab"
-            onClick={() => update({ aba: key, status: "", skip: "0" })}
-          >
-            {text}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        label="Seções de moderação"
+        tabs={TABS}
+        active={tab}
+        onSelect={(key) => update({ aba: key, status: "", skip: "0" })}
+      />
       {tab === "perguntas" ? (
         <QuestionsQueue
           status={QUESTION_STATUSES.find(([k]) => k === state.status)?.[0] ?? "unanswered"}

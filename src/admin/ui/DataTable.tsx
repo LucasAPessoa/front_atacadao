@@ -59,7 +59,8 @@ export function DataTable<T>({
   const toggleAll = () => onSelectedChange?.(allSelected ? new Set() : new Set(keys));
 
   return (
-    <div className="adm-table-wrap" aria-busy={loading}>
+    // biome-ignore lint/a11y/noNoninteractiveTabindex: região rolável precisa de foco para rolar por teclado
+    <section className="adm-table-wrap" aria-busy={loading} aria-label={caption} tabIndex={0}>
       <table className="adm-table">
         <caption className="adm-sr-only">{caption}</caption>
         <thead>
@@ -129,6 +130,6 @@ export function DataTable<T>({
           })}
         </tbody>
       </table>
-    </div>
+    </section>
   );
 }
