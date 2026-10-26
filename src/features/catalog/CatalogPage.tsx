@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ProductThumb } from "../../components/ProductThumb";
 import { navigate } from "../../components/Layout";
 import { money } from "../../lib/format";
 import { handleLinkClick, productPath } from "../../lib/product";
@@ -105,7 +106,7 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
                     aria-label={`Ver detalhes de ${product.name}`}
                     onClick={(event) => openProduct(event, product.id)}
                   >
-                    {product.name.slice(0, 2).toUpperCase()}
+                    <ProductThumb name={product.name} src={product.main_image_url} />
                   </a>
                   <h3 className="product-name">
                     <a

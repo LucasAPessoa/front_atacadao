@@ -12,6 +12,8 @@ export type Product = {
   id: string;
   name: string;
   description?: string | null;
+  complementary_description?: string | null;
+  main_image_url?: string | null;
   brand?: string | null;
   is_active: boolean;
   categories: Category[];
