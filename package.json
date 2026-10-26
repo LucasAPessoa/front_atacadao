@@ -1,6 +1,9 @@
 {
   "name": "ecommerce-atacadao-storefront",
   "private": true,
+  "engines": {
+    "node": ">=22.22"
+  },
   "version": "0.1.0",
   "type": "module",
   "scripts": {

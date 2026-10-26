@@ -61,4 +61,8 @@ export const routes: RouteObject[] = [
   { path: "*", element: <p className="adm-content">Página não encontrada.</p> },
 ];
 
-export const createRouter = () => createBrowserRouter(routes, { basename: "/admin" });
+export const createRouter = () =>
+  createBrowserRouter(routes, {
+    basename: "/admin",
+    future: { v8_middleware: true },
+  });
