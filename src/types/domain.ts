@@ -127,3 +127,26 @@ export type BlingStatus = {
   last_error: { code: string; at: string } | null;
   recent_events: { event: string; reason: string | null; at: string }[];
 };
+
+export type CatalogSyncRun = {
+  id: string;
+  trigger: "SCHEDULED" | "MANUAL";
+  status: "RUNNING" | "SUCCESS" | "PARTIAL" | "FAILED" | "SKIPPED";
+  started_at: string;
+  finished_at: string | null;
+  phase?: string | null;
+  counts: {
+    created: number;
+    updated: number;
+    deactivated: number;
+    blocked: number;
+    unchanged: number;
+    failed: number;
+  };
+  errors: { bling_id: number | string; code: string; message: string }[];
+  reason: string | null;
+};
+export type CatalogSyncRuns = {
+  current: CatalogSyncRun | null;
+  items: CatalogSyncRun[];
+};
