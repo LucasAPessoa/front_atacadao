@@ -1,4 +1,4 @@
-import type { Order } from "../types/domain";
+import type { Order } from "../shared/types/domain";
 
 export type OrderTone = "approved" | "failed" | "pending" | "attention";
 export type OrderPresentation = {

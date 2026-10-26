@@ -21,7 +21,7 @@ import {
   setOnSessionExpired,
   storeSession,
 } from "./services/client";
-import type { Address, BlingStatus, Cart, User } from "./types/domain";
+import type { Address, BlingStatus, Cart, User } from "./shared/types/domain";
 
 const messageFor = (error: unknown) =>
   error instanceof ApiError && error.status === 401

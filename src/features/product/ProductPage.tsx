@@ -12,7 +12,7 @@ import {
   safeImageUrl,
 } from "../../lib/product";
 import { api } from "../../services/client";
-import type { Cart, Product } from "../../types/domain";
+import type { Cart, Product } from "../../shared/types/domain";
 import { addToCart, type Extras, type Loaded, loadProduct } from "./loader";
 
 type PageProps = {

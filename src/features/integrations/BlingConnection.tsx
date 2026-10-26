@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, api } from "../../services/client";
-import type { BlingStatus, User } from "../../types/domain";
+import type { BlingStatus, User } from "../../shared/types/domain";
 
 type Props = {
   token: string;

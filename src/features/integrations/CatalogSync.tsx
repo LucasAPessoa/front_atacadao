@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, api } from "../../services/client";
-import type { CatalogSyncRun, CatalogSyncRuns, User } from "../../types/domain";
+import type { CatalogSyncRun, CatalogSyncRuns, User } from "../../shared/types/domain";
 
 export const statusLabels: Record<CatalogSyncRun["status"], string> = {
   RUNNING: "Em andamento",

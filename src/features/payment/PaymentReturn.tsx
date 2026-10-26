@@ -3,7 +3,7 @@ import { navigate } from "../../components/Layout";
 import { money } from "../../lib/format";
 import { orderPresentation } from "../../lib/orderStatus";
 import { api } from "../../services/client";
-import type { Order } from "../../types/domain";
+import type { Order } from "../../shared/types/domain";
 
 type PaymentReturnProps = {
   token: string;

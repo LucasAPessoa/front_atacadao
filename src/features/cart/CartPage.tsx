@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../../services/client";
-import type { Address, Cart, CartItem, CheckoutPreview } from "../../types/domain";
+import type { Address, Cart, CartItem, CheckoutPreview } from "../../shared/types/domain";
 import { money } from "../../lib/format";
 import {
   cartItemName,

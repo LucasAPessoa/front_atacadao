@@ -8,7 +8,7 @@ import {
   validateAddress,
 } from "../../lib/address";
 import { ApiError, api } from "../../services/client";
-import type { Address } from "../../types/domain";
+import type { Address } from "../../shared/types/domain";
 
 const fromAddress = (a: Address): AddressFormValues => ({
   zip_code: formatZip(a.zip_code),

@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Layout } from "../../components/Layout";
 import { ApiError, api } from "../../services/client";
-import type { BlingStatus } from "../../types/domain";
+import type { BlingStatus } from "../../shared/types/domain";
 import {
   BlingConnectionView,
   blingErrorMessage,

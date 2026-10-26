@@ -8,7 +8,7 @@ import type {
   ProductQuestion,
   ProductReview,
   Variant,
-} from "../../types/domain";
+} from "../../shared/types/domain";
 
 export type Extras = {
   images: ProductImage[];

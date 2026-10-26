@@ -10,7 +10,7 @@ import {
   productPath,
 } from "../../lib/product";
 import { api } from "../../services/client";
-import type { Cart, Category, Product } from "../../types/domain";
+import type { Cart, Category, Product } from "../../shared/types/domain";
 
 type Props = {
   token: string;

@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { ApiError } from "../../services/client";
-import type { CatalogSyncRun, CatalogSyncRuns } from "../../types/domain";
+import type { CatalogSyncRun, CatalogSyncRuns } from "../../shared/types/domain";
 import {
   CatalogSyncView,
   catalogSyncErrorMessage,

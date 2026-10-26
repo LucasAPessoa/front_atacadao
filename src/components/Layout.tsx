@@ -1,7 +1,7 @@
 import { type ReactNode, useState } from "react";
-import { store } from "../config/store";
-import { brandTokens } from "../lib/theme";
-import type { User } from "../types/domain";
+import { store } from "../shared/store-config";
+import { brandTokens } from "../shared/theme";
+import type { User } from "../shared/types/domain";
 
 const tokens = brandTokens(store.theme.brand);
 const themeStyle = {

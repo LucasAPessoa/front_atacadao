@@ -1,6 +1,6 @@
 import { type FormEvent, type ReactNode, useState } from "react";
 import { navigate } from "../../components/Layout";
-import { store } from "../../config/store";
+import { store } from "../../shared/store-config";
 import { ApiError, api, type Registration } from "../../services/client";
 
 type LoginPageProps = {

@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import type { Product } from "../../types/domain";
+import type { Product } from "../../shared/types/domain";
 import { ProductStateView, ProductView } from "./ProductPage";
 
 const product: Product = {
