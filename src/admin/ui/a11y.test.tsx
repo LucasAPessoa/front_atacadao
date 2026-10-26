@@ -71,4 +71,31 @@ describe("ConfirmDialog (teclado)", () => {
     act(() => root.render(<ConfirmDialog open={false} {...props} />));
     expect(document.activeElement).toBe(opener);
   });
+
+  it("re-render aberto (onCancel inline, busy) não perde o botão de origem", () => {
+    const box = document.createElement("div");
+    document.body.append(box);
+    const opener = document.createElement("button");
+    document.body.append(opener);
+    opener.focus();
+    const root = createRoot(box);
+    const render = (open: boolean, busy: boolean) =>
+      act(() =>
+        root.render(
+          <ConfirmDialog
+            open={open}
+            busy={busy}
+            title="T"
+            message="M"
+            onConfirm={() => {}}
+            onCancel={() => {}}
+          />,
+        ),
+      );
+    render(true, false);
+    render(true, true);
+    render(true, false);
+    render(false, false);
+    expect(document.activeElement).toBe(opener);
+  });
 });

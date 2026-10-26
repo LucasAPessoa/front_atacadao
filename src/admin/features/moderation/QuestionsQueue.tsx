@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router";
 import { z } from "zod";
@@ -80,6 +80,7 @@ export function QuestionsQueue({
   onSkip(skip: number): void;
 }) {
   const client = useQueryClient();
+  const [failure, setFailure] = useState("");
   const toast = useToast();
   const [toDelete, setToDelete] = useState<ModerationQuestion | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
@@ -93,11 +94,13 @@ export function QuestionsQueue({
   const act = useMutation({
     mutationFn: (job: { run(): Promise<unknown>; done: string }) => job.run(),
     onSuccess: (_data, job) => {
+      setFailure("");
       toast.push("success", job.done);
       setToDelete(null);
       setEditing(null);
     },
     onError: (error) => {
+      setFailure(errorMessage(error));
       toast.push("error", errorMessage(error));
       setToDelete(null);
     },
@@ -110,6 +113,11 @@ export function QuestionsQueue({
     });
 
   const items = query.data?.items ?? [];
+  // Excluir o último item de uma página > 1 deixaria a lista vazia sem paginação.
+  useEffect(() => {
+    if (query.data && !query.isPlaceholderData && items.length === 0 && skip > 0)
+      onSkip(Math.max(0, skip - PAGE_SIZE));
+  }, [query.data, query.isPlaceholderData, items.length, skip, onSkip]);
   return (
     <>
       <div className="adm-filterbar">
@@ -128,6 +136,11 @@ export function QuestionsQueue({
           </select>
         </div>
       </div>
+      {failure && (
+        <p className="adm-alert adm-alert-danger" role="alert">
+          {failure}
+        </p>
+      )}
       {query.error && items.length === 0 ? (
         <ErrorState error={query.error} onRetry={() => void query.refetch()} />
       ) : query.isPending ? (

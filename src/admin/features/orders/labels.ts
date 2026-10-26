@@ -73,7 +73,7 @@ export const label = (map: Record<string, string>, key: string | null | undefine
   key ? (map[key] ?? key) : "—";
 
 export const formatDateTime = (value: string | null | undefined) =>
-  value ? new Date(value).toLocaleString("pt-BR") : "—";
+  value ? new Date(value).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "—";
 
 export type OrderActionKey = "cancel" | "reconcile" | "request_refund";
 export const actionTexts: Record<

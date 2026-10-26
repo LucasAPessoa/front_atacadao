@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { adminApi } from "../../api";
 import type { ModerationReview, ReviewFilter } from "../../api/types";
@@ -25,6 +25,7 @@ export function ReviewsQueue({
   onSkip(skip: number): void;
 }) {
   const client = useQueryClient();
+  const [failure, setFailure] = useState("");
   const toast = useToast();
   const [toDelete, setToDelete] = useState<ModerationReview | null>(null);
   const params = { status, skip, limit: PAGE_SIZE };
@@ -37,10 +38,12 @@ export function ReviewsQueue({
   const act = useMutation({
     mutationFn: (job: { run(): Promise<unknown>; done: string }) => job.run(),
     onSuccess: (_data, job) => {
+      setFailure("");
       toast.push("success", job.done);
       setToDelete(null);
     },
     onError: (error) => {
+      setFailure(errorMessage(error));
       toast.push("error", errorMessage(error));
       setToDelete(null);
     },
@@ -53,6 +56,11 @@ export function ReviewsQueue({
     });
 
   const items = query.data?.items ?? [];
+  // Excluir o último item de uma página > 1 deixaria a lista vazia sem paginação.
+  useEffect(() => {
+    if (query.data && !query.isPlaceholderData && items.length === 0 && skip > 0)
+      onSkip(Math.max(0, skip - PAGE_SIZE));
+  }, [query.data, query.isPlaceholderData, items.length, skip, onSkip]);
   return (
     <>
       <div className="adm-filterbar">
@@ -71,6 +79,11 @@ export function ReviewsQueue({
           </select>
         </div>
       </div>
+      {failure && (
+        <p className="adm-alert adm-alert-danger" role="alert">
+          {failure}
+        </p>
+      )}
       {query.error && items.length === 0 ? (
         <ErrorState error={query.error} onRetry={() => void query.refetch()} />
       ) : query.isPending ? (

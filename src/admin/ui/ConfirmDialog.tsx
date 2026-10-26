@@ -26,13 +26,16 @@ export function ConfirmDialog({
   const titleId = useId();
   const cancelRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
+  // Refs evitam refazer o efeito (e perder o botão de origem) quando o pai re-renderiza aberto.
+  const latest = useRef({ busy, onCancel });
+  latest.current = { busy, onCancel };
 
   useEffect(() => {
     if (!open) return;
     const opener = document.activeElement as HTMLElement | null;
     cancelRef.current?.focus();
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !busy) onCancel();
+      if (event.key === "Escape" && !latest.current.busy) latest.current.onCancel();
       if (event.key !== "Tab") return;
       // Mantém o foco dentro do diálogo (aria-modal não prende o foco sozinho).
       const nodes = [
@@ -57,7 +60,7 @@ export function ConfirmDialog({
       document.removeEventListener("keydown", onKey);
       if (opener?.isConnected) opener.focus();
     };
-  }, [open, busy, onCancel]);
+  }, [open]);
 
   if (!open) return null;
   return (

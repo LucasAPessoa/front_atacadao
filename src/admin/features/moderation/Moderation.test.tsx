@@ -210,3 +210,44 @@ describe("perguntas", () => {
     expect(calls.some((c) => c.method === "DELETE")).toBe(false);
   });
 });
+
+describe("correções de moderação", () => {
+  it("excluir o último item de uma página > 1 volta à página anterior", async () => {
+    let deleted = false;
+    respond = (url, method) => {
+      if (method === "DELETE") {
+        deleted = true;
+        return { status: 204, body: null };
+      }
+      const empty = deleted && url.includes("skip=20");
+      return {
+        status: 200,
+        body: {
+          data: empty ? [] : [review],
+          meta: { total: empty ? 20 : 21, skip: 20, limit: 20 },
+        },
+      };
+    };
+    const box = await mount("/moderacao?skip=20");
+    await waitFor(() => expect(findButton(box, "Excluir")).toBeTruthy());
+    await click(findButton(box, "Excluir"));
+    const confirm = [...box.querySelectorAll('[role="alertdialog"] button')].find(
+      (b) => b.textContent === "Excluir",
+    );
+    await click(confirm);
+    await waitFor(() => expect(search).not.toContain("skip=20"));
+  });
+
+  it("erro do servidor fica em alerta persistente", async () => {
+    respond = (_url, method) =>
+      method === "PATCH"
+        ? { status: 409, body: { detail: "Avaliação já removida" } }
+        : page([review]);
+    const box = await mount("/moderacao");
+    await waitFor(() => expect(findButton(box, "Aprovar")).toBeTruthy());
+    await click(findButton(box, "Aprovar"));
+    await waitFor(() =>
+      expect(box.querySelector('[role="alert"]')?.textContent).toContain("O estado mudou"),
+    );
+  });
+});
