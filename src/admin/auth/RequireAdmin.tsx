@@ -9,17 +9,22 @@ export function safeReturnTo(value: string | null | undefined): string {
     : "/";
 }
 
-export type Guard = { kind: "wait" } | { kind: "allow" } | { kind: "redirect"; to: string };
+export type Guard =
+  | { kind: "wait" }
+  | { kind: "error" }
+  | { kind: "allow" }
+  | { kind: "redirect"; to: string };
 
 /** Decisão do guard: espera a restauração antes de qualquer redirecionamento (sem flash). */
 export function guardDecision(status: AuthStatus, location: string): Guard {
   if (status === "restoring") return { kind: "wait" };
+  if (status === "error") return { kind: "error" };
   if (status === "authenticated") return { kind: "allow" };
   return { kind: "redirect", to: `/login?returnTo=${encodeURIComponent(location)}` };
 }
 
 export function RequireAdmin() {
-  const { status } = useAuth();
+  const { status, retryRestore } = useAuth();
   const location = useLocation();
   const decision = guardDecision(status, location.pathname + location.search);
   if (decision.kind === "wait")
@@ -27,6 +32,18 @@ export function RequireAdmin() {
       <div className="adm-restoring" role="status" aria-label="Restaurando sessão">
         <Skeleton height="2rem" width="40%" />
         <Skeleton height="12rem" />
+      </div>
+    );
+  if (decision.kind === "error")
+    return (
+      <div className="adm-restoring">
+        <div className="adm-state adm-state-error" role="alert">
+          <h2>Não foi possível restaurar a sessão</h2>
+          <p>Falha de conexão com o servidor. Sua sessão foi mantida.</p>
+          <button type="button" className="adm-btn" onClick={retryRestore}>
+            Tentar de novo
+          </button>
+        </div>
       </div>
     );
   if (decision.kind === "redirect") return <Navigate to={decision.to} replace />;

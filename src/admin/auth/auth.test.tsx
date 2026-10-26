@@ -1,8 +1,14 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createTokenStore } from "../../shared/http";
-import { AuthProvider, NOT_ADMIN_MESSAGE, NotAdminError, authenticate } from "./AuthProvider";
+import { ApiError, createTokenStore } from "../../shared/http";
+import {
+  AuthProvider,
+  NOT_ADMIN_MESSAGE,
+  NotAdminError,
+  authenticate,
+  invalidatesSession,
+} from "./AuthProvider";
 import { RequireAdmin, guardDecision, safeReturnTo } from "./RequireAdmin";
 import { ADMIN_REFRESH_KEY, adminTokens } from "./session";
 
@@ -74,5 +80,31 @@ describe("guard", () => {
     expect(safeReturnTo("//evil.com")).toBe("/");
     expect(safeReturnTo("https://evil.com")).toBe("/");
     expect(safeReturnTo("/pedidos")).toBe("/pedidos");
+  });
+});
+
+describe("restauração de sessão", () => {
+  it("só rejeição do servidor ou papel errado invalida", () => {
+    expect(invalidatesSession(new ApiError(401, "x"))).toBe(true);
+    expect(invalidatesSession(new ApiError(403, "x"))).toBe(true);
+    expect(invalidatesSession(new ApiError(400, "x"))).toBe(true);
+    expect(invalidatesSession(new NotAdminError())).toBe(true);
+    expect(invalidatesSession(new ApiError(503, "x"))).toBe(false);
+    expect(invalidatesSession(new TypeError("Failed to fetch"))).toBe(false);
+  });
+  it("rede/5xx preserva o refresh; 401 limpa", async () => {
+    adminTokens.storeSession(session);
+    fetchMock.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    await expect(adminTokens.refreshSession(false)).rejects.toBeInstanceOf(TypeError);
+    expect(adminTokens.hasStoredSession()).toBe(true);
+    fetchMock.mockResolvedValueOnce(reply(null, 503));
+    await expect(adminTokens.refreshSession(false)).rejects.toBeInstanceOf(ApiError);
+    expect(adminTokens.hasStoredSession()).toBe(true);
+    fetchMock.mockResolvedValueOnce(reply(null, 401));
+    await expect(adminTokens.refreshSession(false)).rejects.toBeInstanceOf(ApiError);
+    expect(adminTokens.hasStoredSession()).toBe(false);
+  });
+  it("guard mostra erro com retry, sem redirecionar", () => {
+    expect(guardDecision("error", "/pedidos")).toEqual({ kind: "error" });
   });
 });

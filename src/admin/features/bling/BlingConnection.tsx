@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { ApiError } from "../../../shared/http";
 import { adminApi } from "../../api";
@@ -44,6 +44,13 @@ export async function startConnect(
 export function resultFromParams(params: URLSearchParams) {
   const value = params.get("resultado");
   return value ? (resultMessages[value] ?? resultMessages.invalido) : null;
+}
+
+/** Query string sem o parâmetro de resultado. */
+export function withoutResult(params: URLSearchParams) {
+  const next = new URLSearchParams(params);
+  next.delete("resultado");
+  return next;
 }
 
 export const blingStatusKey = ["bling", "status"] as const;
@@ -189,16 +196,12 @@ export function BlingConnectionView(p: ViewProps) {
 export function BlingConnection() {
   const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
-  // Exibe o resultado do retorno OAuth e remove o parâmetro da URL (o aviso fica no estado).
-  const [result] = useState(() => {
-    const parsed = resultFromParams(params);
-    if (params.has("resultado")) {
-      const next = new URLSearchParams(params);
-      next.delete("resultado");
-      setParams(next, { replace: true });
-    }
-    return parsed;
-  });
+  // Aviso do retorno OAuth fica no estado; o parâmetro sai da URL (efeito) para o F5 não repeti-lo.
+  const [result] = useState(() => resultFromParams(params));
+  useEffect(() => {
+    if (!params.has("resultado")) return;
+    setParams(withoutResult(params), { replace: true });
+  }, [params, setParams]);
   const [confirming, setConfirming] = useState(false);
   const [actionError, setActionError] = useState("");
 

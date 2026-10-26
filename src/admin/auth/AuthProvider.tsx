@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { ApiError } from "../../shared/http";
 import { adminApi } from "../api";
 import type { User } from "../api/types";
 import { adminTokens } from "./session";
@@ -35,13 +36,20 @@ export async function authenticate(email: string, password: string): Promise<Use
   return user;
 }
 
-export type AuthStatus = "restoring" | "authenticated" | "anonymous";
+export type AuthStatus = "restoring" | "authenticated" | "anonymous" | "error";
+
+/** Só rejeição do servidor (400/401/403) ou papel errado invalida a sessão; rede/5xx preserva. */
+export const invalidatesSession = (error: unknown) =>
+  error instanceof NotAdminError ||
+  (error instanceof ApiError && [400, 401, 403].includes(error.status));
 type AuthState = { status: AuthStatus; user: User | null; notice: string };
 
 type AuthContextValue = AuthState & {
   signIn(email: string, password: string): Promise<void>;
   signOut(): Promise<void>;
   clearNotice(): void;
+  /** Nova tentativa de restaurar a sessão após falha de rede/5xx. */
+  retryRestore(): void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -75,10 +83,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!alive) return;
         if (user.role.name !== "admin") throw new NotAdminError();
         setState({ status: "authenticated", user, notice: "" });
-      } catch {
+      } catch (error) {
         if (!alive) return;
-        adminTokens.clearSession();
-        setState({ status: "anonymous", user: null, notice: "" });
+        if (invalidatesSession(error)) {
+          adminTokens.clearSession();
+          setState({ status: "anonymous", user: null, notice: "" });
+        } else setState({ status: "error", user: null, notice: "" });
       }
     })();
     return () => {
@@ -102,11 +112,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
   }, []);
 
+  const retryRestore = useCallback(
+    () => setState({ status: "restoring", user: null, notice: "" }),
+    [],
+  );
+
   const clearNotice = useCallback(() => setState((s) => ({ ...s, notice: "" })), []);
 
   const value = useMemo(
-    () => ({ ...state, signIn, signOut, clearNotice }),
-    [state, signIn, signOut, clearNotice],
+    () => ({ ...state, signIn, signOut, clearNotice, retryRestore }),
+    [state, signIn, signOut, clearNotice, retryRestore],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

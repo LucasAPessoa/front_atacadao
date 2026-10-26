@@ -7,6 +7,7 @@ import {
   BlingConnectionView,
   blingErrorMessage,
   resultFromParams,
+  withoutResult,
   resultMessages,
   startConnect,
 } from "./BlingConnection";
@@ -90,5 +91,6 @@ describe("tela Bling", () => {
     expect(resultFromParams(new URLSearchParams("resultado=conectado"))?.tone).toBe("ok");
     expect(resultFromParams(new URLSearchParams("resultado=xyz"))).toBe(resultMessages.invalido);
     expect(resultFromParams(new URLSearchParams("x=1"))).toBeNull();
+    expect(withoutResult(new URLSearchParams("resultado=conectado&x=1")).toString()).toBe("x=1");
   });
 });
