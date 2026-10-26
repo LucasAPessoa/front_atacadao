@@ -7,6 +7,8 @@ import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AdminProductDetail } from "../../api/types";
 import { adminTokens } from "../../auth/session";
+import { waitFor } from "../../test-utils";
+import { ToastProvider } from "../../ui/Toast";
 import { ProductDetail } from "./ProductDetail";
 import { ProductDetailView } from "./ProductDetailView";
 
@@ -123,21 +125,25 @@ describe("ProductDetailView (aba Bling)", () => {
     expect(html).not.toMatch(/<(input|textarea|select)\b/);
   });
 
-  it("aba Loja é placeholder", () => {
+  it("aba Loja mostra o formulário de apresentação", () => {
     const box = document.createElement("div");
     act(() =>
       createRoot(box).render(
-        <MemoryRouter>
-          <ProductDetailView product={detail} />
-        </MemoryRouter>,
+        <QueryClientProvider client={new QueryClient()}>
+          <ToastProvider>
+            <MemoryRouter>
+              <ProductDetailView product={detail} />
+            </MemoryRouter>
+          </ToastProvider>
+        </QueryClientProvider>,
       ),
     );
     const store = Array.from(box.querySelectorAll("[role=tab]")).find(
       (t) => t.textContent === "Loja",
     );
     act(() => (store as HTMLElement).click());
-    expect(box.textContent).toContain("em breve");
-    expect(box.querySelector("input, textarea, select")).toBeNull();
+    expect(box.querySelector("form[aria-label=Loja]")).not.toBeNull();
+    expect(box.textContent).toContain("Visível na loja");
   });
 });
 
@@ -167,7 +173,6 @@ describe("ProductDetail (container)", () => {
         </QueryClientProvider>,
       );
     });
-    await act(async () => new Promise((r) => setTimeout(r, 50)));
     return box;
   };
 
@@ -180,7 +185,7 @@ describe("ProductDetail (container)", () => {
       ),
     );
     const box = await mount();
-    expect(box.textContent).toContain("Produto não encontrado");
+    await waitFor(() => expect(box.textContent).toContain("Produto não encontrado"));
   });
 
   it("200 renderiza o detalhe", async () => {
@@ -189,7 +194,7 @@ describe("ProductDetail (container)", () => {
       vi.fn(async () => new Response(JSON.stringify({ data: detail }), { status: 200 })),
     );
     const box = await mount();
-    expect(box.textContent).toContain("Nome site");
+    await waitFor(() => expect(box.textContent).toContain("Nome site"));
     expect(box.textContent).toContain("vem do Bling");
   });
 });

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import type { AdminProductDetail, AdminVariant } from "../../api/types";
+import { PresentationForm } from "./PresentationForm";
 import { formatBRL, pendingLabels } from "./format";
 
 const num = (value: number | null, unit: string) => (value === null ? "—" : `${value} ${unit}`);
@@ -171,13 +172,7 @@ export function ProductDetailView({ product }: { product: AdminProductDetail }) 
           </button>
         ))}
       </div>
-      {tab === "bling" ? (
-        <BlingTab product={product} />
-      ) : (
-        <div role="tabpanel" aria-label="Loja" className="adm-state">
-          Edição da apresentação na loja em breve.
-        </div>
-      )}
+      {tab === "bling" ? <BlingTab product={product} /> : <PresentationForm product={product} />}
     </section>
   );
 }

@@ -471,3 +471,34 @@
   border-radius: var(--adm-radius);
   border: 1px solid var(--adm-border);
 }
+
+/* Aba Loja (apresentação) */
+.adm-override {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--adm-space-3);
+  margin-bottom: var(--adm-space-4);
+}
+.adm-override-bling {
+  padding: var(--adm-space-2);
+  border: 1px dashed var(--adm-border-strong);
+  border-radius: var(--adm-radius);
+  overflow-wrap: anywhere;
+}
+.adm-switch {
+  display: flex;
+  align-items: center;
+  gap: var(--adm-space-2);
+  margin-bottom: var(--adm-space-2);
+}
+.adm-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adm-space-1);
+  max-height: 12rem;
+  overflow: auto;
+  margin: 0;
+  padding: var(--adm-space-2);
+  border: 1px solid var(--adm-border-strong);
+  border-radius: var(--adm-radius);
+}
