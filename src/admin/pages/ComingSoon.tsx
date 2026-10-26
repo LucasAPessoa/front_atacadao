@@ -12,6 +12,4 @@ function ComingSoon({ title }: { title: string }) {
 }
 
 export const Dashboard = () => <ComingSoon title="Dashboard" />;
-export const Orders = () => <ComingSoon title="Pedidos" />;
-export const OrderDetail = () => <ComingSoon title="Pedido" />;
 export const Moderation = () => <ComingSoon title="Moderação" />;

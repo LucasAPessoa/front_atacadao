@@ -5,10 +5,7 @@ import type {
   CatalogSyncRun,
   CatalogSyncRuns,
   Category,
-  FulfillmentStatus,
-  PaymentStatus,
   PricingTier,
-  Reconciliation,
   User,
 } from "../../shared/types/domain";
 
@@ -126,6 +123,7 @@ export type OrderListParams = {
 };
 export type AdminOrderSummary = {
   id: string;
+  order_code: string;
   status: string;
   created_at: string;
   total_amount: string;
@@ -142,16 +140,38 @@ export type AdminOrderItem = {
   product_name_snapshot: string;
   variation_name_snapshot: string;
   sku_snapshot: string;
+  pricing_tier_min_quantity?: number | null;
   subtotal: string;
+};
+export type AdminOrderReconciliation = {
+  status: "PENDING" | "IN_REVIEW" | "RESOLVED";
+  reason: string;
+  outcome: string | null;
+};
+export type ReconciliationQueueItem = {
+  id: string;
+  order_id: string;
+  status: string;
+  reason: string;
+  outcome: string | null;
+  next_poll_after_seconds: number | null;
+  refund_status: string | null;
+  refund_attempts: number | null;
+  refund_last_attempt_at: string | null;
+  refund_next_retry_at: string | null;
+  refund_last_error_code: string | null;
 };
 export type AdminOrderDetail = {
   id: string;
   order_code: string;
   status: string;
-  payment_status?: PaymentStatus;
-  fulfillment_status?: FulfillmentStatus;
-  reconciliation?: Reconciliation | null;
+  reconciliation?: AdminOrderReconciliation | null;
   created_at: string;
+  updated_at?: string;
+  coupon_code?: string | null;
+  currency?: string;
+  shipping_provider?: string;
+  shipping_delivery_time_days?: number | null;
   subtotal_amount: string;
   discount_amount: string;
   shipping_fee: string;
@@ -165,6 +185,9 @@ export type AdminOrderDetail = {
     amount: string;
     status: string;
     gateway_status_detail?: string | null;
+    installments?: number;
+    gateway_provider?: string;
+    paid_at?: string | null;
   }[];
   customer: { id: string; full_name: string; email: string };
   status_history: {

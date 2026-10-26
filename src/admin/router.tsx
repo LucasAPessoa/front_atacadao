@@ -13,6 +13,12 @@ const productDetail = {
   lazy: () =>
     import("./features/products/ProductDetail").then((m) => ({ Component: m.ProductDetail })),
 };
+const orders = {
+  lazy: () => import("./features/orders/OrdersList").then((m) => ({ Component: m.OrdersList })),
+};
+const orderDetail = {
+  lazy: () => import("./features/orders/OrderDetail").then((m) => ({ Component: m.OrderDetail })),
+};
 const bling = {
   lazy: () => import("./features/bling/BlingPage").then((m) => ({ Component: m.BlingPage })),
 };
@@ -28,8 +34,8 @@ export const routes: RouteObject[] = [
           { index: true, ...soon("Dashboard") },
           { path: "produtos", ...products },
           { path: "produtos/:id", ...productDetail },
-          { path: "pedidos", ...soon("Orders") },
-          { path: "pedidos/:id", ...soon("OrderDetail") },
+          { path: "pedidos", ...orders },
+          { path: "pedidos/:id", ...orderDetail },
           { path: "moderacao", ...soon("Moderation") },
           { path: "bling", ...bling },
           // Retorno do OAuth do Bling (a API redireciona para /admin/integracoes/bling?resultado=...).
