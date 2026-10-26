@@ -2,7 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { ProductThumb } from "../../components/ProductThumb";
 import { navigate } from "../../components/Layout";
 import { money } from "../../lib/format";
-import { handleLinkClick, productPath } from "../../lib/product";
+import {
+  departmentsWithProducts,
+  effectiveCategoryId,
+  handleLinkClick,
+  isDisplayable,
+  productPath,
+} from "../../lib/product";
 import { api } from "../../services/client";
 import type { Cart, Category, Product } from "../../types/domain";
 
@@ -16,9 +22,9 @@ type Props = {
 };
 export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Props) {
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [allCategories, setCategories] = useState<Category[]>([]);
   const [search, setSearch] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [selectedCategoryId, setCategoryId] = useState("");
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
   const [adding, setAdding] = useState("");
@@ -26,8 +32,8 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
     setLoading(true);
     Promise.all([api.products(), api.categories()])
       .then(([list, categoryList]) => {
-        setProducts(list.filter((item) => item.is_active));
-        setCategories(categoryList.filter((item) => item.is_active));
+        setProducts(list.filter(isDisplayable));
+        setCategories(categoryList);
         setUnavailable(false);
       })
       .catch((error) => {
@@ -49,6 +55,11 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
     if (search.trim()) params.set("busca", search.trim());
     navigate(`/produtos${params.size ? `?${params.toString()}` : ""}`);
   };
+  const categories = useMemo(
+    () => departmentsWithProducts(allCategories, products),
+    [allCategories, products],
+  );
+  const categoryId = effectiveCategoryId(selectedCategoryId, categories);
   const visible = useMemo(
     () =>
       products.filter(
