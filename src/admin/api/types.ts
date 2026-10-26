@@ -239,7 +239,7 @@ export type BlingPendingItem = {
   product_id: string;
   product_name: string;
   variant_id: string;
-  bling_sku: string;
+  bling_sku: string | null;
   reason: PendingReason;
 };
 export type BlingPendingParams = { reason?: PendingReason; skip?: number; limit?: number };
