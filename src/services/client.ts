@@ -4,7 +4,11 @@ import type {
   Category,
   CheckoutPreview,
   Order,
+  PricingTier,
   Product,
+  ProductImage,
+  ProductQuestion,
+  ProductReview,
   User,
 } from "../types/domain";
 
@@ -197,12 +201,25 @@ export const api = {
     request<User>("/auth/register", { method: "POST", body: JSON.stringify(payload) }),
   me: (token: string) => request<User>("/users/me", {}, token),
   products: () => request<Product[]>("/catalog/products/?limit=100"),
+  product: (id: string) => request<Product>(`/catalog/products/${encodeURIComponent(id)}`),
+  productImages: (productId: string) =>
+    request<ProductImage[]>(`/catalog/product-images/?product_id=${encodeURIComponent(productId)}`),
+  pricingTiers: (productId: string) =>
+    request<PricingTier[]>(`/catalog/pricing-tiers/?product_id=${encodeURIComponent(productId)}`),
+  productReviews: (productId: string) =>
+    request<ProductReview[]>(
+      `/catalog/product-reviews/?product_id=${encodeURIComponent(productId)}`,
+    ),
+  productQuestions: (productId: string) =>
+    request<ProductQuestion[]>(
+      `/catalog/product-questions/?product_id=${encodeURIComponent(productId)}`,
+    ),
   categories: () => request<Category[]>("/catalog/categories/?limit=50"),
   cart: (token: string) => request<Cart>("/sales/cart/", {}, token),
-  addCartItem: (token: string, variant_id: string) =>
+  addCartItem: (token: string, variant_id: string, quantity = 1) =>
     request<Cart>(
       "/sales/cart/items",
-      { method: "POST", body: JSON.stringify({ variant_id, quantity: 1 }) },
+      { method: "POST", body: JSON.stringify({ variant_id, quantity }) },
       token,
     ),
   updateCartItem: (token: string, id: string, quantity: number) =>

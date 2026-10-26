@@ -5,7 +5,9 @@ import { AdminPage } from "./features/admin/AdminPage";
 import { LoginPage, RegisterPage } from "./features/auth/AuthPages";
 import { CartPage } from "./features/cart/CartPage";
 import { CatalogPage } from "./features/catalog/CatalogPage";
+import { ProductPage } from "./features/product/ProductPage";
 import { PaymentReturn } from "./features/payment/PaymentReturn";
+import { productIdFromPath } from "./lib/product";
 import {
   ApiError,
   api,
@@ -168,6 +170,19 @@ export default function App() {
     ),
     "/cadastro": <RegisterPage />,
   };
+  const productId = productIdFromPath(path);
+  const page = productId ? (
+    <ProductPage
+      key={productId}
+      id={productId}
+      token={token}
+      onLogin={() => navigate("/entrar")}
+      onCart={setCart}
+      onError={handleError}
+    />
+  ) : (
+    (pages[path] ?? <NotFoundPage />)
+  );
   return (
     <Layout user={user} cartCount={cart?.total_items ?? 0} onLogout={logout} path={path}>
       {notice && (
@@ -183,7 +198,7 @@ export default function App() {
           <p>Restaurando sua sessão…</p>
         </section>
       ) : (
-        (pages[path] ?? <NotFoundPage />)
+        page
       )}
     </Layout>
   );

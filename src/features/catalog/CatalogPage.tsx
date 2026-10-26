@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { navigate } from "../../components/Layout";
 import { money } from "../../lib/format";
+import { handleLinkClick, productPath } from "../../lib/product";
 import { api } from "../../services/client";
 import type { Cart, Category, Product } from "../../types/domain";
 
@@ -71,6 +72,8 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
       setAdding("");
     }
   };
+  const openProduct = (event: React.MouseEvent<HTMLAnchorElement>, id: string) =>
+    handleLinkClick(event, productPath(id), navigate);
   const ProductGrid = () => (
     <>
       {loading ? (
@@ -95,10 +98,23 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
                     <span>{product.categories[0]?.name ?? "Seleção"}</span>
                     <span>{product.brand || "Seleção"}</span>
                   </div>
-                  <div className="product-image" aria-hidden="true">
+                  <a
+                    className="product-image"
+                    href={productPath(product.id)}
+                    tabIndex={-1}
+                    aria-label={`Ver detalhes de ${product.name}`}
+                    onClick={(event) => openProduct(event, product.id)}
+                  >
                     {product.name.slice(0, 2).toUpperCase()}
-                  </div>
-                  <h3 className="product-name">{product.name}</h3>
+                  </a>
+                  <h3 className="product-name">
+                    <a
+                      href={productPath(product.id)}
+                      onClick={(event) => openProduct(event, product.id)}
+                    >
+                      {product.name}
+                    </a>
+                  </h3>
                   <span className="product-unit">
                     {variant?.variation_name ?? "Indisponível no momento"}
                   </span>
