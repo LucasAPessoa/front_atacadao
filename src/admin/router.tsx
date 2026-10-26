@@ -1,5 +1,6 @@
 import { type RouteObject, createBrowserRouter } from "react-router";
 import { RequireAdmin } from "./auth/RequireAdmin";
+import { comingSoonSections } from "./features/coming-soon/sections";
 import { AdminLayout } from "./layout/AdminLayout";
 
 const dashboard = {
@@ -27,6 +28,14 @@ const bling = {
   lazy: () => import("./features/bling/BlingPage").then((m) => ({ Component: m.BlingPage })),
 };
 
+const comingSoonRoutes: RouteObject[] = comingSoonSections.map((section) => ({
+  path: section.path,
+  lazy: () =>
+    import("./features/coming-soon/ComingSoon").then((m) => ({
+      Component: () => <m.ComingSoon title={section.label} />,
+    })),
+}));
+
 export const routes: RouteObject[] = [
   { path: "/login", lazy: () => import("./auth/LoginPage") },
   {
@@ -44,6 +53,7 @@ export const routes: RouteObject[] = [
           { path: "bling", ...bling },
           // Retorno do OAuth do Bling (a API redireciona para /admin/integracoes/bling?resultado=...).
           { path: "integracoes/bling", ...bling },
+          ...comingSoonRoutes,
         ],
       },
     ],

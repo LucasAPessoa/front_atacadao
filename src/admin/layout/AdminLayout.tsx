@@ -2,6 +2,7 @@ import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router";
 import { store } from "../../shared/store-config";
 import { useAuth } from "../auth/AuthProvider";
+import { comingSoonSections } from "../features/coming-soon/sections";
 
 const links = [
   { to: "/", label: "Dashboard", end: true },
@@ -31,6 +32,12 @@ export function AdminLayout() {
         <nav className="adm-nav" id="adm-menu" aria-label="Painel">
           {links.map((link) => (
             <NavLink key={link.to} to={link.to} end={link.end} onClick={() => setMenuOpen(false)}>
+              {link.label}
+            </NavLink>
+          ))}
+          <span className="adm-nav-group">Em breve:</span>
+          {comingSoonSections.map((link) => (
+            <NavLink key={link.to} to={link.to} onClick={() => setMenuOpen(false)}>
               {link.label}
             </NavLink>
           ))}

@@ -35,6 +35,14 @@
   border-left-color: var(--adm-accent);
   font-weight: 600;
 }
+.adm-nav-group {
+  margin-top: var(--adm-space-3);
+  padding: var(--adm-space-2) var(--adm-space-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+}
 .adm-main-col {
   display: flex;
   flex-direction: column;
