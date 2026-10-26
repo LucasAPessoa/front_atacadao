@@ -11,7 +11,33 @@ npm install
 npm run dev
 ```
 
+`npm run dev` serve os dois apps no mesmo servidor (porta 5173): a loja em `/` e o portal administrativo em `/admin/`.
+
 O backend local padrão está em `http://127.0.0.1:8000`. Ajuste `VITE_API_BASE_URL` quando necessário.
+
+## Dois apps: loja e portal (`/admin/`)
+
+| App | Entrada | Código | Estilos |
+| --- | --- | --- | --- |
+| Loja | `index.html` | `src/` (exceto `src/admin`) | `src/styles.css` |
+| Portal | `admin/index.html` | `src/admin/` | `src/admin/styles/` |
+
+O build gera as duas entradas (`manifest: true`). Em dev e preview, `/admin` e `/admin/<rota>` caem em `admin/index.html`; no deploy, o rewrite do `vercel.json` faz o mesmo. O portal só aparece na loja como o link "Painel admin" para usuários com perfil admin.
+
+### Isolamento
+
+`src/admin` importa apenas de `src/admin` e `src/shared`; a loja não pode carregar o portal. Duas travas:
+
+- Regras do Biome (`npm run lint`) proíbem o portal de importar da loja (fora de `src/shared`).
+- `npm run check:isolation` (rode depois de `npm run build`) confere no manifest que a loja não carrega nada do portal e que o portal não usa o CSS da loja.
+
+### Tema do portal
+
+Os componentes usam só variáveis `--adm-*` definidas em `src/admin/styles/tokens.css` sob `:root[data-theme="default"]`. Um tema futuro é outro bloco `:root[data-theme="..."]` com os mesmos tokens (ajuste `THEME` em `src/admin/theme.ts`). O acento (`--adm-accent`, `--adm-on-accent`, `--adm-accent-text`) vem de `VITE_STORE_BRAND_COLOR` em runtime, com contraste derivado.
+
+### Sessão própria do portal
+
+O portal tem sessão independente da loja (`src/admin/auth/`): entrar na loja não abre o portal e vice-versa. Só usuários com perfil admin acessam, e uma rejeição do servidor (400/401/403) encerra a sessão do portal e volta ao login. A API é a mesma (`VITE_API_BASE_URL`).
 
 ## Identidade da loja (white-label)
 
@@ -46,7 +72,8 @@ Entre em **Minha conta** com credenciais existentes do backend. O access token f
 ## Verificação
 
 ```bash
-npm run build
+npm run typecheck && npm test && npm run lint && npm run format:check
+npm run build && npm run check:isolation
 ```
 
 ## CI
