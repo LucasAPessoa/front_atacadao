@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link } from "react-router";
 import type { AdminProductDetail, AdminVariant } from "../../api/types";
 import { PresentationForm } from "./PresentationForm";
+import { PricingTiersEditor } from "./PricingTiersEditor";
+import { VariantPriceEditor } from "./VariantPriceEditor";
 import { formatBRL, pendingLabels } from "./format";
 
 const num = (value: number | null, unit: string) => (value === null ? "—" : `${value} ${unit}`);
@@ -125,27 +127,12 @@ export function BlingTab({ product }: { product: AdminProductDetail }) {
           </ul>
         )}
       </section>
-
-      <section className="adm-card" aria-labelledby="bling-tiers">
-        <h2 id="bling-tiers">Faixas de preço</h2>
-        {product.pricing_tiers.length === 0 ? (
-          <p>Sem faixas de preço.</p>
-        ) : (
-          <ul className="adm-list">
-            {product.pricing_tiers.map((t) => (
-              <li key={t.id}>
-                A partir de {t.min_quantity} un.: {formatBRL(t.unit_price)}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
     </div>
   );
 }
 
 export function ProductDetailView({ product }: { product: AdminProductDetail }) {
-  const [tab, setTab] = useState<"bling" | "store">("bling");
+  const [tab, setTab] = useState<"bling" | "store" | "prices">("bling");
   const name = product.presentation.name.site ?? product.presentation.name.bling ?? product.code;
   return (
     <section aria-labelledby="adm-page-title">
@@ -158,6 +145,7 @@ export function ProductDetailView({ product }: { product: AdminProductDetail }) 
           [
             ["bling", "Bling"],
             ["store", "Loja"],
+            ["prices", "Preços"],
           ] as const
         ).map(([key, label]) => (
           <button
@@ -172,7 +160,14 @@ export function ProductDetailView({ product }: { product: AdminProductDetail }) 
           </button>
         ))}
       </div>
-      {tab === "bling" ? <BlingTab product={product} /> : <PresentationForm product={product} />}
+      {tab === "bling" && <BlingTab product={product} />}
+      {tab === "store" && <PresentationForm product={product} />}
+      {tab === "prices" && (
+        <div role="tabpanel" aria-label="Preços" className="adm-stack">
+          <VariantPriceEditor productId={product.id} variants={product.variants} />
+          <PricingTiersEditor productId={product.id} tiers={product.pricing_tiers} />
+        </div>
+      )}
     </section>
   );
 }

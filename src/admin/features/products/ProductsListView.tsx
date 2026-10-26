@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { ConfirmDialog } from "../../ui/ConfirmDialog";
 import type { AdminProductSummary, Category, ProductSortKey } from "../../api/types";
 import { DataTable } from "../../ui/DataTable";
 import type { Column, SortState } from "../../ui/DataTable";
@@ -111,7 +112,32 @@ const columns: Column<AdminProductSummary>[] = [
   },
 ];
 
+export const BULK_MAX = 100;
+
+export type BulkAction = "hide" | "show" | "feature" | "unfeature";
+export const bulkActions: { key: BulkAction; label: string }[] = [
+  { key: "hide", label: "Ocultar da loja" },
+  { key: "show", label: "Mostrar na loja" },
+  { key: "feature", label: "Destacar" },
+  { key: "unfeature", label: "Remover destaque" },
+];
+const plural = (n: number) => `${n} ${n === 1 ? "produto" : "produtos"}`;
+export function bulkTitle(action: BulkAction, n: number): string {
+  const items = plural(n);
+  if (action === "hide") return `Ocultar ${items}?`;
+  if (action === "show") return `Mostrar ${items} na loja?`;
+  if (action === "feature") return `Destacar ${items}?`;
+  return `Remover destaque de ${items}?`;
+}
+
 export type ProductsListViewProps = {
+  selected: ReadonlySet<string>;
+  onSelectedChange(selected: Set<string>): void;
+  pendingAction: BulkAction | null;
+  bulkBusy: boolean;
+  onBulkRequest(action: BulkAction): void;
+  onBulkConfirm(): void;
+  onBulkCancel(): void;
   filters: ProductFilters;
   categories: Category[];
   items: AdminProductSummary[];
@@ -177,6 +203,35 @@ export function ProductsListView(p: ProductsListViewProps) {
         ))}
       </FilterBar>
 
+      {p.selected.size > 0 && (
+        <div className="adm-bulk" role="toolbar" aria-label="Ações em lote">
+          <span>{plural(p.selected.size)} selecionado(s)</span>
+          {bulkActions.map((a) => (
+            <button
+              key={a.key}
+              type="button"
+              className="adm-btn"
+              disabled={p.selected.size > BULK_MAX || p.bulkBusy}
+              onClick={() => p.onBulkRequest(a.key)}
+            >
+              {a.label}
+            </button>
+          ))}
+          {p.selected.size > BULK_MAX && (
+            <p className="adm-field-error" role="alert">
+              Selecione no máximo {BULK_MAX} produtos por ação.
+            </p>
+          )}
+        </div>
+      )}
+      <ConfirmDialog
+        open={p.pendingAction !== null}
+        title={p.pendingAction ? bulkTitle(p.pendingAction, p.selected.size) : ""}
+        message="A alteração vale para todos os produtos selecionados."
+        busy={p.bulkBusy}
+        onConfirm={p.onBulkConfirm}
+        onCancel={p.onBulkCancel}
+      />
       {p.error && p.items.length === 0 ? (
         <ErrorState error={p.error} onRetry={p.onRetry} />
       ) : (
@@ -186,6 +241,9 @@ export function ProductsListView(p: ProductsListViewProps) {
             columns={columns}
             rows={p.items}
             rowKey={(row) => row.id}
+            selectable
+            selected={p.selected}
+            onSelectedChange={p.onSelectedChange}
             loading={p.loading}
             sort={sort}
             onSortChange={(next) =>

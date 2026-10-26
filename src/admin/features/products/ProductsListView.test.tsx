@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { adminTokens } from "../../auth/session";
 import type { AdminProductSummary } from "../../api/types";
 import { waitFor } from "../../test-utils";
+import { ToastProvider } from "../../ui/Toast";
 import { ProductsList } from "./ProductsList";
 import { formatBRL, formatPriceRange } from "./format";
 
@@ -69,10 +70,12 @@ async function mount(initial = "/produtos") {
   await act(async () => {
     createRoot(box).render(
       <QueryClientProvider client={client}>
-        <MemoryRouter initialEntries={[initial]}>
-          <ProductsList />
-          <Probe />
-        </MemoryRouter>
+        <ToastProvider>
+          <MemoryRouter initialEntries={[initial]}>
+            <ProductsList />
+            <Probe />
+          </MemoryRouter>
+        </ToastProvider>
       </QueryClientProvider>,
     );
   });

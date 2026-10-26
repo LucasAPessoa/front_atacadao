@@ -104,11 +104,10 @@ describe("ProductDetailView (aba Bling)", () => {
     </MemoryRouter>,
   );
 
-  it("mostra dados com o selo e as faixas de preço", () => {
+  it("mostra dados com o selo", () => {
     expect(html).toContain("vem do Bling");
     expect(html).toContain("Nome Bling");
     expect(html).toContain("Marca X");
-    expect(html).toContain("A partir de 10 un.: R$ 17,90");
     expect(html).toContain('src="https://img/1.jpg"');
   });
 

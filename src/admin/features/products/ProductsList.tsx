@@ -1,8 +1,13 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { ApiError } from "../../../shared/http";
 import { adminApi } from "../../api";
 import type { ProductListParams, ProductSortKey } from "../../api/types";
+import { errorMessage } from "../../ui/errors";
+import { useToast } from "../../ui/Toast";
 import { useUrlState } from "../../ui/useUrlState";
 import {
+  type BulkAction,
   PAGE_SIZE,
   type ProductFilters,
   ProductsListView,
@@ -28,8 +33,51 @@ export function toParams(f: ProductFilters): ProductListParams {
   };
 }
 
+const bulkPatch: Record<BulkAction, { visible?: boolean; featured?: boolean }> = {
+  hide: { visible: false },
+  show: { visible: true },
+  feature: { featured: true },
+  unfeature: { featured: false },
+};
+const bulkDone: Record<BulkAction, string> = {
+  hide: "ocultado(s) da loja",
+  show: "exibido(s) na loja",
+  feature: "destacado(s)",
+  unfeature: "sem destaque",
+};
+
 export function ProductsList() {
-  const [filters, update] = useUrlState(productFilterDefaults);
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [pending, setPending] = useState<BulkAction | null>(null);
+  const bulk = useMutation({
+    mutationFn: (action: BulkAction) =>
+      adminApi.bulkPresentation({ product_ids: [...selected], ...bulkPatch[action] }),
+  });
+  const confirmBulk = async () => {
+    if (!pending) return;
+    try {
+      const result = await bulk.mutateAsync(pending);
+      toast.push("success", `${result.updated} produto(s) ${bulkDone[pending]}.`);
+      setSelected(new Set());
+    } catch (error) {
+      // 404 traz no detail os IDs inexistentes; nada foi gravado.
+      toast.push(
+        "error",
+        error instanceof ApiError && error.status === 404 ? error.message : errorMessage(error),
+      );
+    }
+    setPending(null);
+    await queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+  };
+
+  const [filters, updateUrl] = useUrlState(productFilterDefaults);
+  // A seleção vale só para a página/filtro atual.
+  const update: typeof updateUrl = (patch) => {
+    setSelected(new Set());
+    updateUrl(patch);
+  };
   const params = toParams(filters);
   const products = useQuery({
     queryKey: ["admin", "products", params],
@@ -44,6 +92,13 @@ export function ProductsList() {
 
   return (
     <ProductsListView
+      selected={selected}
+      onSelectedChange={setSelected}
+      pendingAction={pending}
+      bulkBusy={bulk.isPending}
+      onBulkRequest={setPending}
+      onBulkConfirm={() => void confirmBulk()}
+      onBulkCancel={() => setPending(null)}
       filters={filters}
       categories={categories.data ?? []}
       items={products.data?.items ?? []}
