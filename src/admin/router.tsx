@@ -64,5 +64,4 @@ export const routes: RouteObject[] = [
 export const createRouter = () =>
   createBrowserRouter(routes, {
     basename: "/admin",
-    future: { v8_middleware: true },
   });
