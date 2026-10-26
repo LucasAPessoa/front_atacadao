@@ -25,7 +25,11 @@ type LayoutProps = {
 
 export function Layout({ children, user, cartCount, onLogout, path }: LayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [headerSearch, setHeaderSearch] = useState("");
+  const [headerSearch, setHeaderSearch] = useState(() =>
+    typeof window === "undefined"
+      ? ""
+      : (new URLSearchParams(window.location.search).get("busca") ?? ""),
+  );
   const isAdmin = user?.role.name === "admin";
   const go = (target: string) => {
     setMenuOpen(false);
@@ -105,7 +109,24 @@ export function Layout({ children, user, cartCount, onLogout, path }: LayoutProp
                 onClick={() => go("/conta")}
                 aria-label="Minha conta"
               >
-                Conta
+                <svg
+                  className="hc-icon"
+                  viewBox="0 0 24 24"
+                  width="22"
+                  height="22"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path
+                    d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span className="hc-label">Conta</span>
               </button>
             ) : (
               <button
@@ -114,11 +135,53 @@ export function Layout({ children, user, cartCount, onLogout, path }: LayoutProp
                 onClick={() => go("/entrar")}
                 aria-label="Entrar"
               >
-                Entrar
+                <svg
+                  className="hc-icon"
+                  viewBox="0 0 24 24"
+                  width="22"
+                  height="22"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path
+                    d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span className="hc-label">Entrar</span>
               </button>
             )}
-            <button type="button" className="cart-button" onClick={() => go("/carrinho")}>
-              Carrinho <span className="cart-count">[{count}]</span>
+            <button
+              type="button"
+              className="cart-button"
+              onClick={() => go("/carrinho")}
+              aria-label={`Carrinho, ${cartCount} ${cartCount === 1 ? "item" : "itens"}`}
+            >
+              <svg
+                className="hc-icon"
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path
+                  d="M3 4h2l2.4 11h10.2L20 7H6M9 20h.01M17 20h.01"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span className="hc-label">Carrinho</span>{" "}
+              <span className="cart-count" aria-hidden="true">
+                [{count}]
+              </span>
             </button>
           </div>
         </div>
