@@ -2,6 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "../../services/client";
 import type { Address, Cart, CartItem, CheckoutPreview } from "../../types/domain";
 import { money } from "../../lib/format";
+import {
+  cartItemName,
+  formatDeliveryTime,
+  formatZip,
+  shippingLabel,
+  summaryAmounts,
+} from "../../lib/checkout";
 import { navigate } from "../../components/Layout";
 import { AddressForm } from "../account/AddressForm";
 
@@ -27,8 +34,15 @@ export function CartPage({
   const [shippingId, setShippingId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [productNames, setProductNames] = useState<Record<string, string>>({});
   const preferred = useRef("");
   const key = useRef(crypto.randomUUID());
+  useEffect(() => {
+    api
+      .products()
+      .then((list) => setProductNames(Object.fromEntries(list.map((p) => [p.id, p.name]))))
+      .catch(() => {});
+  }, []);
   useEffect(() => {
     const wanted = addresses.find((a) => a.id === preferred.current);
     preferred.current = "";
@@ -129,6 +143,13 @@ export function CartPage({
       .toFixed(2) ??
     "0";
   const selectedShipping = preview?.shipping_options.find((item) => item.service_id === shippingId);
+  const itemName = (item: CartItem) =>
+    cartItemName(
+      preview?.items?.find((p) => p.variant_id === item.variant_id)?.product_name ??
+        (item.variant.product_id ? productNames[item.variant.product_id] : undefined),
+      item.variant.variation_name,
+    );
+  const amounts = summaryAmounts(preview?.subtotal_amount ?? total, selectedShipping);
   const step = preview ? 2 : 1;
   const stepClass = (n: number) => (n === step ? "current" : "");
   const count = String(cart?.total_items ?? 0).padStart(2, "0");
@@ -179,10 +200,10 @@ export function CartPage({
                     <td>
                       <div className="cart-product">
                         <div className="cart-thumb" aria-hidden="true">
-                          {item.variant.variation_name.slice(0, 2)}
+                          {itemName(item).slice(0, 2)}
                         </div>
                         <div>
-                          <h2>{item.variant.variation_name}</h2>
+                          <h2>{itemName(item)}</h2>
                           <span className="unit-price">
                             {money(item.unit_price ?? item.variant.base_price)} / un.
                           </span>
@@ -193,7 +214,7 @@ export function CartPage({
                       <div className="quantity">
                         <button
                           type="button"
-                          aria-label={`Diminuir quantidade de ${item.variant.variation_name}`}
+                          aria-label={`Diminuir quantidade de ${itemName(item)}`}
                           disabled={busy}
                           onClick={() => quantity(item, item.quantity - 1)}
                         >
@@ -204,7 +225,7 @@ export function CartPage({
                         </span>
                         <button
                           type="button"
-                          aria-label={`Aumentar quantidade de ${item.variant.variation_name}`}
+                          aria-label={`Aumentar quantidade de ${itemName(item)}`}
                           disabled={busy}
                           onClick={() => quantity(item, item.quantity + 1)}
                         >
@@ -219,7 +240,7 @@ export function CartPage({
                       <button
                         type="button"
                         className="remove"
-                        aria-label={`Remover ${item.variant.variation_name}`}
+                        aria-label={`Remover ${itemName(item)}`}
                         onClick={() => remove(item)}
                       >
                         ×
@@ -246,7 +267,7 @@ export function CartPage({
                   <option value="">Selecione</option>
                   {addresses.map((a) => (
                     <option value={a.id} key={a.id}>
-                      {a.street}, {a.number || "s/n"} · {a.zip_code}
+                      {a.street}, {a.number || "s/n"} · {formatZip(a.zip_code)}
                     </option>
                   ))}
                 </select>
@@ -295,12 +316,15 @@ export function CartPage({
                       onChange={() => setShippingId(item.service_id)}
                     />
                     <span className="ship-name">
-                      {item.company_name} · {item.service_name}
-                      {item.delivery_time_days !== undefined && (
-                        <span className="eta"> / {item.delivery_time_days} d</span>
+                      {shippingLabel(item)}
+                      {formatDeliveryTime(item.delivery_time_days) && (
+                        <span className="eta">
+                          {" "}
+                          / {formatDeliveryTime(item.delivery_time_days)}
+                        </span>
                       )}
                     </span>
-                    <strong>{money(item.total_amount)}</strong>
+                    <strong>{money(item.price)}</strong>
                   </label>
                 ))}
               </fieldset>
@@ -308,13 +332,19 @@ export function CartPage({
             <dl className="totals">
               <div>
                 <dt>Produtos</dt>
-                <dd>{money(total)}</dd>
+                <dd>{money(amounts.products)}</dd>
               </div>
-              {selectedShipping && (
-                <div className="grand">
-                  <dt className="grand-label">Total</dt>
-                  <dd className="grand-value">{money(selectedShipping.total_amount)}</dd>
-                </div>
+              {amounts.total !== null && (
+                <>
+                  <div>
+                    <dt>Frete</dt>
+                    <dd>{money(amounts.shipping ?? 0)}</dd>
+                  </div>
+                  <div className="grand">
+                    <dt className="grand-label">Total</dt>
+                    <dd className="grand-value">{money(amounts.total)}</dd>
+                  </div>
+                </>
               )}
             </dl>
             <button
