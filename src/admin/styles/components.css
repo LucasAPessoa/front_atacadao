@@ -409,3 +409,111 @@
   flex-wrap: wrap;
   gap: var(--adm-space-2);
 }
+
+/* Produtos */
+.adm-muted {
+  color: var(--adm-text-muted);
+  font-size: var(--adm-font-size-small);
+}
+.adm-thumb {
+  display: block;
+  width: 2.5rem;
+  height: 2.5rem;
+  object-fit: cover;
+  border-radius: var(--adm-radius);
+  background: var(--adm-surface-muted);
+}
+.adm-stack {
+  display: grid;
+  gap: var(--adm-space-3);
+}
+.adm-tabs {
+  display: flex;
+  gap: var(--adm-space-1);
+  border-bottom: 1px solid var(--adm-border);
+  margin-bottom: var(--adm-space-3);
+}
+.adm-tab {
+  padding: var(--adm-space-2) var(--adm-space-4);
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  cursor: pointer;
+}
+.adm-tab[aria-selected="true"] {
+  border-bottom-color: var(--adm-accent);
+  font-weight: 600;
+}
+.adm-dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--adm-space-1) var(--adm-space-4);
+  margin: 0;
+}
+.adm-dl dt {
+  color: var(--adm-text-muted);
+}
+.adm-dl dd {
+  margin: 0;
+}
+.adm-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--adm-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.adm-gallery img {
+  width: 6rem;
+  height: 6rem;
+  object-fit: cover;
+  border-radius: var(--adm-radius);
+  border: 1px solid var(--adm-border);
+}
+
+/* Aba Loja (apresentação) */
+.adm-override {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--adm-space-3);
+  margin-bottom: var(--adm-space-4);
+}
+.adm-override-bling {
+  padding: var(--adm-space-2);
+  border: 1px dashed var(--adm-border-strong);
+  border-radius: var(--adm-radius);
+  overflow-wrap: anywhere;
+}
+.adm-switch {
+  display: flex;
+  align-items: center;
+  gap: var(--adm-space-2);
+  margin-bottom: var(--adm-space-2);
+}
+.adm-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adm-space-1);
+  max-height: 12rem;
+  overflow: auto;
+  margin: 0;
+  padding: var(--adm-space-2);
+  border: 1px solid var(--adm-border-strong);
+  border-radius: var(--adm-radius);
+}
+
+/* Ações em lote e formulários em linha */
+.adm-bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--adm-space-2);
+  margin-bottom: var(--adm-space-3);
+}
+.adm-inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--adm-space-2);
+}
