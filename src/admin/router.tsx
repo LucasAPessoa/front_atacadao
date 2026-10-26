@@ -5,6 +5,14 @@ import { AdminLayout } from "./layout/AdminLayout";
 const soon = (name: string) => ({
   lazy: () => import("./pages/ComingSoon").then((m) => ({ Component: m[name as "Dashboard"] })),
 });
+const products = {
+  lazy: () =>
+    import("./features/products/ProductsList").then((m) => ({ Component: m.ProductsList })),
+};
+const productDetail = {
+  lazy: () =>
+    import("./features/products/ProductDetail").then((m) => ({ Component: m.ProductDetail })),
+};
 const bling = {
   lazy: () => import("./features/bling/BlingPage").then((m) => ({ Component: m.BlingPage })),
 };
@@ -18,8 +26,8 @@ export const routes: RouteObject[] = [
         element: <AdminLayout />,
         children: [
           { index: true, ...soon("Dashboard") },
-          { path: "produtos", ...soon("Products") },
-          { path: "produtos/:id", ...soon("ProductDetail") },
+          { path: "produtos", ...products },
+          { path: "produtos/:id", ...productDetail },
           { path: "pedidos", ...soon("Orders") },
           { path: "pedidos/:id", ...soon("OrderDetail") },
           { path: "moderacao", ...soon("Moderation") },
