@@ -2139,3 +2139,20 @@ a.link-button {
 .pdp-title:focus {
   outline: none;
 }
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.rich-plain {
+  white-space: pre-line;
+}
+.rich-html p,
+.rich-html ul,
+.rich-html ol {
+  margin: 0 0 8px;
+}
+.rich-html ul,
+.rich-html ol {
+  padding-left: 20px;
+}

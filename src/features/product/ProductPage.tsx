@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { RichText } from "../../components/RichText";
 import { navigate } from "../../components/Layout";
 import { money } from "../../lib/format";
 import {
@@ -198,7 +199,12 @@ export function ProductView({
           <h1 className="pdp-title" ref={titleRef} tabIndex={-1}>
             {product.name}
           </h1>
-          {product.description && <p className="pdp-description">{product.description}</p>}
+          {product.description?.trim() && (
+            <RichText className="pdp-description" value={product.description} />
+          )}
+          {product.complementary_description?.trim() && (
+            <RichText className="pdp-description" value={product.complementary_description} />
+          )}
           <p className="pdp-price">
             {variant ? money(variant.base_price) : "—"}
             <small>valor unitário · confirmado pelo servidor no carrinho</small>
