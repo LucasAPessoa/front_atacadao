@@ -248,11 +248,10 @@ const FIELD_KEYS = [
   "featured",
 ] as const;
 
-function target(key: string, loc: unknown[]): FieldPath<PresentationFormValues> | null {
+function target(key: string): FieldPath<PresentationFormValues> | null {
   if (!(FIELD_KEYS as readonly string[]).includes(key)) return null;
   if (key === "categories") return "categories.ids";
   if (key === "visible" || key === "featured") return key;
-  void loc;
   return `${key as TextKey}.value`;
 }
 
@@ -295,7 +294,7 @@ export function PresentationForm({ product }: { product: AdminProductDetail }) {
           const key = e.loc.find((part) =>
             FIELD_KEYS.includes(part as (typeof FIELD_KEYS)[number]),
           );
-          const path = typeof key === "string" ? target(key, e.loc) : null;
+          const path = typeof key === "string" ? target(key) : null;
           if (path) {
             form.setError(path, { type: "server", message: e.msg });
             mapped = true;

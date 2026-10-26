@@ -2,7 +2,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, useNavigate } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AdminProductSummary } from "../../api/types";
 import { adminTokens } from "../../auth/session";
@@ -44,6 +44,7 @@ beforeEach(() => {
   });
   adminTokens.storeSession({ access_token: "a", refresh_token: "r", token_type: "bearer" });
   listCalls = 0;
+  urls = [];
   patches = [];
   patchReply = () => new Response(JSON.stringify({ data: { updated: 3 } }), { status: 200 });
   vi.stubGlobal(
@@ -57,6 +58,7 @@ beforeEach(() => {
       if (url.includes("/catalog/categories"))
         return new Response(JSON.stringify({ data: [] }), { status: 200 });
       listCalls++;
+      urls.push(url);
       return new Response(
         JSON.stringify({
           data: [product(1), product(2), product(3)],
@@ -69,7 +71,14 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-async function mount() {
+let navigate: ReturnType<typeof useNavigate>;
+const Nav = () => {
+  navigate = useNavigate();
+  return null;
+};
+let urls: string[];
+
+async function mount(initial = "/produtos") {
   const box = document.createElement("div");
   document.body.append(box);
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -77,8 +86,9 @@ async function mount() {
     createRoot(box).render(
       <QueryClientProvider client={client}>
         <ToastProvider>
-          <MemoryRouter initialEntries={["/produtos"]}>
+          <MemoryRouter initialEntries={[initial]}>
             <ProductsList />
+            <Nav />
           </MemoryRouter>
         </ToastProvider>
       </QueryClientProvider>,
@@ -133,5 +143,21 @@ describe("ações em lote", () => {
     await click(button(box, "Confirmar"));
     await waitFor(() => expect(box.textContent).toContain("Produtos não encontrados: id-2"));
     expect(box.querySelector("[role=toolbar]")).not.toBeNull();
+  });
+
+  it("voltar do navegador limpa a seleção", async () => {
+    const box = await mount();
+    await click(box.querySelector("input[aria-label='Selecionar todos']") as HTMLElement);
+    expect(box.querySelector("[role=toolbar]")).not.toBeNull();
+    await act(async () => void navigate("/produtos?skip=25"));
+    await act(async () => void navigate(-1));
+    expect(box.querySelector("[role=toolbar]")).toBeNull();
+  });
+
+  it("sort e order inválidos na URL caem no padrão", async () => {
+    await mount("/produtos?sort=bogus&order=sideways");
+    expect(urls.at(-1)).toContain("sort=name");
+    expect(urls.at(-1)).toContain("order=asc");
+    expect(urls.at(-1)).not.toContain("bogus");
   });
 });

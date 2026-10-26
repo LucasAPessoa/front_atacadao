@@ -1,5 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router";
 import { ApiError } from "../../../shared/http";
 import { adminApi } from "../../api";
 import type { ProductListParams, ProductSortKey } from "../../api/types";
@@ -13,6 +14,17 @@ import {
   ProductsListView,
   productFilterDefaults,
 } from "./ProductsListView";
+
+const SORT_KEYS: readonly string[] = ["name", "price", "stock", "updated_at"];
+
+/** Valores inválidos vindos da URL caem no padrão (evita 422). */
+export function sanitizeFilters(f: ProductFilters): ProductFilters {
+  return {
+    ...f,
+    sort: SORT_KEYS.includes(f.sort) ? f.sort : productFilterDefaults.sort,
+    order: f.order === "desc" || f.order === "asc" ? f.order : productFilterDefaults.order,
+  };
+}
 
 const bool = (value: string) => (value === "" ? undefined : value === "true");
 
@@ -72,12 +84,12 @@ export function ProductsList() {
     await queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
   };
 
-  const [filters, updateUrl] = useUrlState(productFilterDefaults);
-  // A seleção vale só para a página/filtro atual.
-  const update: typeof updateUrl = (patch) => {
-    setSelected(new Set());
-    updateUrl(patch);
-  };
+  const [rawFilters, update] = useUrlState(productFilterDefaults);
+  const filters = sanitizeFilters(rawFilters);
+  // A seleção vale só para a página/filtro atual: qualquer mudança da URL (inclusive voltar/avançar) a limpa.
+  const { search } = useLocation();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `search` é o gatilho do efeito.
+  useEffect(() => setSelected(new Set()), [search]);
   const params = toParams(filters);
   const products = useQuery({
     queryKey: ["admin", "products", params],
