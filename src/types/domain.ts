@@ -117,3 +117,13 @@ export type ProductQuestion = {
   answer_text?: string | null;
   created_at?: string;
 };
+
+export type BlingState = "CONNECTED" | "RECONNECT_REQUIRED" | "NOT_CONNECTED";
+export type BlingStatus = {
+  status: BlingState;
+  company: { id: string; name: string } | null;
+  connected_at: string | null;
+  last_refreshed_at: string | null;
+  last_error: { code: string; at: string } | null;
+  recent_events: { event: string; reason: string | null; at: string }[];
+};
