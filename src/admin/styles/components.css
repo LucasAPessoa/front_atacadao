@@ -517,3 +517,58 @@
   align-items: flex-start;
   gap: var(--adm-space-2);
 }
+
+/* Dashboard */
+.adm-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--adm-space-4);
+}
+.adm-kpis .adm-card {
+  margin-bottom: 0;
+}
+.adm-kpi-title {
+  margin: 0;
+  font-size: var(--adm-font-size);
+  color: var(--adm-text-muted);
+}
+.adm-kpi-value {
+  margin: var(--adm-space-2) 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+.adm-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--adm-space-2);
+}
+.adm-bar-row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr) 3rem;
+  align-items: center;
+  gap: var(--adm-space-3);
+}
+.adm-bar-track {
+  width: 100%;
+  height: 0.75rem;
+  background: var(--adm-surface-muted);
+  border-radius: var(--adm-radius);
+}
+.adm-bar-fill {
+  fill: var(--adm-accent);
+}
+.adm-bar-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Moderação */
+.adm-moderation-item {
+  display: grid;
+  gap: var(--adm-space-2);
+}
+.adm-moderation-item p {
+  margin: 0;
+}

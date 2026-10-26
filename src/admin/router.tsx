@@ -2,9 +2,13 @@ import { type RouteObject, createBrowserRouter } from "react-router";
 import { RequireAdmin } from "./auth/RequireAdmin";
 import { AdminLayout } from "./layout/AdminLayout";
 
-const soon = (name: string) => ({
-  lazy: () => import("./pages/ComingSoon").then((m) => ({ Component: m[name as "Dashboard"] })),
-});
+const dashboard = {
+  lazy: () => import("./features/dashboard/Dashboard").then((m) => ({ Component: m.Dashboard })),
+};
+const moderation = {
+  lazy: () =>
+    import("./features/moderation/ModerationPage").then((m) => ({ Component: m.ModerationPage })),
+};
 const products = {
   lazy: () =>
     import("./features/products/ProductsList").then((m) => ({ Component: m.ProductsList })),
@@ -31,12 +35,12 @@ export const routes: RouteObject[] = [
       {
         element: <AdminLayout />,
         children: [
-          { index: true, ...soon("Dashboard") },
+          { index: true, ...dashboard },
           { path: "produtos", ...products },
           { path: "produtos/:id", ...productDetail },
           { path: "pedidos", ...orders },
           { path: "pedidos/:id", ...orderDetail },
-          { path: "moderacao", ...soon("Moderation") },
+          { path: "moderacao", ...moderation },
           { path: "bling", ...bling },
           // Retorno do OAuth do Bling (a API redireciona para /admin/integracoes/bling?resultado=...).
           { path: "integracoes/bling", ...bling },
