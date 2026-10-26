@@ -50,7 +50,10 @@ describe("catálogo do Bling", () => {
       mk("SUCCESS"),
       mk("PARTIAL", {
         trigger: "SCHEDULED",
-        errors: [{ bling_id: 123, code: "incompleto_sem_peso", message: "sem peso" }],
+        errors: [
+          { bling_id: 123, code: "incompleto_peso", message: "sem peso" },
+          { bling_id: null, code: "filtro_alteracao_ignorado", message: "aviso geral" },
+        ],
       }),
       mk("FAILED"),
       mk("SKIPPED", { reason: "conexao_inativa" }),
@@ -60,7 +63,8 @@ describe("catálogo do Bling", () => {
       expect(html).toContain(t);
     expect(html).toContain("conexao_inativa");
     expect(html).toContain("<details>");
-    expect(html).toContain("123 · incompleto_sem_peso · sem peso");
+    expect(html).toContain("123 · incompleto_peso · sem peso");
+    expect(html).toContain("Geral · filtro_alteracao_ignorado · aviso geral");
   });
 
   it("mostra a execução corrente e desabilita o botão em RUNNING", () => {

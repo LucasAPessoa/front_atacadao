@@ -121,7 +121,7 @@ export function CatalogSyncView(p: ViewProps) {
                     <ul>
                       {run.errors.map((e) => (
                         <li key={`${e.bling_id}-${e.code}-${e.message}`}>
-                          {e.bling_id} · {e.code} · {e.message}
+                          {e.bling_id ?? "Geral"} · {e.code} · {e.message}
                         </li>
                       ))}
                     </ul>

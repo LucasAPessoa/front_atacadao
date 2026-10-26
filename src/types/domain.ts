@@ -145,7 +145,7 @@ export type CatalogSyncRun = {
     unchanged: number;
     failed: number;
   };
-  errors: { bling_id: number | string; code: string; message: string }[];
+  errors: { bling_id: number | string | null; code: string; message: string }[];
   reason: string | null;
 };
 export type CatalogSyncRuns = {
