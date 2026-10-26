@@ -1,6 +1,10 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
-  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
   "files": {
     "includes": [
       "src/**",
@@ -12,14 +16,20 @@
       "!tsconfig.tsbuildinfo"
     ]
   },
-  "assist": { "enabled": false },
+  "assist": {
+    "enabled": false
+  },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 100
   },
-  "javascript": { "formatter": { "quoteStyle": "double" } },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double"
+    }
+  },
   "linter": {
     "enabled": true,
     "rules": {
@@ -29,5 +39,461 @@
         "useHookAtTopLevel": "error"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/admin/*"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "../features",
+                      "../features/**",
+                      "../components",
+                      "../components/**",
+                      "../App",
+                      "../App/**",
+                      "../styles.css",
+                      "../styles.css/**",
+                      "../services",
+                      "../services/**",
+                      "../config",
+                      "../config/**",
+                      "../lib",
+                      "../lib/**",
+                      "../types",
+                      "../types/**",
+                      "../../features",
+                      "../../features/**",
+                      "../../components",
+                      "../../components/**",
+                      "../../App",
+                      "../../App/**",
+                      "../../styles.css",
+                      "../../styles.css/**",
+                      "../../services",
+                      "../../services/**",
+                      "../../config",
+                      "../../config/**",
+                      "../../lib",
+                      "../../lib/**",
+                      "../../types",
+                      "../../types/**",
+                      "../../../features",
+                      "../../../features/**",
+                      "../../../components",
+                      "../../../components/**",
+                      "../../../App",
+                      "../../../App/**",
+                      "../../../styles.css",
+                      "../../../styles.css/**",
+                      "../../../services",
+                      "../../../services/**",
+                      "../../../config",
+                      "../../../config/**",
+                      "../../../lib",
+                      "../../../lib/**",
+                      "../../../types",
+                      "../../../types/**",
+                      "../../../../features",
+                      "../../../../features/**",
+                      "../../../../components",
+                      "../../../../components/**",
+                      "../../../../App",
+                      "../../../../App/**",
+                      "../../../../styles.css",
+                      "../../../../styles.css/**",
+                      "../../../../services",
+                      "../../../../services/**",
+                      "../../../../config",
+                      "../../../../config/**",
+                      "../../../../lib",
+                      "../../../../lib/**",
+                      "../../../../types",
+                      "../../../../types/**"
+                    ],
+                    "message": "O portal só pode importar de src/shared e src/admin."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/admin/*/*"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "../../features",
+                      "../../features/**",
+                      "../../components",
+                      "../../components/**",
+                      "../../App",
+                      "../../App/**",
+                      "../../styles.css",
+                      "../../styles.css/**",
+                      "../../services",
+                      "../../services/**",
+                      "../../config",
+                      "../../config/**",
+                      "../../lib",
+                      "../../lib/**",
+                      "../../types",
+                      "../../types/**",
+                      "../../../features",
+                      "../../../features/**",
+                      "../../../components",
+                      "../../../components/**",
+                      "../../../App",
+                      "../../../App/**",
+                      "../../../styles.css",
+                      "../../../styles.css/**",
+                      "../../../services",
+                      "../../../services/**",
+                      "../../../config",
+                      "../../../config/**",
+                      "../../../lib",
+                      "../../../lib/**",
+                      "../../../types",
+                      "../../../types/**",
+                      "../../../../features",
+                      "../../../../features/**",
+                      "../../../../components",
+                      "../../../../components/**",
+                      "../../../../App",
+                      "../../../../App/**",
+                      "../../../../styles.css",
+                      "../../../../styles.css/**",
+                      "../../../../services",
+                      "../../../../services/**",
+                      "../../../../config",
+                      "../../../../config/**",
+                      "../../../../lib",
+                      "../../../../lib/**",
+                      "../../../../types",
+                      "../../../../types/**",
+                      "../../../../../features",
+                      "../../../../../features/**",
+                      "../../../../../components",
+                      "../../../../../components/**",
+                      "../../../../../App",
+                      "../../../../../App/**",
+                      "../../../../../styles.css",
+                      "../../../../../styles.css/**",
+                      "../../../../../services",
+                      "../../../../../services/**",
+                      "../../../../../config",
+                      "../../../../../config/**",
+                      "../../../../../lib",
+                      "../../../../../lib/**",
+                      "../../../../../types",
+                      "../../../../../types/**"
+                    ],
+                    "message": "O portal só pode importar de src/shared e src/admin."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/admin/*/*/*"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "../../../features",
+                      "../../../features/**",
+                      "../../../components",
+                      "../../../components/**",
+                      "../../../App",
+                      "../../../App/**",
+                      "../../../styles.css",
+                      "../../../styles.css/**",
+                      "../../../services",
+                      "../../../services/**",
+                      "../../../config",
+                      "../../../config/**",
+                      "../../../lib",
+                      "../../../lib/**",
+                      "../../../types",
+                      "../../../types/**",
+                      "../../../../features",
+                      "../../../../features/**",
+                      "../../../../components",
+                      "../../../../components/**",
+                      "../../../../App",
+                      "../../../../App/**",
+                      "../../../../styles.css",
+                      "../../../../styles.css/**",
+                      "../../../../services",
+                      "../../../../services/**",
+                      "../../../../config",
+                      "../../../../config/**",
+                      "../../../../lib",
+                      "../../../../lib/**",
+                      "../../../../types",
+                      "../../../../types/**",
+                      "../../../../../features",
+                      "../../../../../features/**",
+                      "../../../../../components",
+                      "../../../../../components/**",
+                      "../../../../../App",
+                      "../../../../../App/**",
+                      "../../../../../styles.css",
+                      "../../../../../styles.css/**",
+                      "../../../../../services",
+                      "../../../../../services/**",
+                      "../../../../../config",
+                      "../../../../../config/**",
+                      "../../../../../lib",
+                      "../../../../../lib/**",
+                      "../../../../../types",
+                      "../../../../../types/**",
+                      "../../../../../../features",
+                      "../../../../../../features/**",
+                      "../../../../../../components",
+                      "../../../../../../components/**",
+                      "../../../../../../App",
+                      "../../../../../../App/**",
+                      "../../../../../../styles.css",
+                      "../../../../../../styles.css/**",
+                      "../../../../../../services",
+                      "../../../../../../services/**",
+                      "../../../../../../config",
+                      "../../../../../../config/**",
+                      "../../../../../../lib",
+                      "../../../../../../lib/**",
+                      "../../../../../../types",
+                      "../../../../../../types/**"
+                    ],
+                    "message": "O portal só pode importar de src/shared e src/admin."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/admin/*/*/*/*"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "../../../../features",
+                      "../../../../features/**",
+                      "../../../../components",
+                      "../../../../components/**",
+                      "../../../../App",
+                      "../../../../App/**",
+                      "../../../../styles.css",
+                      "../../../../styles.css/**",
+                      "../../../../services",
+                      "../../../../services/**",
+                      "../../../../config",
+                      "../../../../config/**",
+                      "../../../../lib",
+                      "../../../../lib/**",
+                      "../../../../types",
+                      "../../../../types/**",
+                      "../../../../../features",
+                      "../../../../../features/**",
+                      "../../../../../components",
+                      "../../../../../components/**",
+                      "../../../../../App",
+                      "../../../../../App/**",
+                      "../../../../../styles.css",
+                      "../../../../../styles.css/**",
+                      "../../../../../services",
+                      "../../../../../services/**",
+                      "../../../../../config",
+                      "../../../../../config/**",
+                      "../../../../../lib",
+                      "../../../../../lib/**",
+                      "../../../../../types",
+                      "../../../../../types/**",
+                      "../../../../../../features",
+                      "../../../../../../features/**",
+                      "../../../../../../components",
+                      "../../../../../../components/**",
+                      "../../../../../../App",
+                      "../../../../../../App/**",
+                      "../../../../../../styles.css",
+                      "../../../../../../styles.css/**",
+                      "../../../../../../services",
+                      "../../../../../../services/**",
+                      "../../../../../../config",
+                      "../../../../../../config/**",
+                      "../../../../../../lib",
+                      "../../../../../../lib/**",
+                      "../../../../../../types",
+                      "../../../../../../types/**",
+                      "../../../../../../../features",
+                      "../../../../../../../features/**",
+                      "../../../../../../../components",
+                      "../../../../../../../components/**",
+                      "../../../../../../../App",
+                      "../../../../../../../App/**",
+                      "../../../../../../../styles.css",
+                      "../../../../../../../styles.css/**",
+                      "../../../../../../../services",
+                      "../../../../../../../services/**",
+                      "../../../../../../../config",
+                      "../../../../../../../config/**",
+                      "../../../../../../../lib",
+                      "../../../../../../../lib/**",
+                      "../../../../../../../types",
+                      "../../../../../../../types/**"
+                    ],
+                    "message": "O portal só pode importar de src/shared e src/admin."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/admin/*/*/*/*/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "../../../../../features",
+                      "../../../../../features/**",
+                      "../../../../../components",
+                      "../../../../../components/**",
+                      "../../../../../App",
+                      "../../../../../App/**",
+                      "../../../../../styles.css",
+                      "../../../../../styles.css/**",
+                      "../../../../../services",
+                      "../../../../../services/**",
+                      "../../../../../config",
+                      "../../../../../config/**",
+                      "../../../../../lib",
+                      "../../../../../lib/**",
+                      "../../../../../types",
+                      "../../../../../types/**",
+                      "../../../../../../features",
+                      "../../../../../../features/**",
+                      "../../../../../../components",
+                      "../../../../../../components/**",
+                      "../../../../../../App",
+                      "../../../../../../App/**",
+                      "../../../../../../styles.css",
+                      "../../../../../../styles.css/**",
+                      "../../../../../../services",
+                      "../../../../../../services/**",
+                      "../../../../../../config",
+                      "../../../../../../config/**",
+                      "../../../../../../lib",
+                      "../../../../../../lib/**",
+                      "../../../../../../types",
+                      "../../../../../../types/**",
+                      "../../../../../../../features",
+                      "../../../../../../../features/**",
+                      "../../../../../../../components",
+                      "../../../../../../../components/**",
+                      "../../../../../../../App",
+                      "../../../../../../../App/**",
+                      "../../../../../../../styles.css",
+                      "../../../../../../../styles.css/**",
+                      "../../../../../../../services",
+                      "../../../../../../../services/**",
+                      "../../../../../../../config",
+                      "../../../../../../../config/**",
+                      "../../../../../../../lib",
+                      "../../../../../../../lib/**",
+                      "../../../../../../../types",
+                      "../../../../../../../types/**",
+                      "../../../../../../../../features",
+                      "../../../../../../../../features/**",
+                      "../../../../../../../../components",
+                      "../../../../../../../../components/**",
+                      "../../../../../../../../App",
+                      "../../../../../../../../App/**",
+                      "../../../../../../../../styles.css",
+                      "../../../../../../../../styles.css/**",
+                      "../../../../../../../../services",
+                      "../../../../../../../../services/**",
+                      "../../../../../../../../config",
+                      "../../../../../../../../config/**",
+                      "../../../../../../../../lib",
+                      "../../../../../../../../lib/**",
+                      "../../../../../../../../types",
+                      "../../../../../../../../types/**"
+                    ],
+                    "message": "O portal só pode importar de src/shared e src/admin."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/**", "!src/admin/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "./admin",
+                      "./admin/**",
+                      "../admin",
+                      "../admin/**",
+                      "../../admin",
+                      "../../admin/**",
+                      "../../../admin",
+                      "../../../admin/**"
+                    ],
+                    "message": "A loja não pode importar de src/admin."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }
