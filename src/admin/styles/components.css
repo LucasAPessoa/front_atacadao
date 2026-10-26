@@ -35,13 +35,24 @@
   border-left-color: var(--adm-accent);
   font-weight: 600;
 }
-.adm-nav-group {
+.adm-nav-group-label {
   margin-top: var(--adm-space-3);
   padding: var(--adm-space-2) var(--adm-space-3) 0;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   opacity: 0.7;
+}
+.adm-nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adm-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.adm-nav-group a {
+  display: block;
 }
 .adm-main-col {
   display: flex;

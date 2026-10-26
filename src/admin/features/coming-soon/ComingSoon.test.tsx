@@ -34,6 +34,12 @@ describe("seções em breve", () => {
     expect(typeof route?.lazy).toBe("function");
   });
 
+  it("rotas protegidas têm o AdminLayout como pai", () => {
+    const parent = routes.find((r) => r.element !== undefined)?.children?.[0];
+    expect(isValidElement(parent?.element) && parent.element.type).toBe(AdminLayout);
+    expect(parent?.children).toBe(guarded());
+  });
+
   it("links na sidebar, agrupados como Em breve", () => {
     const html = renderToStaticMarkup(
       <MemoryRouter>
@@ -43,10 +49,14 @@ describe("seções em breve", () => {
       </MemoryRouter>,
     );
     expect(html.indexOf("Bling")).toBeLessThan(html.indexOf("Em breve"));
-    expect(html).toContain("Em breve:");
+    const label = /<span[^>]*id="([^"]+)"[^>]*>Em breve:<\/span>/.exec(html);
+    expect(label).not.toBeNull();
+    const list = new RegExp(`<ul[^>]*aria-labelledby="${label?.[1]}"[^>]*>(.*?)</ul>`).exec(html);
+    expect(list).not.toBeNull();
+    expect(list?.[1].match(/<li>/g)).toHaveLength(comingSoonSections.length);
     for (const { to, label } of comingSoonSections) {
-      expect(html).toContain(`href="${to}"`);
-      expect(html).toContain(label);
+      expect(list?.[1]).toContain(`href="${to}"`);
+      expect(list?.[1]).toContain(label);
     }
   });
 });
