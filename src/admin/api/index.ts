@@ -20,6 +20,7 @@ import type {
   PricingTier,
   ProductListParams,
   QuestionFilter,
+  ReconciliationQueueItem,
   ReviewFilter,
   Session,
   User,
@@ -118,6 +119,12 @@ export const adminApi = {
     callPage<AdminOrderSummary>(`/admin/orders${qs(params)}`, signal),
   order: (id: string, signal?: AbortSignal) =>
     call<AdminOrderDetail>(`/admin/orders/${encodeURIComponent(id)}`, {}, signal),
+  reconciliationQueue: (skip = 0, limit = 50, signal?: AbortSignal) =>
+    call<ReconciliationQueueItem[]>(
+      `/sales/orders/payment-reconciliations/queue${qs({ skip, limit })}`,
+      {},
+      signal,
+    ),
   cancelOrder: (id: string) =>
     call<unknown>(`/sales/orders/${encodeURIComponent(id)}/cancel`, json("POST")),
   reconcileOrder: (id: string) =>

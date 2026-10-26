@@ -150,24 +150,4 @@ export const api = {
     ),
   orders: (token: string) => request<Order[]>("/sales/orders/", {}, token),
   order: (token: string, id: string) => request<Order>(`/sales/orders/${id}`, {}, token),
-  adminUsers: (token: string) => request<User[]>("/users/list", {}, token),
-  adminResource: <T>(token: string, resource: string) =>
-    request<T[]>(`/catalog/${resource}/`, {}, token),
-  createAdminResource: <T>(token: string, resource: string, payload: Record<string, unknown>) =>
-    request<T>(`/catalog/${resource}/`, { method: "POST", body: JSON.stringify(payload) }, token),
-  updateAdminResource: <T>(
-    token: string,
-    resource: string,
-    id: string,
-    payload: Record<string, unknown>,
-  ) =>
-    request<T>(
-      `/catalog/${resource}/${id}`,
-      { method: "PATCH", body: JSON.stringify(payload) },
-      token,
-    ),
-  deleteAdminResource: (token: string, resource: string, id: string) =>
-    request<void>(`/catalog/${resource}/${id}`, { method: "DELETE" }, token),
-  cancelOrder: (token: string, id: string) =>
-    request<Order>(`/sales/orders/${id}/cancel`, { method: "POST" }, token),
 };

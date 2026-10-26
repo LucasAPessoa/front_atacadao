@@ -35,6 +35,25 @@
   border-left-color: var(--adm-accent);
   font-weight: 600;
 }
+.adm-nav-group-label {
+  margin-top: var(--adm-space-3);
+  padding: var(--adm-space-2) var(--adm-space-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+}
+.adm-nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adm-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.adm-nav-group a {
+  display: block;
+}
 .adm-main-col {
   display: flex;
   flex-direction: column;
@@ -58,7 +77,7 @@
   color: var(--adm-text-muted);
   overflow-wrap: anywhere;
 }
-.adm-menu-toggle {
+.adm-btn.adm-menu-toggle {
   display: none;
 }
 .adm-content {
@@ -83,6 +102,9 @@
 }
 
 @media (max-width: 768px) {
+  .adm-dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .adm-shell {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -96,7 +118,7 @@
   .adm-brand {
     display: none;
   }
-  .adm-menu-toggle {
+  .adm-btn.adm-menu-toggle {
     display: inline-flex;
   }
   .adm-topbar {
@@ -316,6 +338,13 @@
 }
 .adm-filterbar .adm-field {
   margin-bottom: 0;
+  min-width: 0;
+  max-width: 100%;
+}
+.adm-field input,
+.adm-field select,
+.adm-field textarea {
+  max-width: 100%;
 }
 .adm-pagination {
   display: flex;
@@ -429,6 +458,7 @@
 }
 .adm-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--adm-space-1);
   border-bottom: 1px solid var(--adm-border);
   margin-bottom: var(--adm-space-3);
@@ -475,7 +505,7 @@
 /* Aba Loja (apresentação) */
 .adm-override {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
   gap: var(--adm-space-3);
   margin-bottom: var(--adm-space-4);
 }
@@ -516,4 +546,71 @@
   flex-wrap: wrap;
   align-items: flex-start;
   gap: var(--adm-space-2);
+}
+
+/* Dashboard */
+.adm-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
+  gap: var(--adm-space-4);
+}
+.adm-kpis .adm-card {
+  margin-bottom: 0;
+}
+.adm-kpi-title {
+  margin: 0;
+  font-size: var(--adm-font-size);
+  color: var(--adm-text-muted);
+}
+.adm-kpi-value {
+  margin: var(--adm-space-2) 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+.adm-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--adm-space-2);
+}
+.adm-bar-row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr) 3rem;
+  align-items: center;
+  gap: var(--adm-space-3);
+}
+.adm-bar-track {
+  width: 100%;
+  height: 0.75rem;
+  background: var(--adm-surface-muted);
+  border-radius: var(--adm-radius);
+}
+.adm-bar-fill {
+  fill: var(--adm-accent);
+}
+.adm-bar-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Moderação */
+.adm-moderation-item {
+  display: grid;
+  gap: var(--adm-space-2);
+}
+.adm-moderation-item p {
+  margin: 0;
+}
+
+/* Acessibilidade: foco sobre a sidebar escura e alvos de toque nos botões só com ícone */
+.adm-sidebar :focus-visible {
+  outline-color: var(--adm-nav-text);
+}
+.adm-table-wrap:focus-visible {
+  outline-offset: -2px;
+}
+.adm-toast button {
+  min-width: 2rem;
+  min-height: 2rem;
 }

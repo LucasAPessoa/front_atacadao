@@ -1,3 +1,4 @@
+import { Tabs } from "../../ui/Tabs";
 import { useState } from "react";
 import { Link } from "react-router";
 import type { AdminProductDetail, AdminVariant } from "../../api/types";
@@ -131,6 +132,12 @@ export function BlingTab({ product }: { product: AdminProductDetail }) {
   );
 }
 
+const PRODUCT_TABS = [
+  ["bling", "Bling"],
+  ["store", "Loja"],
+  ["prices", "Preços"],
+] as const;
+
 export function ProductDetailView({ product }: { product: AdminProductDetail }) {
   const [tab, setTab] = useState<"bling" | "store" | "prices">("bling");
   const name = product.presentation.name.site ?? product.presentation.name.bling ?? product.code;
@@ -140,26 +147,12 @@ export function ProductDetailView({ product }: { product: AdminProductDetail }) 
         <h1 id="adm-page-title">{name}</h1>
         <Link to="/produtos">Voltar para produtos</Link>
       </div>
-      <div role="tablist" aria-label="Seções do produto" className="adm-tabs">
-        {(
-          [
-            ["bling", "Bling"],
-            ["store", "Loja"],
-            ["prices", "Preços"],
-          ] as const
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            role="tab"
-            aria-selected={tab === key}
-            className="adm-tab"
-            onClick={() => setTab(key)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <Tabs<"bling" | "store" | "prices">
+        label="Seções do produto"
+        tabs={PRODUCT_TABS}
+        active={tab}
+        onSelect={setTab}
+      />
       {tab === "bling" && <BlingTab product={product} />}
       {tab === "store" && <PresentationForm product={product} />}
       {tab === "prices" && (

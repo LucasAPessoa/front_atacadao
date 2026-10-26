@@ -2,6 +2,7 @@ import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router";
 import { store } from "../../shared/store-config";
 import { useAuth } from "../auth/AuthProvider";
+import { comingSoonSections } from "../features/coming-soon/sections";
 
 const links = [
   { to: "/", label: "Dashboard", end: true },
@@ -34,6 +35,18 @@ export function AdminLayout() {
               {link.label}
             </NavLink>
           ))}
+          <span className="adm-nav-group-label" id="adm-nav-soon">
+            Em breve:
+          </span>
+          <ul className="adm-nav-group" aria-labelledby="adm-nav-soon">
+            {comingSoonSections.map((link) => (
+              <li key={link.to}>
+                <NavLink to={link.to} onClick={() => setMenuOpen(false)}>
+                  {link.label}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
         </nav>
       </aside>
       <div className="adm-main-col">
