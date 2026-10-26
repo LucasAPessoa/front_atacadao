@@ -6,6 +6,7 @@ import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { adminTokens } from "../../auth/session";
 import type { AdminProductSummary } from "../../api/types";
+import { waitFor } from "../../test-utils";
 import { ProductsList } from "./ProductsList";
 import { formatBRL, formatPriceRange } from "./format";
 
@@ -75,18 +76,11 @@ async function mount(initial = "/produtos") {
       </QueryClientProvider>,
     );
   });
-  await settle(() => !box.querySelector("[role=status]") && productCalls().length > 0);
-  await act(async () => new Promise((r) => setTimeout(r, 20)));
+  await waitFor(() => {
+    expect(box.querySelector("[role=status]")).toBeNull();
+  });
   return box;
 }
-const flush = () => act(async () => {});
-const settle = async (check: () => unknown) => {
-  for (let i = 0; i < 40; i++) {
-    if (check()) return;
-    await act(async () => new Promise((r) => setTimeout(r, 10)));
-  }
-};
-
 const productCalls = () => urls.filter((u) => u.includes("/admin/products"));
 const categoriesReply = (url: string) =>
   url.includes("/catalog/categories")
@@ -184,7 +178,6 @@ describe("ProductsList", () => {
     );
     expect(clear.length).toBeGreaterThan(0);
     await act(async () => clear.at(-1)?.click());
-    await flush();
     expect(search).toBe("");
     expect((box.querySelector("input[type=search]") as HTMLInputElement).value).toBe("");
   });
