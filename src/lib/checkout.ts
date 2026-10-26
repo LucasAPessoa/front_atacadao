@@ -1,4 +1,4 @@
-import type { CheckoutPreview } from "../types/domain";
+import type { CheckoutPreview } from "../shared/types/domain";
 
 type ShippingOption = CheckoutPreview["shipping_options"][number];
 

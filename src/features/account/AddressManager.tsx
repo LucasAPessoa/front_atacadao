@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { formatZip } from "../../lib/checkout";
 import { ApiError, api } from "../../services/client";
-import type { Address } from "../../types/domain";
+import type { Address } from "../../shared/types/domain";
 import { AddressForm } from "./AddressForm";
 
 type Props = {

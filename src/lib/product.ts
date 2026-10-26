@@ -1,4 +1,4 @@
-import type { Category, PricingTier, Product, ProductImage, Variant } from "../types/domain";
+import type { Category, PricingTier, Product, ProductImage, Variant } from "../shared/types/domain";
 
 export const productPath = (id: string) => `/produtos/${encodeURIComponent(id)}`;
 

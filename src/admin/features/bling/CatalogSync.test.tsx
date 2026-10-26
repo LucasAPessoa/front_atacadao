@@ -1,12 +1,13 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { ApiError } from "../../services/client";
-import type { CatalogSyncRun, CatalogSyncRuns } from "../../types/domain";
+import { ApiError } from "../../../shared/http";
+import type { CatalogSyncRun, CatalogSyncRuns } from "../../api/types";
 import {
   CatalogSyncView,
   catalogSyncErrorMessage,
   historyItems,
   isInProgress,
+  pollInterval,
 } from "./CatalogSync";
 
 const counts = {
@@ -73,7 +74,9 @@ describe("catálogo do Bling", () => {
     expect(html).toContain("Em andamento");
     expect(html).toContain("Fase: SCAN");
     expect(html).toContain("Desativados: 3");
-    expect(html).toMatch(/<button type="button" class="primary" disabled="">Importar agora/);
+    expect(html).toMatch(
+      /<button type="button" class="adm-btn adm-btn-primary" disabled="">Importar agora/,
+    );
   });
 
   it("habilita o botão sem execução em andamento e tem botão Atualizar", () => {
@@ -109,5 +112,13 @@ describe("catálogo do Bling", () => {
       "não configurada neste ambiente",
     );
     expect(catalogSyncErrorMessage(new ApiError(403, "x"))).toContain("permissão");
+  });
+
+  it("polling liga enquanto há RUNNING e desliga ao terminar", () => {
+    const running = mk("RUNNING");
+    expect(pollInterval({ current: running, items: [running] })).toBe(3000);
+    expect(pollInterval({ current: null, items: [running] })).toBe(3000);
+    expect(pollInterval({ current: null, items: [mk("SUCCESS")] })).toBe(false);
+    expect(pollInterval(undefined)).toBe(false);
   });
 });

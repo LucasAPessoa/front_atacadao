@@ -4,7 +4,7 @@ import { money } from "../../lib/format";
 import { orderPresentation } from "../../lib/orderStatus";
 import { api } from "../../services/client";
 import { AddressManager } from "./AddressManager";
-import type { Address, Order, User } from "../../types/domain";
+import type { Address, Order, User } from "../../shared/types/domain";
 
 type Props = {
   token: string;

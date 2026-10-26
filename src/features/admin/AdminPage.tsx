@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { navigate } from "../../components/Layout";
 import { money } from "../../lib/format";
 import { ApiError, api } from "../../services/client";
-import type { Order, User } from "../../types/domain";
+import type { Order, User } from "../../shared/types/domain";
 
 type Props = { token: string; user: User | null; onError(error: unknown): void };
 type Item = Record<string, unknown> & { id: string };

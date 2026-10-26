@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../services/client";
-import type { Product, Variant } from "../../types/domain";
+import type { Product, Variant } from "../../shared/types/domain";
 import { addToCart, loadProduct, type ProductApi } from "./loader";
 
 const variant = (stock: number): Variant => ({

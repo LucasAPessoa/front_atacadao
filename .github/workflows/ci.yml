@@ -53,6 +53,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      - run: npm run check:isolation
 
   report-npm-audit:
     name: Report - npm audit (não bloqueante)

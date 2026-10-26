@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { Category, PricingTier, Product, ProductImage, Variant } from "../types/domain";
+import type { Category, PricingTier, Product, ProductImage, Variant } from "../shared/types/domain";
 import {
   applicableTier,
   clampQuantity,

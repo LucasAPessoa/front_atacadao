@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { Layout } from "../../components/Layout";
-import type { Cart } from "../../types/domain";
+import type { Cart } from "../../shared/types/domain";
 import { CartPage } from "./CartPage";
 
 const cart = {

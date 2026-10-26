@@ -1,11 +1,13 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Layout } from "../../components/Layout";
-import { ApiError, api } from "../../services/client";
-import type { BlingStatus } from "../../types/domain";
+import { ApiError } from "../../../shared/http";
+import { adminApi } from "../../api";
+import type { BlingStatus } from "../../api/types";
 import {
   BlingConnectionView,
   blingErrorMessage,
+  resultFromParams,
+  withoutResult,
   resultMessages,
   startConnect,
 } from "./BlingConnection";
@@ -70,9 +72,9 @@ describe("tela Bling", () => {
     expect(html).toContain("Cancelar");
   });
   it("conectar chama /connect e redireciona", async () => {
-    vi.spyOn(api, "blingConnect").mockResolvedValue({ authorize_url: "https://bling/x" });
+    vi.spyOn(adminApi, "blingConnect").mockResolvedValue({ authorize_url: "https://bling/x" });
     const assign = vi.fn();
-    await startConnect("t", assign);
+    await startConnect(assign);
     expect(assign).toHaveBeenCalledWith("https://bling/x");
   });
   it("mensagens de resultado cobrem o contrato", () => {
@@ -85,14 +87,10 @@ describe("tela Bling", () => {
     expect(blingErrorMessage(new ApiError(403, "x"))).toContain("permissão");
     expect(blingErrorMessage(new ApiError(409, "x"))).toContain("mudou");
   });
-  it("layout avisa reconexão só para admin", () => {
-    const admin = { id: "1", email: "a@a", role: { name: "admin" } } as never;
-    const html = renderToStaticMarkup(
-      <Layout user={admin} cartCount={0} onLogout={() => {}} path="/" reconnectBling>
-        x
-      </Layout>,
-    );
-    expect(html).toContain("precisa ser refeita");
-    expect(html).toContain("Integração Bling");
+  it("retorno OAuth lê resultado da query; valor desconhecido vira inválido", () => {
+    expect(resultFromParams(new URLSearchParams("resultado=conectado"))?.tone).toBe("ok");
+    expect(resultFromParams(new URLSearchParams("resultado=xyz"))).toBe(resultMessages.invalido);
+    expect(resultFromParams(new URLSearchParams("x=1"))).toBeNull();
+    expect(withoutResult(new URLSearchParams("resultado=conectado&x=1")).toString()).toBe("x=1");
   });
 });
