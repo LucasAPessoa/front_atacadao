@@ -23,10 +23,9 @@ type LayoutProps = {
   cartCount: number;
   onLogout(destination?: string): void;
   path: string;
-  reconnectBling?: boolean;
 };
 
-export function Layout({ children, user, cartCount, onLogout, path, reconnectBling }: LayoutProps) {
+export function Layout({ children, user, cartCount, onLogout, path }: LayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [headerSearch, setHeaderSearch] = useState(() =>
     typeof window === "undefined"
@@ -214,34 +213,13 @@ export function Layout({ children, user, cartCount, onLogout, path, reconnectBli
               Como funciona
             </button>
             {isAdmin && (
-              <button
-                type="button"
-                className={path === "/admin" ? "active" : ""}
-                onClick={() => go("/admin")}
-              >
-                Administração
-              </button>
-            )}
-            {isAdmin && (
-              <button
-                type="button"
-                className={path === "/admin/integracoes/bling" ? "active" : ""}
-                onClick={() => go("/admin/integracoes/bling")}
-              >
-                Integração Bling
-              </button>
+              <a className="admin-link" href="/admin/" target="_blank" rel="noopener">
+                Painel admin
+              </a>
             )}
           </div>
         </nav>
       </header>
-      {isAdmin && reconnectBling && (
-        <div className="notice" role="alert">
-          A conexão com o Bling precisa ser refeita.{" "}
-          <button type="button" onClick={() => go("/admin/integracoes/bling")}>
-            Reconectar
-          </button>
-        </div>
-      )}
       <main id="conteudo">{children}</main>
       <footer className="site-footer">
         <div className="footer-inner">

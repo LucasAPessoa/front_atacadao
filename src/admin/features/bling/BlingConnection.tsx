@@ -1,12 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
-import { ApiError, api } from "../../services/client";
-import type { BlingStatus, User } from "../../shared/types/domain";
-
-type Props = {
-  token: string;
-  user: User | null;
-  onStatus?(status: BlingStatus["status"]): void;
-};
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useSearchParams } from "react-router";
+import { ApiError } from "../../../shared/http";
+import { adminApi } from "../../api";
+import type { BlingStatus } from "../../api/types";
 
 export const resultMessages: Record<string, { tone: "ok" | "error"; text: string }> = {
   conectado: { tone: "ok", text: "Bling conectado com sucesso." },
@@ -37,12 +34,19 @@ export function blingErrorMessage(error: unknown): string {
 }
 
 export async function startConnect(
-  token: string,
   assign: (url: string) => void = (url) => window.location.assign(url),
 ) {
-  const { authorize_url } = await api.blingConnect(token);
+  const { authorize_url } = await adminApi.blingConnect();
   assign(authorize_url);
 }
+
+/** Retorno do OAuth: /integracoes/bling?resultado=conectado|recusado|empresa_diferente|invalido. */
+export function resultFromParams(params: URLSearchParams) {
+  const value = params.get("resultado");
+  return value ? (resultMessages[value] ?? resultMessages.invalido) : null;
+}
+
+export const blingStatusKey = ["bling", "status"] as const;
 
 const labels: Record<BlingStatus["status"], string> = {
   CONNECTED: "Conectado",
@@ -68,18 +72,20 @@ export function BlingConnectionView(p: ViewProps) {
   const { status } = p;
   const connected = status?.status === "CONNECTED";
   return (
-    <section className="admin-page" aria-labelledby="bling-title">
+    <section className="adm-card" aria-labelledby="bling-title">
       <h1 id="bling-title">Integração Bling</h1>
       {p.result && (
         <p
-          className={p.result.tone === "error" ? "admin-feedback error" : "admin-feedback"}
+          className={
+            p.result.tone === "error" ? "adm-alert adm-alert-danger" : "adm-alert adm-alert-success"
+          }
           role={p.result.tone === "error" ? "alert" : "status"}
         >
           {p.result.text}
         </p>
       )}
       {p.error && (
-        <p className="admin-feedback error" role="alert">
+        <p className="adm-alert adm-alert-danger" role="alert">
           {p.error}
         </p>
       )}
@@ -90,7 +96,7 @@ export function BlingConnectionView(p: ViewProps) {
             Estado: <strong data-status={status.status}>{labels[status.status]}</strong>
           </p>
           {status.status === "RECONNECT_REQUIRED" && (
-            <p className="admin-feedback error" role="alert">
+            <p className="adm-alert adm-alert-danger" role="alert">
               A autorização do Bling expirou ou foi revogada. Reconecte para retomar a
               sincronização.
             </p>
@@ -111,7 +117,7 @@ export function BlingConnectionView(p: ViewProps) {
           {status.recent_events.length === 0 ? (
             <p>Nenhum evento registrado.</p>
           ) : (
-            <ul>
+            <ul className="adm-list">
               {status.recent_events.map((event) => (
                 <li key={`${event.at}-${event.event}`}>
                   {fmt(event.at)} · {event.event}
@@ -121,29 +127,53 @@ export function BlingConnectionView(p: ViewProps) {
             </ul>
           )}
           {p.confirming ? (
-            <div role="alertdialog" aria-label="Confirmar desconexão">
+            <div
+              role="alertdialog"
+              aria-label="Confirmar desconexão"
+              className="adm-alert adm-alert-warning"
+            >
               <p>Desconectar o Bling? A sincronização será interrompida até nova conexão.</p>
-              <button type="button" className="danger" disabled={p.busy} onClick={p.onDisconnect}>
+              <button
+                type="button"
+                className="adm-btn adm-btn-danger"
+                disabled={p.busy}
+                onClick={p.onDisconnect}
+              >
                 Confirmar desconexão
               </button>
-              <button type="button" disabled={p.busy} onClick={p.onCancelDisconnect}>
+              <button
+                type="button"
+                className="adm-btn"
+                disabled={p.busy}
+                onClick={p.onCancelDisconnect}
+              >
                 Cancelar
               </button>
             </div>
           ) : (
-            <div>
+            <div className="adm-actions">
               {status.status !== "CONNECTED" && (
-                <button type="button" className="primary" disabled={p.busy} onClick={p.onConnect}>
+                <button
+                  type="button"
+                  className="adm-btn adm-btn-primary"
+                  disabled={p.busy}
+                  onClick={p.onConnect}
+                >
                   {status.status === "RECONNECT_REQUIRED" ? "Reconectar" : "Conectar"}
                 </button>
               )}
               {status.status === "CONNECTED" && (
-                <button type="button" className="primary" disabled>
+                <button type="button" className="adm-btn adm-btn-primary" disabled>
                   Conectar
                 </button>
               )}
               {status.status !== "NOT_CONNECTED" && (
-                <button type="button" disabled={p.busy} onClick={p.onAskDisconnect}>
+                <button
+                  type="button"
+                  className="adm-btn"
+                  disabled={p.busy}
+                  onClick={p.onAskDisconnect}
+                >
                   Desconectar
                 </button>
               )}
@@ -156,84 +186,59 @@ export function BlingConnectionView(p: ViewProps) {
   );
 }
 
-export function BlingConnection({ token, user, onStatus }: Props) {
-  const [status, setStatus] = useState<BlingStatus | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [confirming, setConfirming] = useState(false);
-  const [error, setError] = useState("");
+export function BlingConnection() {
+  const queryClient = useQueryClient();
+  const [params, setParams] = useSearchParams();
+  // Exibe o resultado do retorno OAuth e remove o parâmetro da URL (o aviso fica no estado).
   const [result] = useState(() => {
-    const value = new URLSearchParams(window.location.search).get("resultado");
-    return value ? (resultMessages[value] ?? resultMessages.invalido) : null;
-  });
-  const isAdmin = user?.role.name === "admin";
-
-  const apply = useCallback(
-    (next: BlingStatus) => {
-      setStatus(next);
-      onStatus?.(next.status);
-    },
-    [onStatus],
-  );
-  const load = useCallback(async () => {
-    try {
-      apply(await api.blingStatus(token));
-      setError("");
-    } catch (e) {
-      setError(blingErrorMessage(e));
-    } finally {
-      setLoading(false);
+    const parsed = resultFromParams(params);
+    if (params.has("resultado")) {
+      const next = new URLSearchParams(params);
+      next.delete("resultado");
+      setParams(next, { replace: true });
     }
-  }, [apply, token]);
+    return parsed;
+  });
+  const [confirming, setConfirming] = useState(false);
+  const [actionError, setActionError] = useState("");
 
-  useEffect(() => {
-    // Exibe o resultado e remove o parâmetro da URL.
-    if (new URLSearchParams(window.location.search).has("resultado"))
-      window.history.replaceState({}, "", window.location.pathname);
-  }, []);
-  useEffect(() => {
-    if (token && isAdmin) void load();
-    else setLoading(false);
-  }, [token, isAdmin, load]);
+  const query = useQuery({
+    queryKey: blingStatusKey,
+    queryFn: ({ signal }) => adminApi.blingStatus(signal),
+  });
+  const connect = useMutation({ mutationFn: () => startConnect() });
+  const disconnect = useMutation({
+    mutationFn: () => adminApi.blingDisconnect(),
+    onSuccess: (next) => {
+      queryClient.setQueryData(blingStatusKey, next);
+      setConfirming(false);
+    },
+  });
+  const busy = connect.isPending || disconnect.isPending;
 
-  if (!token || !isAdmin)
-    return (
-      <section className="state-page">
-        <h1>Acesso restrito</h1>
-        <p>Entre com uma conta de administrador para gerenciar a integração.</p>
-      </section>
-    );
-
-  const run = async (action: () => Promise<void>) => {
-    setBusy(true);
-    setError("");
+  const run = async (action: () => Promise<unknown>) => {
+    setActionError("");
     try {
       await action();
     } catch (e) {
-      setError(blingErrorMessage(e));
-      if (e instanceof ApiError && e.status === 409) await load();
-    } finally {
-      setBusy(false);
+      setActionError(blingErrorMessage(e));
+      if (e instanceof ApiError && e.status === 409)
+        await queryClient.invalidateQueries({ queryKey: blingStatusKey });
     }
   };
 
   return (
     <BlingConnectionView
-      status={status}
-      loading={loading}
+      status={query.data ?? null}
+      loading={query.isPending}
       busy={busy}
       confirming={confirming}
-      error={error}
+      error={actionError || (query.isError ? blingErrorMessage(query.error) : "")}
       result={result}
-      onConnect={() => void run(() => startConnect(token))}
+      onConnect={() => void run(() => connect.mutateAsync())}
       onAskDisconnect={() => setConfirming(true)}
       onCancelDisconnect={() => setConfirming(false)}
-      onDisconnect={() =>
-        void run(async () => {
-          apply(await api.blingDisconnect(token));
-          setConfirming(false);
-        })
-      }
+      onDisconnect={() => void run(() => disconnect.mutateAsync())}
     />
   );
 }

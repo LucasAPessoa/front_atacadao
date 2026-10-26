@@ -1,0 +1,55 @@
+/*
+ * Tokens do portal. Componentes usam apenas variáveis --adm-*; um tema novo é só outro bloco
+ * :root[data-theme="..."]. O acento da marca (--adm-accent*) é gravado em runtime a partir de
+ * brandTokens(VITE_STORE_BRAND_COLOR) por src/admin/theme.ts; os valores abaixo são o fallback.
+ */
+:root[data-theme="default"] {
+  color-scheme: light;
+
+  /* Superfícies e texto (contraste AA: texto >= 4.5:1 sobre as superfícies) */
+  --adm-bg: #f4f5f7;
+  --adm-surface: #ffffff;
+  --adm-surface-muted: #eceef2;
+  --adm-text: #1a1d21;
+  --adm-text-muted: #4a5260;
+  --adm-border: #d3d8e0;
+  --adm-border-strong: #8a93a1;
+
+  /* Acento da marca */
+  --adm-accent: #ff3b00;
+  --adm-on-accent: #0a0a0a;
+  --adm-accent-text: #a82800;
+
+  /* Sidebar */
+  --adm-nav-bg: #14171c;
+  --adm-nav-text: #d9dde4;
+  --adm-nav-active-bg: #262b33;
+
+  /* Estados */
+  --adm-success-bg: #e3f4e8;
+  --adm-success-text: #0f5c25;
+  --adm-warning-bg: #fff2d0;
+  --adm-warning-text: #6b4200;
+  --adm-danger-bg: #fde8e6;
+  --adm-danger-text: #9f1c14;
+  --adm-danger: #b3261e;
+  --adm-on-danger: #ffffff;
+  --adm-info-bg: #e5eefb;
+  --adm-info-text: #1a4a8a;
+  --adm-focus: #1a4a8a;
+  --adm-overlay: rgb(10 12 16 / 55%);
+
+  /* Espaçamento, raio, tipografia densa */
+  --adm-space-1: 0.25rem;
+  --adm-space-2: 0.5rem;
+  --adm-space-3: 0.75rem;
+  --adm-space-4: 1rem;
+  --adm-space-5: 1.5rem;
+  --adm-radius: 6px;
+  --adm-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --adm-font-size: 0.875rem;
+  --adm-font-size-small: 0.8125rem;
+  --adm-line: 1.45;
+  --adm-shadow: 0 8px 24px rgb(10 12 16 / 22%);
+  --adm-sidebar-width: 13.5rem;
+}

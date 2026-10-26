@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
-import { ApiError, api } from "../../services/client";
-import type { CatalogSyncRun, CatalogSyncRuns, User } from "../../shared/types/domain";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { ApiError } from "../../../shared/http";
+import { adminApi } from "../../api";
+import type { CatalogSyncRun, CatalogSyncRuns } from "../../api/types";
 
 export const statusLabels: Record<CatalogSyncRun["status"], string> = {
   RUNNING: "Em andamento",
@@ -46,12 +48,19 @@ export const isInProgress = (error: unknown) =>
 export const historyItems = (data: CatalogSyncRuns) =>
   data.items.filter((r) => r.id !== data.current?.id);
 
+export const RUNS_POLL_MS = 3000;
+export const runsKey = ["bling", "catalog-sync", "runs"] as const;
+
+/** Consulta `runs` a cada 3 s enquanto houver execução RUNNING; desliga quando termina. */
+export const pollInterval = (data: CatalogSyncRuns | null | undefined) =>
+  isRunning(data ?? null) ? RUNS_POLL_MS : false;
+
 export const isRunning = (data: CatalogSyncRuns | null) =>
   !!data && (data.current?.status === "RUNNING" || data.items.some((r) => r.status === "RUNNING"));
 
 function Counts({ run }: { run: CatalogSyncRun }) {
   return (
-    <ul>
+    <ul className="adm-list">
       {countLabels.map(([key, label]) => (
         <li key={key}>
           {label}: {run.counts[key]}
@@ -66,6 +75,8 @@ type ViewProps = {
   loading: boolean;
   busy: boolean;
   error: string;
+  /** Aviso não fatal (ex.: 409 de importação já em andamento). */
+  warning?: string;
   onImport(): void;
   onRefresh(): void;
 };
@@ -74,18 +85,33 @@ export function CatalogSyncView(p: ViewProps) {
   const running = isRunning(p.data);
   const current = p.data?.current ?? null;
   return (
-    <section className="admin-page" aria-labelledby="catalog-sync-title">
+    <section className="adm-card" aria-labelledby="catalog-sync-title">
       <h2 id="catalog-sync-title">Catálogo do Bling</h2>
       {p.error && (
-        <p className="admin-feedback error" role="alert">
+        <p className="adm-alert adm-alert-danger" role="alert">
           {p.error}
         </p>
       )}
-      <div>
-        <button type="button" className="primary" disabled={p.busy || running} onClick={p.onImport}>
+      {p.warning && (
+        <p className="adm-alert adm-alert-warning" role="status">
+          {p.warning}
+        </p>
+      )}
+      <div className="adm-actions">
+        <button
+          type="button"
+          className="adm-btn adm-btn-primary"
+          disabled={p.busy || running}
+          onClick={p.onImport}
+        >
           Importar agora
         </button>
-        <button type="button" disabled={p.loading || p.busy} onClick={p.onRefresh}>
+        <button
+          type="button"
+          className="adm-btn"
+          disabled={p.loading || p.busy}
+          onClick={p.onRefresh}
+        >
           Atualizar
         </button>
       </div>
@@ -107,7 +133,7 @@ export function CatalogSyncView(p: ViewProps) {
       {p.data && historyItems(p.data).length === 0 ? (
         <p>Nenhuma importação registrada.</p>
       ) : (
-        <ul>
+        <ul className="adm-list">
           {p.data &&
             historyItems(p.data).map((run) => (
               <li key={run.id} data-status={run.status}>
@@ -135,55 +161,43 @@ export function CatalogSyncView(p: ViewProps) {
   );
 }
 
-export function CatalogSync({ token, user }: { token: string; user: User | null }) {
-  const [data, setData] = useState<CatalogSyncRuns | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
+export function CatalogSync() {
+  const queryClient = useQueryClient();
   const [error, setError] = useState("");
-  const isAdmin = user?.role.name === "admin";
+  const [warning, setWarning] = useState("");
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      setData(await api.blingCatalogRuns(token, 20));
-      setError("");
-    } catch (e) {
-      setError(catalogSyncErrorMessage(e));
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    if (token && isAdmin) void load();
-    else setLoading(false);
-  }, [token, isAdmin, load]);
-
-  if (!token || !isAdmin) return null;
+  const query = useQuery({
+    queryKey: runsKey,
+    queryFn: ({ signal }) => adminApi.blingCatalogRuns(20, signal),
+    refetchInterval: (q) => pollInterval(q.state.data),
+  });
+  const start = useMutation({ mutationFn: () => adminApi.blingCatalogSync() });
+  const refresh = () => queryClient.invalidateQueries({ queryKey: runsKey });
 
   const importNow = async () => {
-    setBusy(true);
     setError("");
+    setWarning("");
     try {
-      await api.blingCatalogSync(token);
-      await load();
+      await start.mutateAsync();
+      await refresh();
     } catch (e) {
-      // load() limpa o erro ao concluir; o aviso de "em andamento" vem depois dele.
-      if (isInProgress(e)) await load();
-      setError(catalogSyncErrorMessage(e));
-    } finally {
-      setBusy(false);
+      if (isInProgress(e)) {
+        // O 409 diz que já há uma execução: mostra o aviso e passa a acompanhá-la.
+        setWarning(catalogSyncErrorMessage(e));
+        await refresh();
+      } else setError(catalogSyncErrorMessage(e));
     }
   };
 
   return (
     <CatalogSyncView
-      data={data}
-      loading={loading}
-      busy={busy}
-      error={error}
+      data={query.data ?? null}
+      loading={query.isPending}
+      busy={start.isPending}
+      error={error || (query.isError ? catalogSyncErrorMessage(query.error) : "")}
+      warning={warning}
       onImport={() => void importNow()}
-      onRefresh={() => void load()}
+      onRefresh={() => void refresh()}
     />
   );
 }

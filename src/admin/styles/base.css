@@ -1,0 +1,79 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--adm-bg);
+  color: var(--adm-text);
+  font-family: var(--adm-font);
+  font-size: var(--adm-font-size);
+  line-height: var(--adm-line);
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 var(--adm-space-3);
+  line-height: 1.25;
+}
+h1 {
+  font-size: 1.25rem;
+}
+h2 {
+  font-size: 1rem;
+}
+h3 {
+  font-size: var(--adm-font-size);
+}
+p {
+  margin: 0 0 var(--adm-space-3);
+}
+a {
+  color: var(--adm-accent-text);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--adm-focus);
+  outline-offset: 2px;
+}
+
+.adm-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.adm-skip-link {
+  position: absolute;
+  left: var(--adm-space-2);
+  top: -3rem;
+  z-index: 60;
+  padding: var(--adm-space-2) var(--adm-space-3);
+  background: var(--adm-surface);
+  border-radius: var(--adm-radius);
+}
+.adm-skip-link:focus {
+  top: var(--adm-space-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adm-skeleton {
+    animation: none;
+  }
+}

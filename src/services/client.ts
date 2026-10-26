@@ -1,7 +1,4 @@
 import type {
-  BlingStatus,
-  CatalogSyncRun,
-  CatalogSyncRuns,
   Address,
   Cart,
   Category,
@@ -171,15 +168,6 @@ export const api = {
     ),
   deleteAdminResource: (token: string, resource: string, id: string) =>
     request<void>(`/catalog/${resource}/${id}`, { method: "DELETE" }, token),
-  blingStatus: (token: string) => request<BlingStatus>("/integrations/bling/status", {}, token),
-  blingConnect: (token: string) =>
-    request<{ authorize_url: string }>("/integrations/bling/connect", { method: "POST" }, token),
-  blingDisconnect: (token: string) =>
-    request<BlingStatus>("/integrations/bling/disconnect", { method: "POST" }, token),
-  blingCatalogSync: (token: string) =>
-    request<CatalogSyncRun>("/integrations/bling/catalog-sync", { method: "POST" }, token),
-  blingCatalogRuns: (token: string, limit = 20) =>
-    request<CatalogSyncRuns>(`/integrations/bling/catalog-sync/runs?limit=${limit}`, {}, token),
   cancelOrder: (token: string, id: string) =>
     request<Order>(`/sales/orders/${id}/cancel`, { method: "POST" }, token),
 };
