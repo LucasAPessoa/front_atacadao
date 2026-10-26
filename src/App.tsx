@@ -7,6 +7,7 @@ import { CartPage } from "./features/cart/CartPage";
 import { CatalogPage } from "./features/catalog/CatalogPage";
 import { ProductPage } from "./features/product/ProductPage";
 import { BlingConnection } from "./features/integrations/BlingConnection";
+import { CatalogSync } from "./features/integrations/CatalogSync";
 import { PaymentReturn } from "./features/payment/PaymentReturn";
 import { productIdFromPath } from "./lib/product";
 import {
@@ -169,7 +170,12 @@ export default function App() {
       />
     ),
     "/admin": <AdminPage token={token} user={user} onError={handleError} />,
-    "/admin/integracoes/bling": <BlingConnection token={token} user={user} onStatus={setBling} />,
+    "/admin/integracoes/bling": (
+      <>
+        <BlingConnection token={token} user={user} onStatus={setBling} />
+        <CatalogSync token={token} user={user} />
+      </>
+    ),
     "/entrar": (
       <LoginPage
         notice={
