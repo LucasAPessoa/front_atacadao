@@ -1,12 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
-import type { PricingTier, ProductImage, Variant } from "../types/domain";
+import type { Category, PricingTier, Product, ProductImage, Variant } from "../types/domain";
 import {
   applicableTier,
   clampQuantity,
   defaultVariant,
+  departmentsWithProducts,
+  effectiveCategoryId,
   galleryImages,
   handleLinkClick,
   isAvailable,
+  isDisplayable,
   productIdFromPath,
   productPath,
   safeImageUrl,
@@ -118,5 +121,34 @@ describe("links e imagens", () => {
       "a.png",
     ])
       expect(safeImageUrl(bad)).toBeNull();
+  });
+});
+
+describe("departamentos com produtos", () => {
+  const cat = (id: string, is_active = true): Category => ({ id, name: id, is_active });
+  const product = (
+    id: string,
+    categories: Category[],
+    is_active = true,
+    variants = [variant("v", 1)],
+  ): Product => ({ id, name: id, is_active, categories, variants });
+  const all = [cat("a"), cat("b"), cat("c"), cat("d", false)];
+  const products = [
+    product("1", [cat("a")]),
+    product("2", [cat("b")], false),
+    product("3", [cat("c")], true, [variant("v", 5, false)]),
+    product("4", [cat("d")]),
+  ];
+  it("exibível exige produto ativo com variação ativa", () => {
+    expect(products.map(isDisplayable)).toEqual([true, false, false, true]);
+  });
+  it("lista só departamentos ativos com produto exibível", () => {
+    expect(departmentsWithProducts(all, products).map((c) => c.id)).toEqual(["a"]);
+  });
+  it("departamento oculto vira Todos", () => {
+    const list = departmentsWithProducts(all, products);
+    expect(effectiveCategoryId("a", list)).toBe("a");
+    expect(effectiveCategoryId("b", list)).toBe("");
+    expect(effectiveCategoryId("", list)).toBe("");
   });
 });

@@ -1,4 +1,4 @@
-import type { PricingTier, ProductImage, Variant } from "../types/domain";
+import type { Category, PricingTier, Product, ProductImage, Variant } from "../types/domain";
 
 export const productPath = (id: string) => `/produtos/${encodeURIComponent(id)}`;
 
@@ -69,3 +69,22 @@ export function handleLinkClick(event: ClickLike, path: string, go: (path: strin
   go(path);
   return true;
 }
+
+/** Produto exibível na vitrine: ativo e com ao menos uma variação ativa. */
+export const isDisplayable = (product: Product) =>
+  product.is_active && product.variants.some((variant) => variant.is_active);
+
+/** Departamentos ativos com ao menos um produto exibível. */
+export const departmentsWithProducts = (
+  categories: Category[],
+  products: Product[],
+): Category[] => {
+  const used = new Set(
+    products.filter(isDisplayable).flatMap((product) => product.categories.map((c) => c.id)),
+  );
+  return categories.filter((category) => category.is_active && used.has(category.id));
+};
+
+/** Departamento oculto ou inexistente vira "" (Todos). */
+export const effectiveCategoryId = (categoryId: string, departments: Category[]) =>
+  departments.some((category) => category.id === categoryId) ? categoryId : "";
