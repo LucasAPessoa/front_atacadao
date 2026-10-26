@@ -1,4 +1,5 @@
 import type {
+  BlingStatus,
   Address,
   Cart,
   Category,
@@ -283,6 +284,11 @@ export const api = {
     ),
   deleteAdminResource: (token: string, resource: string, id: string) =>
     request<void>(`/catalog/${resource}/${id}`, { method: "DELETE" }, token),
+  blingStatus: (token: string) => request<BlingStatus>("/integrations/bling/status", {}, token),
+  blingConnect: (token: string) =>
+    request<{ authorize_url: string }>("/integrations/bling/connect", { method: "POST" }, token),
+  blingDisconnect: (token: string) =>
+    request<BlingStatus>("/integrations/bling/disconnect", { method: "POST" }, token),
   cancelOrder: (token: string, id: string) =>
     request<Order>(`/sales/orders/${id}/cancel`, { method: "POST" }, token),
 };

@@ -6,6 +6,7 @@ import { LoginPage, RegisterPage } from "./features/auth/AuthPages";
 import { CartPage } from "./features/cart/CartPage";
 import { CatalogPage } from "./features/catalog/CatalogPage";
 import { ProductPage } from "./features/product/ProductPage";
+import { BlingConnection } from "./features/integrations/BlingConnection";
 import { PaymentReturn } from "./features/payment/PaymentReturn";
 import { productIdFromPath } from "./lib/product";
 import {
@@ -19,7 +20,7 @@ import {
   setOnSessionExpired,
   storeSession,
 } from "./services/client";
-import type { Address, Cart, User } from "./types/domain";
+import type { Address, BlingStatus, Cart, User } from "./types/domain";
 
 const messageFor = (error: unknown) =>
   error instanceof ApiError && error.status === 401
@@ -52,6 +53,7 @@ export default function App() {
   const [cart, setCart] = useState<Cart | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [notice, setNotice] = useState("");
+  const [bling, setBling] = useState<BlingStatus["status"] | null>(null);
   const logout = useCallback(
     (destination = "/") => {
       const refreshToken = getRefreshToken();
@@ -119,6 +121,15 @@ export default function App() {
       })
       .catch(handleError);
   }, [handleError, token]);
+  const isAdmin = user?.role.name === "admin";
+  useEffect(() => {
+    // Uma consulta por sessão de admin, sem polling; a tela de integração atualiza via onStatus.
+    if (!token || !isAdmin) return setBling(null);
+    api
+      .blingStatus(token)
+      .then((current) => setBling(current.status))
+      .catch(() => setBling(null));
+  }, [token, isAdmin]);
   const refreshAddresses = useCallback(async () => {
     setAddresses(await api.addresses(token));
   }, [token]);
@@ -158,6 +169,7 @@ export default function App() {
       />
     ),
     "/admin": <AdminPage token={token} user={user} onError={handleError} />,
+    "/admin/integracoes/bling": <BlingConnection token={token} user={user} onStatus={setBling} />,
     "/entrar": (
       <LoginPage
         notice={
@@ -184,7 +196,13 @@ export default function App() {
     (pages[path] ?? <NotFoundPage />)
   );
   return (
-    <Layout user={user} cartCount={cart?.total_items ?? 0} onLogout={logout} path={path}>
+    <Layout
+      user={user}
+      cartCount={cart?.total_items ?? 0}
+      onLogout={logout}
+      path={path}
+      reconnectBling={bling === "RECONNECT_REQUIRED"}
+    >
       {notice && (
         <div className="notice" role="status">
           {notice}
