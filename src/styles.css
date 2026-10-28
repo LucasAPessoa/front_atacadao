@@ -733,6 +733,34 @@ h4,
   color: var(--on-brand);
   font-weight: 700;
 }
+.card-tiers-toggle {
+  min-height: var(--touch);
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--ink);
+  font: 600 var(--fs-support) var(--font-body);
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.card-tiers {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font: 400 var(--fs-support) var(--font-body);
+  font-variant-numeric: tabular-nums;
+}
+.card-tiers[hidden] {
+  display: none;
+}
+.card-tiers li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
 .product-add:disabled,
 .product-add[aria-disabled="true"] {
   background: var(--divider);
