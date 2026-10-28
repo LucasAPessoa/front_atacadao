@@ -12,15 +12,6 @@ import {
 import { navigate } from "../../components/Layout";
 import { AddressForm } from "../account/AddressForm";
 
-// Papéis explícitos: no celular a tabela vira grid e perderia a semântica no Safari/Firefox.
-const ROLE = {
-  table: { role: "table" },
-  rowgroup: { role: "rowgroup" },
-  row: { role: "row" },
-  columnheader: { role: "columnheader" },
-  cell: { role: "cell" },
-} as const;
-
 export function CartPage({
   token,
   cart,
@@ -43,6 +34,11 @@ export function CartPage({
   const [shippingId, setShippingId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [removed, setRemoved] = useState<{
+    variantId: string;
+    quantity: number;
+    name: string;
+  } | null>(null);
   const [productNames, setProductNames] = useState<Record<string, string>>({});
   const preferred = useRef("");
   const key = useRef(crypto.randomUUID());
@@ -93,10 +89,24 @@ export function CartPage({
       setBusy(false);
     }
   }
+  async function undo() {
+    if (!removed) return;
+    setBusy(true);
+    try {
+      onCart(await api.addCartItem(token, removed.variantId, removed.quantity));
+      setRemoved(null);
+      setPreview(null);
+    } catch (error) {
+      onError(error);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function remove(item: CartItem) {
     setBusy(true);
     try {
       onCart(await api.removeCartItem(token, item.id));
+      setRemoved({ variantId: item.variant_id, quantity: item.quantity, name: itemName(item) });
       setPreview(null);
     } catch (error) {
       onError(error);
@@ -189,80 +199,63 @@ export function CartPage({
       ) : (
         <div className="cart-layout">
           <div className="table-box">
-            <table className="cart-items" {...ROLE.table}>
-              <caption className="sr-only">Itens do carrinho</caption>
-              <thead {...ROLE.rowgroup}>
-                <tr {...ROLE.row}>
-                  <th {...ROLE.columnheader} scope="col">
-                    Produto
-                  </th>
-                  <th {...ROLE.columnheader} scope="col">
-                    Qtd.
-                  </th>
-                  <th {...ROLE.columnheader} scope="col" className="num-col">
-                    Total
-                  </th>
-                  <th {...ROLE.columnheader} scope="col">
-                    <span className="sr-only">Remover</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody {...ROLE.rowgroup}>
-                {cart.items.map((item) => (
-                  <tr {...ROLE.row} key={item.id}>
-                    <td {...ROLE.cell}>
-                      <div className="cart-product">
-                        <div className="cart-thumb" aria-hidden="true">
-                          {itemName(item).slice(0, 2)}
-                        </div>
-                        <div>
-                          <h2>{itemName(item)}</h2>
-                          <span className="unit-price">
-                            {money(item.unit_price ?? item.variant.base_price)} / un.
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td {...ROLE.cell}>
-                      <div className="quantity">
-                        <button
-                          type="button"
-                          aria-label={`Diminuir quantidade de ${itemName(item)}`}
-                          disabled={busy}
-                          onClick={() => quantity(item, item.quantity - 1)}
-                        >
-                          −
-                        </button>
-                        <span role="status" aria-label={`Quantidade: ${item.quantity}`}>
-                          {item.quantity}
-                        </span>
-                        <button
-                          type="button"
-                          aria-label={`Aumentar quantidade de ${itemName(item)}`}
-                          disabled={busy}
-                          onClick={() => quantity(item, item.quantity + 1)}
-                        >
-                          +
-                        </button>
-                      </div>
-                    </td>
-                    <td {...ROLE.cell} className="line-total num-col">
+            {removed && (
+              <div className="undo-bar" role="status">
+                <span>{removed.name} saiu do carrinho.</span>
+                <button type="button" className="secondary undo" disabled={busy} onClick={undo}>
+                  Desfazer
+                </button>
+              </div>
+            )}
+            <ul className="cart-items" aria-label="Itens do carrinho">
+              {cart.items.map((item) => (
+                <li className="cart-item" key={item.id}>
+                  <div className="cart-thumb" aria-hidden="true">
+                    {itemName(item).slice(0, 2)}
+                  </div>
+                  <h2 className="cart-name">{itemName(item)}</h2>
+                  <div className="quantity">
+                    <button
+                      type="button"
+                      aria-label={`Diminuir quantidade de ${itemName(item)}`}
+                      disabled={busy}
+                      onClick={() => quantity(item, item.quantity - 1)}
+                    >
+                      −
+                    </button>
+                    <span role="status" aria-label={`Quantidade: ${item.quantity}`}>
+                      {item.quantity}
+                    </span>
+                    <button
+                      type="button"
+                      aria-label={`Aumentar quantidade de ${itemName(item)}`}
+                      disabled={busy}
+                      onClick={() => quantity(item, item.quantity + 1)}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div className="line-sum">
+                    <span className="line-total">
                       {money(item.subtotal ?? Number(item.variant.base_price) * item.quantity)}
-                    </td>
-                    <td {...ROLE.cell}>
-                      <button
-                        type="button"
-                        className="remove"
-                        aria-label={`Remover ${itemName(item)}`}
-                        onClick={() => remove(item)}
-                      >
-                        ×
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </span>
+                    <span className="unit-price">
+                      {money(item.unit_price ?? item.variant.base_price)} /{" "}
+                      {item.variant.variation_name || "un."}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="remove"
+                    aria-label={`Remover ${itemName(item)}`}
+                    disabled={busy}
+                    onClick={() => remove(item)}
+                  >
+                    Remover
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
           <aside className="order-summary" aria-labelledby="resumo">
             <h2 id="resumo">Resumo</h2>
