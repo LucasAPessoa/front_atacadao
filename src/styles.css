@@ -1580,7 +1580,7 @@ h4,
   align-items: center;
   gap: 8px;
   min-height: 44px;
-  font: 500 var(--fs-support) var(--font-sans);
+  font: 500 var(--fs-support) var(--font-body);
   text-transform: none;
 }
 .person-type input {
