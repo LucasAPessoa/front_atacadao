@@ -49,7 +49,7 @@ Todas as variáveis são públicas (embutidas no bundle; nunca coloque segredos)
 | `VITE_STORE_TAGLINE`, `VITE_STORE_DESCRIPTION` | Frases institucionais |
 | `VITE_STORE_ANNOUNCEMENT` | Faixa superior |
 | `VITE_STORE_SUPPORT_EMAIL` | E-mail de atendimento |
-| `VITE_STORE_BRAND_COLOR` | Cor da marca em hex (padrão `#FF3B00`); texto e contraste derivam dela |
+| `VITE_STORE_BRAND_COLOR` | Cor da marca em hex (padrão `#1D6B57`); texto e contraste derivam dela |
 | `VITE_STORE_LEGAL_NAME`, `VITE_STORE_CNPJ`, `VITE_STORE_ADDRESS` | Dados legais no rodapé (só aparecem se definidos) |
 
 ## Deploy na Vercel
