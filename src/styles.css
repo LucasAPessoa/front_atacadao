@@ -716,14 +716,19 @@ h4,
   font-size: var(--fs-lg);
   line-height: var(--lh-tight);
 }
-.product-add:hover:not(:disabled) {
+.product-add:hover:not(:disabled):not([aria-disabled="true"]) {
   background: var(--brand);
   border-color: var(--brand);
   color: var(--on-brand);
 }
-.product-add:disabled {
+.product-add:disabled,
+.product-add[aria-disabled="true"] {
   border-color: var(--line-soft);
   color: var(--muted);
+  cursor: not-allowed;
+}
+.product-add[aria-disabled="true"] {
+  cursor: progress;
 }
 .state-panel {
   grid-column: 1 / -1;

@@ -1,14 +1,24 @@
 // @vitest-environment jsdom
 import { act, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Product } from "../../shared/types/domain";
-import { ProductGrid } from "./CatalogPage";
+import { CatalogPage, ProductGrid } from "./CatalogPage";
+
+const { addCartItem } = vi.hoisted(() => ({ addCartItem: vi.fn() }));
+vi.mock("../../services/client", () => ({
+  api: {
+    products: async () => [product],
+    categories: async () => [],
+    addCartItem,
+  },
+}));
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const product = {
   id: "p-1",
+  is_active: true,
   name: "Arroz 5kg",
   brand: "Marca",
   categories: [{ id: "c-1", name: "Mercearia" }],
@@ -59,5 +69,36 @@ describe("ProductGrid", () => {
     expect(after).toBe(button);
     expect(document.activeElement).toBe(button);
     expect(after?.getAttribute("aria-disabled")).toBe("true");
+  });
+
+  it("ignora segundo clique enquanto o item está sendo adicionado", async () => {
+    let resolve: (cart: unknown) => void = () => {};
+    addCartItem.mockReturnValue(
+      new Promise((r) => {
+        resolve = r;
+      }),
+    );
+    const onCart = vi.fn();
+    const host = document.createElement("div");
+    document.body.append(host);
+    root = createRoot(host);
+    await act(async () => {
+      root?.render(
+        <CatalogPage
+          token="t"
+          onLogin={() => {}}
+          onCart={onCart}
+          onError={() => {}}
+          mode="catalog"
+          query=""
+        />,
+      );
+    });
+    const button = host.querySelector<HTMLButtonElement>("button.product-add");
+    await act(async () => button?.click());
+    await act(async () => button?.click());
+    expect(addCartItem).toHaveBeenCalledTimes(1);
+    await act(async () => resolve({ id: "cart" }));
+    expect(onCart).toHaveBeenCalledTimes(1);
   });
 });
