@@ -107,7 +107,7 @@ export function ProductGrid({
                   <div className="product-buy">
                     <span className="product-price">
                       <strong>{variant ? money(variant.base_price) : "—"}</strong>
-                      {variant && <span>/{variant.variation_name}</span>}
+                      {variant && <span> a unidade</span>}
                     </span>
                     {hint && <span className="product-hint">{hint}</span>}
                     {rows.length > 1 && (
@@ -122,6 +122,10 @@ export function ProductGrid({
                           Ver tabela de preços
                         </button>
                         <ul className="card-tiers" id={panelId} hidden={!tiersOpen}>
+                          <li className="card-tiers-head">
+                            <span>Quantidade</span>
+                            <span>Preço por unidade</span>
+                          </li>
                           {rows.map((row, index) => {
                             const following = rows[index + 1];
                             return (
@@ -131,9 +135,7 @@ export function ProductGrid({
                                     ? `${row.min_quantity} a ${following.min_quantity - 1}`
                                     : `${row.min_quantity} ou mais`}
                                 </span>
-                                <span>
-                                  {money(row.unit_price)}/{variant?.variation_name}
-                                </span>
+                                <span>{money(row.unit_price)} a unidade</span>
                               </li>
                             );
                           })}

@@ -257,8 +257,7 @@ export function CartPage({
                       {money(item.subtotal ?? Number(item.variant.base_price) * item.quantity)}
                     </span>
                     <span className="unit-price">
-                      {money(item.unit_price ?? item.variant.base_price)} /{" "}
-                      {item.variant.variation_name || "un."}
+                      {money(item.unit_price ?? item.variant.base_price)} a unidade
                     </span>
                   </div>
                   <button

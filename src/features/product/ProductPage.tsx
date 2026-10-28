@@ -191,7 +191,7 @@ function TierTable({ rows, active }: { rows: PricingTier[]; active?: string }) {
           <thead>
             <tr>
               <th scope="col">Quantidade</th>
-              <th scope="col">Preço</th>
+              <th scope="col">Preço por unidade</th>
             </tr>
           </thead>
           <tbody>
@@ -308,7 +308,7 @@ export function ProductView({
             </span>
             {variant && (
               <span className="price-side">
-                {quantity} × {money(unitPrice)}/{variant.variation_name}
+                {quantity} × {money(unitPrice)} por unidade
               </span>
             )}
             {variant && rows.length > 1 && (
