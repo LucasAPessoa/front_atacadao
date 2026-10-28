@@ -135,7 +135,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--adm-space-1);
-  min-height: 2.25rem;
+  min-height: 2.75rem;
   padding: 0 var(--adm-space-3);
   border: 1px solid var(--adm-border-strong);
   border-radius: var(--adm-radius);
@@ -187,7 +187,7 @@
 .adm-field input,
 .adm-field select,
 .adm-field textarea {
-  min-height: 2.25rem;
+  min-height: 2.75rem;
   padding: var(--adm-space-1) var(--adm-space-2);
   border: 1px solid var(--adm-border-strong);
   border-radius: var(--adm-radius);
@@ -651,7 +651,15 @@
   align-items: center;
 }
 .adm-color-row input[type="color"] {
-  width: 3rem;
-  height: 2.25rem;
+  width: 2.75rem;
+  height: 2.75rem;
   padding: 0;
+}
+.adm-theme-preview {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 var(--adm-space-4);
+  border-radius: var(--adm-radius);
+  font-weight: 600;
 }
