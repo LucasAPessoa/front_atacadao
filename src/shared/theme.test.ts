@@ -12,6 +12,10 @@ describe("brandTokens", () => {
   it("usa texto branco sobre marca escura", () => {
     expect(brandTokens("#0047FF").onBrand).toBe("#FFFFFF");
   });
+  it("escolhe o par de maior contraste com luminância entre 0,19 e 0,23", () => {
+    // #808080 tem luminância 0,216: tinta (4,2:1) vence branco (3,9:1)
+    expect(brandTokens("#808080").onBrand).toBe("#15201C");
+  });
   it("cai no padrão com hex inválido", () => {
     expect(brandTokens("laranja").brand).toBe("#1D6B57");
     expect(brandTokens("").brand).toBe("#1D6B57");
