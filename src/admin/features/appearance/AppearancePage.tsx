@@ -18,6 +18,7 @@ export const isHex = (value: string) => HEX.test(value.trim());
 type ViewProps = {
   themes: ThemeOption[];
   theme: string;
+  savedTheme: string;
   color: string;
   saving: boolean;
   error: string;
@@ -33,6 +34,7 @@ export function AppearanceView(p: ViewProps) {
   const effective = valid ? p.color.trim() : store.theme.brand;
   const tokens = brandTokens(effective);
   const ratio = contrastRatio(tokens.brand, tokens.onBrand);
+  const saveable = valid || p.color.trim() === "";
   const low = valid && ratio < MIN_CONTRAST;
   return (
     <>
@@ -43,7 +45,7 @@ export function AppearanceView(p: ViewProps) {
         className="adm-card"
         onSubmit={(event) => {
           event.preventDefault();
-          if (valid) p.onSave();
+          if (saveable) p.onSave();
         }}
       >
         <fieldset className="adm-theme-list">
@@ -62,7 +64,10 @@ export function AppearanceView(p: ViewProps) {
                 onChange={() => p.onTheme(option.key)}
               />
               <strong>{option.name}</strong>
-              {p.theme === option.key && <span className="adm-badge">Atual</span>}
+              {p.savedTheme === option.key && <span className="adm-badge">Atual</span>}
+              {p.theme === option.key && p.savedTheme !== option.key && (
+                <span className="adm-badge">Selecionado</span>
+              )}
               <span>{option.description}</span>
             </label>
           ))}
@@ -84,7 +89,9 @@ export function AppearanceView(p: ViewProps) {
               placeholder={store.theme.brand}
               maxLength={7}
               aria-invalid={p.color !== "" && !valid}
-              aria-describedby="cor-marca-ajuda"
+              aria-describedby={
+                p.color !== "" && !valid ? "cor-marca-ajuda cor-marca-erro" : "cor-marca-ajuda"
+              }
               onChange={(event) => p.onColor(event.target.value)}
             />
           </div>
@@ -92,20 +99,22 @@ export function AppearanceView(p: ViewProps) {
             Formato #RRGGBB. Vazio usa a cor padrão da loja ({store.theme.brand}).
           </small>
           {p.color !== "" && !valid && (
-            <p className="adm-field-error">Use o formato #RRGGBB, por exemplo #1D6B57.</p>
+            <p id="cor-marca-erro" className="adm-field-error" role="alert">
+              Use o formato #RRGGBB, por exemplo #1D6B57. Mostrando a cor padrão.
+            </p>
           )}
         </div>
 
         <div className="adm-field">
           <span>Prévia do botão</span>
           <div>
-            <button
-              type="button"
-              className="adm-btn adm-theme-preview"
-              style={{ background: tokens.brand, color: tokens.onBrand, borderColor: tokens.brand }}
+            <span
+              aria-hidden="true"
+              className="adm-theme-preview"
+              style={{ background: tokens.brand, color: tokens.onBrand }}
             >
               Comprar
-            </button>{" "}
+            </span>{" "}
             <small>Contraste {ratio.toFixed(1)}:1</small>
           </div>
           {low && (
@@ -127,7 +136,11 @@ export function AppearanceView(p: ViewProps) {
           </p>
         )}
         <div className="adm-actions">
-          <button type="submit" className="adm-btn adm-btn-primary" disabled={p.saving || !valid}>
+          <button
+            type="submit"
+            className="adm-btn adm-btn-primary"
+            disabled={p.saving || !saveable}
+          >
             {p.saving ? "Salvando…" : "Salvar"}
           </button>
           <button type="button" className="adm-btn" disabled={p.saving} onClick={p.onRestore}>
@@ -170,6 +183,7 @@ function AppearanceForm({
     <AppearanceView
       themes={themes}
       theme={theme}
+      savedTheme={settings.theme}
       color={color}
       saving={mutation.isPending}
       error={error}
@@ -183,7 +197,10 @@ function AppearanceForm({
         setSaved(false);
       }}
       onSave={() => run(color.trim() === "" ? null : color.trim().toUpperCase())}
-      onRestore={() => run(null)}
+      onRestore={() => {
+        setColor("");
+        setSaved(false);
+      }}
     />
   );
 }

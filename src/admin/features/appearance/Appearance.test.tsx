@@ -59,6 +59,7 @@ describe("página Aparência", () => {
     expect(document.querySelector("fieldset legend")?.textContent).toBe("Tema da loja");
     expect(document.body.textContent).toContain("Visual de feira.");
     expect(document.body.textContent).toContain("Atual");
+    expect(document.body.textContent).not.toContain("Selecionado");
     expect(hex().value).toBe("#1D6B57");
   });
 
@@ -71,6 +72,7 @@ describe("página Aparência", () => {
       document.querySelectorAll<HTMLInputElement>('input[type="radio"]')[1].click(),
     );
     await type(hex(), "#112233");
+    expect(document.body.textContent).toContain("Selecionado");
     await act(async () => button("Salvar").click());
     await waitFor(() => expect(document.body.textContent).toContain("Aparência salva"));
     expect(update).toHaveBeenCalledWith({ theme: "feira", brand_color: "#112233" });
@@ -88,13 +90,16 @@ describe("página Aparência", () => {
     expect(document.body.textContent).not.toContain("Aparência salva");
   });
 
-  it("restaurar grava brand_color null", async () => {
+  it("restaurar só limpa o campo; Salvar grava brand_color null", async () => {
     const update = vi
       .spyOn(adminApi, "updateStoreTheme")
       .mockResolvedValue({ theme: "gondola", brand_color: null, updated_at: "x" });
     await mount();
     await act(async () => button("Restaurar cor padrão").click());
-    await waitFor(() => expect(hex().value).toBe(""));
+    expect(hex().value).toBe("");
+    expect(update).not.toHaveBeenCalled();
+    await act(async () => button("Salvar").click());
+    await waitFor(() => expect(update).toHaveBeenCalled());
     expect(update).toHaveBeenCalledWith({ theme: "gondola", brand_color: null });
   });
 
@@ -105,6 +110,8 @@ describe("página Aparência", () => {
     expect(document.body.textContent).toContain("abaixo do mínimo");
     await type(hex(), "#12");
     expect(button("Salvar").disabled).toBe(true);
+    expect(document.body.textContent).toContain("Mostrando a cor padrão");
+    expect(hex().getAttribute("aria-describedby")).toContain("cor-marca-erro");
   });
 
   it("falha ao carregar mostra erro com nova tentativa", async () => {
