@@ -41,10 +41,12 @@ export function StoreThemeProvider({ children }: { children: ReactNode }) {
       .storeTheme()
       .then((data) => {
         if (!active) return;
-        setState({
+        const next = {
           theme: data.theme || fallback.theme,
           brand: data.brand_color || fallback.brand,
-        });
+        };
+        writeCache(next);
+        setState(next);
       })
       .catch(() => undefined);
     return () => {
