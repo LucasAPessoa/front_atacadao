@@ -1,5 +1,5 @@
-export const DEFAULT_BRAND = "#FF3B00";
-const INK = "#0A0A0A";
+export const DEFAULT_BRAND = "#1D6B57";
+const INK = "#15201C";
 const WHITE = "#FFFFFF";
 
 type Rgb = [number, number, number];

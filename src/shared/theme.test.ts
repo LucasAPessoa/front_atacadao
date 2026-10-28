@@ -7,22 +7,22 @@ const contrastWithWhite = (value: string) => 1.05 / (luminance(parseRgb(value)) 
 
 describe("brandTokens", () => {
   it("usa texto escuro sobre marca clara", () => {
-    expect(brandTokens("#FFD400").onBrand).toBe("#0A0A0A");
+    expect(brandTokens("#FFD400").onBrand).toBe("#15201C");
   });
   it("usa texto branco sobre marca escura", () => {
     expect(brandTokens("#0047FF").onBrand).toBe("#FFFFFF");
   });
   it("cai no padrão com hex inválido", () => {
-    expect(brandTokens("laranja").brand).toBe("#FF3B00");
-    expect(brandTokens("").brand).toBe("#FF3B00");
-    expect(brandTokens("#12345").brand).toBe("#FF3B00");
+    expect(brandTokens("laranja").brand).toBe("#1D6B57");
+    expect(brandTokens("").brand).toBe("#1D6B57");
+    expect(brandTokens("#12345").brand).toBe("#1D6B57");
   });
   it("aceita 3 dígitos", () => {
     const tokens = brandTokens("#fff");
     expect(tokens.brand).toBe("#fff");
-    expect(tokens.onBrand).toBe("#0A0A0A");
+    expect(tokens.onBrand).toBe("#15201C");
   });
-  it.each(["#FF3B00", "#FFD400", "#00875A", "#0A0A0A", "#fff", "bad"])(
+  it.each(["#FF3B00", "#FFD400", "#00875A", "#15201C", "#fff", "bad"])(
     "brandText de %s tem contraste AA com branco",
     (hex) => {
       expect(contrastWithWhite(brandTokens(hex).brandText)).toBeGreaterThanOrEqual(4.5);
@@ -42,7 +42,8 @@ describe("brandTokens", () => {
       expect(ratio).toBeGreaterThanOrEqual(4.5);
     },
   );
-  it("usa texto escuro na marca padrão", () => {
-    expect(brandTokens("#FF3B00").onBrand).toBe("#0A0A0A");
+  it("usa texto escuro em marca clara e branco na marca padrão", () => {
+    expect(brandTokens("#FF3B00").onBrand).toBe("#15201C");
+    expect(brandTokens("#1D6B57").onBrand).toBe("#FFFFFF");
   });
 });
