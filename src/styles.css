@@ -342,7 +342,8 @@ h4,
   font-weight: 600;
 }
 .cart-button:hover {
-  filter: brightness(0.94);
+  background: var(--brand-text);
+  color: var(--on-ink);
 }
 .cart-count {
   font-family: var(--font-body);
@@ -1181,7 +1182,8 @@ h4,
   font-weight: 600;
 }
 .checkout-cta:hover:not(:disabled) {
-  filter: brightness(0.94);
+  background: var(--brand-text);
+  color: var(--on-ink);
 }
 .checkout-cta:disabled {
   background: var(--surface);
@@ -1319,7 +1321,7 @@ h4,
 }
 .account-overview strong,
 .metrics-grid strong {
-  font: 700 clamp(28px, 4vw, var(--fs-title)) / 1.1 var(--font-body);
+  font: 700 clamp(28px, 4vw, var(--fs-title)) / 1.1 var(--font-display);
   overflow-wrap: anywhere;
 }
 .sub,
@@ -1554,9 +1556,9 @@ h4,
   font-size: var(--fs-body);
 }
 .auth-card .primary:hover:not(:disabled) {
-  border-color: var(--ink);
-  background: var(--brand);
-  filter: brightness(0.94);
+  border-color: var(--brand-text);
+  background: var(--brand-text);
+  color: var(--on-ink);
 }
 .auth-card .primary:focus-visible {
   outline-color: var(--ink);
