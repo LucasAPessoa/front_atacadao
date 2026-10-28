@@ -50,3 +50,9 @@ export function brandTokens(hex: string): BrandTokens {
     brandText: `rgb(${text.join(",")})`,
   };
 }
+
+/** Razão de contraste WCAG entre duas cores hex; 0 se alguma for inválida. */
+export function contrastRatio(a: string, b: string): number {
+  const [x, y] = [parseHex(a), parseHex(b)];
+  return x && y ? contrast(x, y) : 0;
+}

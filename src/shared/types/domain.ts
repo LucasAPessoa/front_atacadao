@@ -152,3 +152,10 @@ export type CatalogSyncRuns = {
   current: CatalogSyncRun | null;
   items: CatalogSyncRun[];
 };
+
+export type StoreThemeSettings = {
+  theme: string;
+  brand_color: string | null;
+  updated_at: string | null;
+};
+export type ThemeOption = { key: string; name: string; description: string };
