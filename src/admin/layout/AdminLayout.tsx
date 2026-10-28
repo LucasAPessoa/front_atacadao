@@ -10,6 +10,7 @@ const links = [
   { to: "/pedidos", label: "Pedidos" },
   { to: "/moderacao", label: "Moderação" },
   { to: "/bling", label: "Bling" },
+  { to: "/configuracoes", label: "Configurações" },
 ];
 
 export function AdminLayout() {
