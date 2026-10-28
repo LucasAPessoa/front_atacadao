@@ -20,6 +20,102 @@ type Props = {
   mode: "home" | "catalog";
   query: string;
 };
+type ProductGridProps = {
+  loading: boolean;
+  unavailable: boolean;
+  visible: Product[];
+  adding: string;
+  onAdd(product: Product): void;
+  onOpen(event: React.MouseEvent<HTMLAnchorElement>, id: string): void;
+};
+/** Componente de módulo: declarado dentro do render, remontaria a grade (e perderia o foco) a cada estado. */
+export function ProductGrid({
+  loading,
+  unavailable,
+  visible,
+  adding,
+  onAdd,
+  onOpen,
+}: ProductGridProps) {
+  return (
+    <>
+      {loading ? (
+        <div className="state-panel" role="status">
+          Carregando produtos e condições comerciais…
+        </div>
+      ) : unavailable ? (
+        <div className="state-panel" role="alert">
+          Não foi possível abrir o catálogo agora. Atualize a página para tentar novamente.
+        </div>
+      ) : (
+        <>
+          <ul className="product-grid">
+            {visible.map((product) => {
+              const variant = product.variants.find(
+                (item) => item.is_active && item.stock_quantity > 0,
+              );
+              const unavailableProduct = !variant;
+              return (
+                <li className="product-card" key={product.id}>
+                  <div className="product-top">
+                    <span>{product.categories[0]?.name ?? "Seleção"}</span>
+                    <span>{product.brand || "Seleção"}</span>
+                  </div>
+                  <a
+                    className="product-image"
+                    href={productPath(product.id)}
+                    tabIndex={-1}
+                    aria-label={`Ver detalhes de ${product.name}`}
+                    onClick={(event) => onOpen(event, product.id)}
+                  >
+                    <ProductThumb name={product.name} src={product.main_image_url} />
+                  </a>
+                  <h3 className="product-name">
+                    <a
+                      href={productPath(product.id)}
+                      onClick={(event) => onOpen(event, product.id)}
+                    >
+                      {product.name}
+                    </a>
+                  </h3>
+                  <span className="product-unit">
+                    {variant?.variation_name ?? "Indisponível no momento"}
+                  </span>
+                  <div className="product-buy">
+                    <span className="product-price">
+                      {variant ? money(variant.base_price) : "—"}
+                      <small>valor unitário</small>
+                    </span>
+                    <button
+                      type="button"
+                      className="product-add"
+                      disabled={unavailableProduct}
+                      aria-disabled={adding === product.id || undefined}
+                      onClick={() => onAdd(product)}
+                      aria-label={
+                        unavailableProduct
+                          ? `${product.name} indisponível`
+                          : `Adicionar ${product.name} ao carrinho`
+                      }
+                    >
+                      {adding === product.id ? "…" : "+"}
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          {!visible.length && (
+            <div className="state-panel">
+              <h2>Nenhum item encontrado</h2>
+              <p>Ajuste a busca ou escolha outra categoria.</p>
+            </div>
+          )}
+        </>
+      )}
+    </>
+  );
+}
 export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Props) {
   const [products, setProducts] = useState<Product[]>([]);
   const [allCategories, setCategories] = useState<Category[]>([]);
@@ -73,7 +169,7 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
   );
   const add = async (product: Product) => {
     const variant = product.variants.find((item) => item.is_active && item.stock_quantity > 0);
-    if (!variant) return;
+    if (!variant || adding) return;
     if (!token) return onLogin();
     setAdding(product.id);
     try {
@@ -86,83 +182,6 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
   };
   const openProduct = (event: React.MouseEvent<HTMLAnchorElement>, id: string) =>
     handleLinkClick(event, productPath(id), navigate);
-  const ProductGrid = () => (
-    <>
-      {loading ? (
-        <div className="state-panel" role="status">
-          Carregando produtos e condições comerciais…
-        </div>
-      ) : unavailable ? (
-        <div className="state-panel" role="alert">
-          Não foi possível abrir o catálogo agora. Atualize a página para tentar novamente.
-        </div>
-      ) : (
-        <>
-          <ul className="product-grid">
-            {visible.map((product) => {
-              const variant = product.variants.find(
-                (item) => item.is_active && item.stock_quantity > 0,
-              );
-              const unavailableProduct = !variant;
-              return (
-                <li className="product-card" key={product.id}>
-                  <div className="product-top">
-                    <span>{product.categories[0]?.name ?? "Seleção"}</span>
-                    <span>{product.brand || "Seleção"}</span>
-                  </div>
-                  <a
-                    className="product-image"
-                    href={productPath(product.id)}
-                    tabIndex={-1}
-                    aria-label={`Ver detalhes de ${product.name}`}
-                    onClick={(event) => openProduct(event, product.id)}
-                  >
-                    <ProductThumb name={product.name} src={product.main_image_url} />
-                  </a>
-                  <h3 className="product-name">
-                    <a
-                      href={productPath(product.id)}
-                      onClick={(event) => openProduct(event, product.id)}
-                    >
-                      {product.name}
-                    </a>
-                  </h3>
-                  <span className="product-unit">
-                    {variant?.variation_name ?? "Indisponível no momento"}
-                  </span>
-                  <div className="product-buy">
-                    <span className="product-price">
-                      {variant ? money(variant.base_price) : "—"}
-                      <small>valor unitário</small>
-                    </span>
-                    <button
-                      type="button"
-                      className="product-add"
-                      disabled={unavailableProduct || adding === product.id}
-                      onClick={() => add(product)}
-                      aria-label={
-                        unavailableProduct
-                          ? `${product.name} indisponível`
-                          : `Adicionar ${product.name} ao carrinho`
-                      }
-                    >
-                      {adding === product.id ? "…" : "+"}
-                    </button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-          {!visible.length && (
-            <div className="state-panel">
-              <h2>Nenhum item encontrado</h2>
-              <p>Ajuste a busca ou escolha outra categoria.</p>
-            </div>
-          )}
-        </>
-      )}
-    </>
-  );
   const hasCategories = categories.length > 0;
   return (
     <>
@@ -304,11 +323,27 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
                 </section>
               </aside>
               <div>
-                <ProductGrid />
+                <ProductGrid
+                  loading={loading}
+                  unavailable={unavailable}
+                  visible={visible}
+                  adding={adding}
+                  onAdd={add}
+                  onOpen={openProduct}
+                />
               </div>
             </div>
           )}
-          {mode === "home" && <ProductGrid />}
+          {mode === "home" && (
+            <ProductGrid
+              loading={loading}
+              unavailable={unavailable}
+              visible={visible}
+              adding={adding}
+              onAdd={add}
+              onOpen={openProduct}
+            />
+          )}
         </div>
       </section>
       {mode === "home" && (

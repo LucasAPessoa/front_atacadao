@@ -35,5 +35,5 @@ export const store: StoreConfig = {
   legalName: optional(env.VITE_STORE_LEGAL_NAME),
   cnpj: optional(env.VITE_STORE_CNPJ),
   address: optional(env.VITE_STORE_ADDRESS),
-  theme: { brand: read(env.VITE_STORE_BRAND_COLOR, "#FF3B00") },
+  theme: { brand: read(env.VITE_STORE_BRAND_COLOR, "#1D6B57") },
 };

@@ -1,5 +1,5 @@
-export const DEFAULT_BRAND = "#FF3B00";
-const INK = "#0A0A0A";
+export const DEFAULT_BRAND = "#1D6B57";
+const INK = "#15201C";
 const WHITE = "#FFFFFF";
 
 type Rgb = [number, number, number];
@@ -27,6 +27,14 @@ export function luminance([r, g, b]: Rgb): number {
   return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
 }
 
+const INK_RGB = parseHex(INK) as Rgb;
+const WHITE_RGB = parseHex(WHITE) as Rgb;
+
+function contrast(a: Rgb, b: Rgb): number {
+  const [x, y] = [luminance(a), luminance(b)];
+  return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+}
+
 export type BrandTokens = { brand: string; onBrand: string; brandText: string };
 
 export function brandTokens(hex: string): BrandTokens {
@@ -38,7 +46,7 @@ export function brandTokens(hex: string): BrandTokens {
   }
   return {
     brand: brand.startsWith("#") ? brand : `#${brand}`,
-    onBrand: luminance(rgb) > 0.186 ? INK : WHITE,
+    onBrand: contrast(rgb, INK_RGB) >= contrast(rgb, WHITE_RGB) ? INK : WHITE,
     brandText: `rgb(${text.join(",")})`,
   };
 }
