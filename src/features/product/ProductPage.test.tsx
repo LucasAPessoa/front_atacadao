@@ -59,16 +59,17 @@ describe("página de produto", () => {
     expect(html).toContain("Arroz Tipo 1");
     expect(html).toContain("Grãos selecionados");
     expect(html).toContain("AR");
-    expect(html).toContain("sua faixa");
+    expect(html).toContain("seu preço");
     expect(html).toContain("Nota 4 de 5");
     expect(html).toContain("Sim");
-    expect(html).toContain("Adicionar ao carrinho");
+    expect(html.replace(/\u00a0/g, " ")).toContain("Adicionar 5 fardos 5kg · R$ 90,00");
+    expect(html).toContain("Máximo de 3 em estoque");
     expect(html).toContain('aria-live="polite"');
   });
   it("variação sem estoque fica indisponível e sem botão de adicionar", () => {
     const html = render("v2", 1);
     expect(html).toContain("Indisponível");
-    expect(html).not.toContain("Adicionar ao carrinho");
+    expect(html).not.toContain("Adicionar ");
   });
   it("falha nas avaliações mostra aviso sem derrubar a página", () => {
     expect(render("v1", 1, { reviews: null })).toContain("Não foi possível carregar as avaliações");

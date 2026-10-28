@@ -36,8 +36,9 @@ describe("carrinho no celular", () => {
     expect(html).toContain("Aumentar quantidade");
     expect(html).toContain("Remover");
     expect(html).toContain("line-total");
-    for (const role of ["table", "rowgroup", "row", "columnheader", "cell"])
-      expect(html).toContain(`role="${role}"`);
+    expect(html).toContain('aria-label="Itens do carrinho"');
+    expect(html).toContain("R$");
+    expect(html).not.toContain("<table");
   });
 
   it("cabeçalho tem ações com aria-label", () => {

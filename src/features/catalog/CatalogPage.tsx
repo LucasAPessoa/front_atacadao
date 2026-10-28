@@ -7,10 +7,12 @@ import {
   effectiveCategoryId,
   handleLinkClick,
   isDisplayable,
+  nextTier,
   productPath,
+  tierRows,
 } from "../../lib/product";
 import { api } from "../../services/client";
-import type { Cart, Category, Product } from "../../shared/types/domain";
+import type { Cart, Category, PricingTier, Product } from "../../shared/types/domain";
 
 type Props = {
   token: string;
@@ -24,6 +26,7 @@ type ProductGridProps = {
   loading: boolean;
   unavailable: boolean;
   visible: Product[];
+  tiers?: PricingTier[];
   adding: string;
   onAdd(product: Product): void;
   onOpen(event: React.MouseEvent<HTMLAnchorElement>, id: string): void;
@@ -33,10 +36,18 @@ export function ProductGrid({
   loading,
   unavailable,
   visible,
+  tiers = [],
   adding,
   onAdd,
   onOpen,
 }: ProductGridProps) {
+  const [openTiers, setOpenTiers] = useState<Set<string>>(new Set());
+  const toggleTiers = (id: string) =>
+    setOpenTiers((current) => {
+      const next = new Set(current);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
   return (
     <>
       {loading ? (
@@ -55,6 +66,18 @@ export function ProductGrid({
                 (item) => item.is_active && item.stock_quantity > 0,
               );
               const unavailableProduct = !variant;
+              const rows = variant
+                ? tierRows(
+                    variant.base_price,
+                    tiers.filter((tier) => tier.product_id === product.id),
+                  )
+                : [];
+              const next = variant ? nextTier(rows, 1) : undefined;
+              const tiersOpen = openTiers.has(product.id);
+              const panelId = `tiers-${product.id}`;
+              const hint = next
+                ? `A partir de ${next.min_quantity}: ${money(next.unit_price)} cada`
+                : "";
               return (
                 <li className="product-card" key={product.id}>
                   <div className="product-top">
@@ -83,9 +106,42 @@ export function ProductGrid({
                   </span>
                   <div className="product-buy">
                     <span className="product-price">
-                      {variant ? money(variant.base_price) : "—"}
-                      <small>valor unitário</small>
+                      <strong>{variant ? money(variant.base_price) : "—"}</strong>
+                      {variant && <span> a unidade</span>}
                     </span>
+                    {hint && <span className="product-hint">{hint}</span>}
+                    {rows.length > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          className="card-tiers-toggle"
+                          aria-expanded={tiersOpen}
+                          aria-controls={panelId}
+                          onClick={() => toggleTiers(product.id)}
+                        >
+                          Ver tabela de preços
+                        </button>
+                        <ul className="card-tiers" id={panelId} hidden={!tiersOpen}>
+                          <li className="card-tiers-head">
+                            <span>Quantidade</span>
+                            <span>Preço por unidade</span>
+                          </li>
+                          {rows.map((row, index) => {
+                            const following = rows[index + 1];
+                            return (
+                              <li key={row.id}>
+                                <span>
+                                  {following
+                                    ? `${row.min_quantity} a ${following.min_quantity - 1}`
+                                    : `${row.min_quantity} ou mais`}
+                                </span>
+                                <span>{money(row.unit_price)} a unidade</span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </>
+                    )}
                     <button
                       type="button"
                       className="product-add"
@@ -98,7 +154,7 @@ export function ProductGrid({
                           : `Adicionar ${product.name} ao carrinho`
                       }
                     >
-                      {adding === product.id ? "…" : "+"}
+                      {adding === product.id ? "Adicionando…" : "Adicionar"}
                     </button>
                   </div>
                 </li>
@@ -124,6 +180,14 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
   const [adding, setAdding] = useState("");
+  const [tiers, setTiers] = useState<PricingTier[]>([]);
+  useEffect(() => {
+    // Dica da próxima faixa é opcional: falha aqui não derruba o catálogo.
+    api
+      .allPricingTiers()
+      .then(setTiers)
+      .catch(() => setTiers([]));
+  }, []);
   useEffect(() => {
     setLoading(true);
     Promise.all([api.products(), api.categories()])
@@ -232,7 +296,11 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
                   <h2 id="departamentos">
                     <span className="num">01</span>Departamentos
                   </h2>
-                  <button type="button" className="mono-link" onClick={() => navigate("/produtos")}>
+                  <button
+                    type="button"
+                    className="section-link"
+                    onClick={() => navigate("/produtos")}
+                  >
                     Todos os produtos →
                   </button>
                 </div>
@@ -281,7 +349,7 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
               )}
             </h2>
             {mode === "home" ? (
-              <button type="button" className="mono-link" onClick={() => navigate("/produtos")}>
+              <button type="button" className="section-link" onClick={() => navigate("/produtos")}>
                 Catálogo completo →
               </button>
             ) : (
@@ -327,6 +395,7 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
                   loading={loading}
                   unavailable={unavailable}
                   visible={visible}
+                  tiers={tiers}
                   adding={adding}
                   onAdd={add}
                   onOpen={openProduct}
@@ -339,6 +408,7 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
               loading={loading}
               unavailable={unavailable}
               visible={visible}
+              tiers={tiers}
               adding={adding}
               onAdd={add}
               onOpen={openProduct}
