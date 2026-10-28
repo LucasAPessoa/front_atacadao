@@ -10,6 +10,7 @@ import {
   handleLinkClick,
   isAvailable,
   nextTier,
+  packPlural,
   safeImageUrl,
   tierRows,
 } from "../../lib/product";
@@ -96,11 +97,13 @@ function QuantityField({
   quantity,
   stock,
   disabled,
+  packName,
   onQuantity,
 }: {
   quantity: number;
   stock: number;
   disabled: boolean;
+  packName: string;
   onQuantity(value: number): void;
 }) {
   const [draft, setDraft] = useState(String(quantity));
@@ -109,15 +112,18 @@ function QuantityField({
     setDraft(String(next));
     onQuantity(next);
   };
+  const max = Math.max(stock, 1);
   return (
     <div className="pdp-qty">
-      <label htmlFor="pdp-qty-input">Quantidade</label>
+      <label htmlFor="pdp-qty-input">Quantidade de {packPlural(packName)}</label>
       <div className="pdp-stepper">
         <button
           type="button"
           aria-label="Diminuir quantidade"
-          disabled={disabled || quantity <= 1}
-          onClick={() => set(quantity - 1)}
+          aria-disabled={disabled || quantity <= 1 || undefined}
+          onClick={() => {
+            if (!disabled && quantity > 1) set(quantity - 1);
+          }}
         >
           −
         </button>
@@ -139,12 +145,17 @@ function QuantityField({
         <button
           type="button"
           aria-label="Aumentar quantidade"
-          disabled={disabled || quantity >= Math.max(stock, 1)}
-          onClick={() => set(quantity + 1)}
+          aria-disabled={disabled || quantity >= max || undefined}
+          onClick={() => {
+            if (!disabled && quantity < max) set(quantity + 1);
+          }}
         >
           +
         </button>
       </div>
+      <small className="pdp-note" role="status">
+        {!disabled && stock > 0 && quantity >= max ? `Máximo de ${max} em estoque` : ""}
+      </small>
     </div>
   );
 }
@@ -175,39 +186,37 @@ function TierTable({ rows, active }: { rows: PricingTier[]; active?: string }) {
           <path d="M6 9l6 6 6-6" />
         </svg>
       </button>
-      {open && (
-        <div id="pdp-tiers-table">
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">Quantidade</th>
-                <th scope="col">Preço</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((item, index) => {
-                const on = item.id === active;
-                const following = rows[index + 1];
-                return (
-                  <tr key={item.id} className={on ? "active" : ""}>
-                    <td>
-                      <span className="tier-mark" aria-hidden="true" />
-                      {following
-                        ? `${item.min_quantity} a ${following.min_quantity - 1}`
-                        : `${item.min_quantity} ou mais`}
-                    </td>
-                    <td>
-                      {money(item.unit_price)}
-                      {on && <span> · seu preço</span>}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          <p className="pdp-note">Exibição informativa; o valor final é calculado pelo servidor.</p>
-        </div>
-      )}
+      <div id="pdp-tiers-table" hidden={!open}>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Quantidade</th>
+              <th scope="col">Preço</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((item, index) => {
+              const on = item.id === active;
+              const following = rows[index + 1];
+              return (
+                <tr key={item.id} className={on ? "active" : ""}>
+                  <td>
+                    <span className="tier-mark" aria-hidden="true" />
+                    {following
+                      ? `${item.min_quantity} a ${following.min_quantity - 1}`
+                      : `${item.min_quantity} ou mais`}
+                  </td>
+                  <td>
+                    {money(item.unit_price)}
+                    {on && <span> · seu preço</span>}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        <p className="pdp-note">Exibição informativa; o valor final é calculado pelo servidor.</p>
+      </div>
     </section>
   );
 }
@@ -344,6 +353,7 @@ export function ProductView({
               quantity={quantity}
               stock={variant?.stock_quantity ?? 1}
               disabled={!available}
+              packName={variant?.variation_name ?? ""}
               onQuantity={onQuantity}
             />
             <button
@@ -352,7 +362,11 @@ export function ProductView({
               disabled={!available || adding}
               onClick={onAdd}
             >
-              {!available ? "Indisponível" : adding ? "Adicionando…" : "Adicionar ao carrinho"}
+              {!available
+                ? "Indisponível"
+                : adding
+                  ? "Adicionando…"
+                  : `Adicionar ${quantity} ${packPlural(variant?.variation_name ?? "", quantity)} · ${money(unitPrice * quantity)}`}
             </button>
           </div>
           <p className="pdp-feedback" role="status" aria-live="polite">

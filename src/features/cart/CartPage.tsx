@@ -41,6 +41,7 @@ export function CartPage({
   } | null>(null);
   const [productNames, setProductNames] = useState<Record<string, string>>({});
   const preferred = useRef("");
+  const undoRef = useRef<HTMLButtonElement>(null);
   const key = useRef(crypto.randomUUID());
   useEffect(() => {
     api
@@ -48,6 +49,9 @@ export function CartPage({
       .then((list) => setProductNames(Object.fromEntries(list.map((p) => [p.id, p.name]))))
       .catch(() => {});
   }, []);
+  useEffect(() => {
+    if (removed) undoRef.current?.focus();
+  }, [removed]);
   useEffect(() => {
     const wanted = addresses.find((a) => a.id === preferred.current);
     preferred.current = "";
@@ -78,7 +82,7 @@ export function CartPage({
       </section>
     );
   async function quantity(item: CartItem, next: number) {
-    if (next < 1) return;
+    if (next < 1 || busy) return;
     setBusy(true);
     try {
       onCart(await api.updateCartItem(token, item.id, next));
@@ -90,7 +94,7 @@ export function CartPage({
     }
   }
   async function undo() {
-    if (!removed) return;
+    if (!removed || busy) return;
     setBusy(true);
     try {
       onCart(await api.addCartItem(token, removed.variantId, removed.quantity));
@@ -188,6 +192,27 @@ export function CartPage({
           Carrinho<span className="title-count">[{count}]</span>
         </h1>
       </div>
+      <div className="undo-region" role="status">
+        {removed && (
+          <div className="undo-bar">
+            <span>{removed.name} saiu do carrinho.</span>
+            <span className="undo-actions">
+              <button
+                type="button"
+                ref={undoRef}
+                className="secondary undo"
+                aria-disabled={busy || undefined}
+                onClick={undo}
+              >
+                Desfazer
+              </button>
+              <button type="button" className="undo-dismiss" onClick={() => setRemoved(null)}>
+                Dispensar
+              </button>
+            </span>
+          </div>
+        )}
+      </div>
       {!cart?.items.length ? (
         <div className="empty-cart">
           <h2>Seu carrinho está vazio.</h2>
@@ -199,14 +224,6 @@ export function CartPage({
       ) : (
         <div className="cart-layout">
           <div className="table-box">
-            {removed && (
-              <div className="undo-bar" role="status">
-                <span>{removed.name} saiu do carrinho.</span>
-                <button type="button" className="secondary undo" disabled={busy} onClick={undo}>
-                  Desfazer
-                </button>
-              </div>
-            )}
             <ul className="cart-items" aria-label="Itens do carrinho">
               {cart.items.map((item) => (
                 <li className="cart-item" key={item.id}>
@@ -218,7 +235,7 @@ export function CartPage({
                     <button
                       type="button"
                       aria-label={`Diminuir quantidade de ${itemName(item)}`}
-                      disabled={busy}
+                      aria-disabled={busy || undefined}
                       onClick={() => quantity(item, item.quantity - 1)}
                     >
                       −
@@ -229,7 +246,7 @@ export function CartPage({
                     <button
                       type="button"
                       aria-label={`Aumentar quantidade de ${itemName(item)}`}
-                      disabled={busy}
+                      aria-disabled={busy || undefined}
                       onClick={() => quantity(item, item.quantity + 1)}
                     >
                       +

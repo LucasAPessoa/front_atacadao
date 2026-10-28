@@ -101,3 +101,21 @@ export const departmentsWithProducts = (
 /** Departamento oculto ou inexistente vira "" (Todos). */
 export const effectiveCategoryId = (categoryId: string, departments: Category[]) =>
   departments.some((category) => category.id === categoryId) ? categoryId : "";
+
+/** Plural simples em português: só a primeira palavra varia ("fardo 5kg" vira "fardos 5kg"). */
+export const packPlural = (name: string, count = 2) => {
+  const [head = "unidade", ...rest] = (name.trim() || "unidade").toLowerCase().split(/\s+/);
+  const plural =
+    count === 1
+      ? head
+      : head.endsWith("ão")
+        ? `${head.slice(0, -2)}ões`
+        : head.endsWith("l")
+          ? `${head.slice(0, -1)}is`
+          : head.endsWith("s")
+            ? head
+            : /[rz]$/.test(head)
+              ? `${head}es`
+              : `${head}s`;
+  return [plural, ...rest].join(" ");
+};

@@ -79,11 +79,22 @@ describe("preço na página do produto", () => {
     mount();
     const toggle = document.querySelector(".pdp-tiers-toggle");
     expect(toggle?.getAttribute("aria-expanded")).toBe("true");
-    expect(document.querySelector("#pdp-tiers-table")).not.toBeNull();
+    const panel = document.querySelector<HTMLElement>("#pdp-tiers-table");
+    expect(toggle?.getAttribute("aria-controls")).toBe("pdp-tiers-table");
+    expect(panel?.hidden).toBe(false);
     click(toggle);
     expect(toggle?.getAttribute("aria-expanded")).toBe("false");
-    expect(document.querySelector("#pdp-tiers-table")).toBeNull();
+    expect(panel?.hidden).toBe(true);
     click(toggle);
     expect(toggle?.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("CTA mostra quantidade, embalagem no plural e total", () => {
+    mount();
+    const cta = () => norm(document.querySelector(".pdp-buy .primary")?.textContent);
+    expect(cta()).toBe("Adicionar 1 fardo · R$ 20,00");
+    click(document.querySelector('[aria-label="Aumentar quantidade"]'));
+    expect(cta()).toBe("Adicionar 2 fardos · R$ 40,00");
+    expect(document.querySelector(".pdp-qty label")?.textContent).toBe("Quantidade de fardos");
   });
 });

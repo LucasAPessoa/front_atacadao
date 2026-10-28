@@ -999,6 +999,30 @@ h4,
   background: var(--ink);
   color: var(--on-ink);
 }
+.undo-region:not(:empty) {
+  margin-bottom: var(--space-4);
+}
+.undo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+.undo-dismiss {
+  min-height: var(--touch);
+  border: 0;
+  padding: 0 var(--space-2);
+  background: none;
+  color: var(--on-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.undo-dismiss:focus-visible {
+  outline-color: var(--on-ink);
+}
+.undo-bar .undo:focus-visible {
+  outline-color: var(--on-ink);
+}
 .undo-bar .undo {
   min-height: var(--touch);
   border-radius: var(--radius-control);
@@ -1078,8 +1102,14 @@ h4,
 .quantity button:hover:not(:disabled) {
   background: var(--divider);
 }
-.quantity button:disabled {
+.quantity button:disabled,
+.quantity button[aria-disabled="true"] {
   color: var(--muted);
+}
+.quantity button:focus-visible,
+.pdp-stepper button:focus-visible,
+.pdp-stepper input:focus-visible {
+  outline-offset: -4px;
 }
 .quantity span {
   min-width: 48px;
@@ -1967,7 +1997,7 @@ h4,
 }
 .pdp-tiers th {
   color: var(--muted);
-  font-size: var(--fs-floor);
+  font-size: var(--fs-support);
   font-weight: 400;
 }
 .pdp-tiers tr {
@@ -1991,7 +2021,7 @@ h4,
 }
 .pdp-note {
   color: var(--muted);
-  font: 400 var(--fs-floor) var(--font-body);
+  font: 400 var(--fs-support) var(--font-body);
 }
 .pdp-buy {
   display: flex;
@@ -2003,7 +2033,7 @@ h4,
 .pdp-qty {
   display: grid;
   gap: var(--space-1);
-  font: 500 var(--fs-floor) var(--font-body);
+  font: 600 var(--fs-support) var(--font-body);
 }
 .pdp-stepper {
   display: inline-flex;
@@ -2022,7 +2052,8 @@ h4,
   font-size: var(--fs-lg);
   font-weight: 700;
 }
-.pdp-stepper button:disabled {
+.pdp-stepper button:disabled,
+.pdp-stepper button[aria-disabled="true"] {
   color: var(--muted);
 }
 .pdp-stepper input {
