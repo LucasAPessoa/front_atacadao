@@ -41,6 +41,13 @@ export function ProductGrid({
   onAdd,
   onOpen,
 }: ProductGridProps) {
+  const [openTiers, setOpenTiers] = useState<Set<string>>(new Set());
+  const toggleTiers = (id: string) =>
+    setOpenTiers((current) => {
+      const next = new Set(current);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
   return (
     <>
       {loading ? (
@@ -59,15 +66,15 @@ export function ProductGrid({
                 (item) => item.is_active && item.stock_quantity > 0,
               );
               const unavailableProduct = !variant;
-              const next = variant
-                ? nextTier(
-                    tierRows(
-                      variant.base_price,
-                      tiers.filter((tier) => tier.product_id === product.id),
-                    ),
-                    1,
+              const rows = variant
+                ? tierRows(
+                    variant.base_price,
+                    tiers.filter((tier) => tier.product_id === product.id),
                   )
-                : undefined;
+                : [];
+              const next = variant ? nextTier(rows, 1) : undefined;
+              const tiersOpen = openTiers.has(product.id);
+              const panelId = `tiers-${product.id}`;
               const hint = next
                 ? `A partir de ${next.min_quantity}: ${money(next.unit_price)} cada`
                 : "";
@@ -103,6 +110,36 @@ export function ProductGrid({
                       {variant && <span>/{variant.variation_name}</span>}
                     </span>
                     {hint && <span className="product-hint">{hint}</span>}
+                    {rows.length > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          className="card-tiers-toggle"
+                          aria-expanded={tiersOpen}
+                          aria-controls={panelId}
+                          onClick={() => toggleTiers(product.id)}
+                        >
+                          Ver tabela de preços
+                        </button>
+                        <ul className="card-tiers" id={panelId} hidden={!tiersOpen}>
+                          {rows.map((row, index) => {
+                            const following = rows[index + 1];
+                            return (
+                              <li key={row.id}>
+                                <span>
+                                  {following
+                                    ? `${row.min_quantity} a ${following.min_quantity - 1}`
+                                    : `${row.min_quantity} ou mais`}
+                                </span>
+                                <span>
+                                  {money(row.unit_price)}/{variant?.variation_name}
+                                </span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </>
+                    )}
                     <button
                       type="button"
                       className="product-add"

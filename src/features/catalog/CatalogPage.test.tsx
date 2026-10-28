@@ -121,8 +121,36 @@ describe("ProductGrid", () => {
       ),
     );
     expect(host.querySelector("input")).toBeNull();
-    expect(host.querySelectorAll("button")).toHaveLength(1);
     expect(host.querySelector(".product-add")?.textContent).toBe("Adicionar");
     expect(host.querySelector(".product-hint")?.textContent).toContain("A partir de 5");
+  });
+
+  it("tabela de preços do card abre fechada e alterna aria-expanded", () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    root = createRoot(host);
+    act(() =>
+      root?.render(
+        <ProductGrid
+          loading={false}
+          unavailable={false}
+          visible={[product]}
+          tiers={[{ id: "t", product_id: "p-1", min_quantity: 5, unit_price: "22.00" }]}
+          adding=""
+          onAdd={() => {}}
+          onOpen={() => {}}
+        />,
+      ),
+    );
+    const toggle = host.querySelector<HTMLButtonElement>(".card-tiers-toggle");
+    const panel = host.querySelector<HTMLElement>(".card-tiers");
+    expect(toggle?.getAttribute("aria-expanded")).toBe("false");
+    expect(panel?.hidden).toBe(true);
+    act(() => toggle?.click());
+    expect(toggle?.getAttribute("aria-expanded")).toBe("true");
+    expect(panel?.hidden).toBe(false);
+    expect(panel?.textContent).toContain("1 a 4");
+    expect(panel?.textContent).toContain("5 ou mais");
+    expect(panel?.textContent).toContain("R$");
   });
 });
