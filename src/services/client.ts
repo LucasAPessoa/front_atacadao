@@ -9,6 +9,7 @@ import type {
   ProductImage,
   ProductQuestion,
   ProductReview,
+  StoreThemeSettings,
   User,
 } from "../shared/types/domain";
 import {
@@ -71,6 +72,7 @@ export const clearSession = tokens.clearSession;
 export const refreshSession = tokens.refreshSession;
 
 export const api = {
+  storeTheme: () => request<StoreThemeSettings>("/store/theme"),
   login: (email: string, password: string) =>
     request<Session>("/auth/login", {
       method: "POST",

@@ -23,6 +23,8 @@ import type {
   ReconciliationQueueItem,
   ReviewFilter,
   Session,
+  StoreThemeSettings,
+  ThemeOption,
   User,
 } from "./types";
 
@@ -156,6 +158,11 @@ export const adminApi = {
   deleteQuestion: (id: string) =>
     call<void>(`/catalog/product-questions/${encodeURIComponent(id)}`, json("DELETE")),
 
+  // Aparência da loja
+  getThemes: (signal?: AbortSignal) => call<ThemeOption[]>("/admin/store/themes", {}, signal),
+  getStoreTheme: (signal?: AbortSignal) => call<StoreThemeSettings>("/store/theme", {}, signal),
+  updateStoreTheme: (body: { theme: string; brand_color: string | null }) =>
+    call<StoreThemeSettings>("/admin/store/theme", json("PUT", body)),
   // Bling
   blingStatus: (signal?: AbortSignal) =>
     call<BlingStatus>("/integrations/bling/status", {}, signal),

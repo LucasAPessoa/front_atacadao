@@ -1,14 +1,17 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { store } from "../shared/store-config";
 import { brandTokens } from "../shared/theme";
 import type { User } from "../shared/types/domain";
+import { useStoreTheme } from "./StoreTheme";
 
-const tokens = brandTokens(store.theme.brand);
-const themeStyle = {
-  "--brand": tokens.brand,
-  "--on-brand": tokens.onBrand,
-  "--brand-text": tokens.brandText,
-} as React.CSSProperties;
+export function themeStyleFor(brand: string) {
+  const tokens = brandTokens(brand);
+  return {
+    "--brand": tokens.brand,
+    "--on-brand": tokens.onBrand,
+    "--brand-text": tokens.brandText,
+  } as React.CSSProperties;
+}
 
 export function navigate(path: string) {
   window.history.pushState({}, "", path);
@@ -26,6 +29,8 @@ type LayoutProps = {
 };
 
 export function Layout({ children, user, cartCount, onLogout, path }: LayoutProps) {
+  const { brand } = useStoreTheme();
+  const themeStyle = useMemo(() => themeStyleFor(brand), [brand]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [headerSearch, setHeaderSearch] = useState(() =>
     typeof window === "undefined"

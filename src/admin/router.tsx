@@ -1,4 +1,4 @@
-import { type RouteObject, createBrowserRouter } from "react-router";
+import { Navigate, type RouteObject, createBrowserRouter } from "react-router";
 import { RequireAdmin } from "./auth/RequireAdmin";
 import { comingSoonSections } from "./features/coming-soon/sections";
 import { AdminLayout } from "./layout/AdminLayout";
@@ -28,6 +28,11 @@ const bling = {
   lazy: () => import("./features/bling/BlingPage").then((m) => ({ Component: m.BlingPage })),
 };
 
+const appearance = {
+  lazy: () =>
+    import("./features/appearance/AppearancePage").then((m) => ({ Component: m.AppearancePage })),
+};
+
 const comingSoonRoutes: RouteObject[] = comingSoonSections.map((section) => ({
   path: section.path,
   lazy: () =>
@@ -53,6 +58,8 @@ export const routes: RouteObject[] = [
           { path: "bling", ...bling },
           // Retorno do OAuth do Bling (a API redireciona para /admin/integracoes/bling?resultado=...).
           { path: "integracoes/bling", ...bling },
+          { path: "configuracoes", element: <Navigate to="/configuracoes/aparencia" replace /> },
+          { path: "configuracoes/aparencia", ...appearance },
           ...comingSoonRoutes,
         ],
       },

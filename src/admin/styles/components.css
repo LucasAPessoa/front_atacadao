@@ -135,7 +135,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--adm-space-1);
-  min-height: 2.25rem;
+  min-height: 2.75rem;
   padding: 0 var(--adm-space-3);
   border: 1px solid var(--adm-border-strong);
   border-radius: var(--adm-radius);
@@ -187,7 +187,7 @@
 .adm-field input,
 .adm-field select,
 .adm-field textarea {
-  min-height: 2.25rem;
+  min-height: 2.75rem;
   padding: var(--adm-space-1) var(--adm-space-2);
   border: 1px solid var(--adm-border-strong);
   border-radius: var(--adm-radius);
@@ -613,4 +613,53 @@
 .adm-toast button {
   min-width: 2rem;
   min-height: 2rem;
+}
+
+/* Aparência */
+.adm-theme-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: var(--adm-space-3);
+  border: 0;
+  padding: 0;
+  margin: 0 0 var(--adm-space-4);
+}
+.adm-theme-list legend {
+  font-weight: 600;
+  margin-bottom: var(--adm-space-2);
+}
+.adm-theme-card {
+  display: grid;
+  gap: var(--adm-space-1);
+  padding: var(--adm-space-3);
+  border: 1px solid var(--adm-border-strong);
+  border-radius: var(--adm-radius);
+  background: var(--adm-surface);
+  cursor: pointer;
+}
+.adm-theme-card[data-selected="true"] {
+  border-color: var(--adm-accent-text);
+  box-shadow: 0 0 0 2px var(--adm-accent-text);
+}
+.adm-theme-card:focus-within {
+  outline: 2px solid var(--adm-focus);
+  outline-offset: 2px;
+}
+.adm-color-row {
+  display: flex;
+  gap: var(--adm-space-2);
+  align-items: center;
+}
+.adm-color-row input[type="color"] {
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+}
+.adm-theme-preview {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 var(--adm-space-4);
+  border-radius: var(--adm-radius);
+  font-weight: 600;
 }

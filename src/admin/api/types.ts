@@ -6,6 +6,8 @@ import type {
   CatalogSyncRuns,
   Category,
   PricingTier,
+  StoreThemeSettings,
+  ThemeOption,
   User,
 } from "../../shared/types/domain";
 
@@ -18,6 +20,8 @@ export type {
   PageMeta,
   PricingTier,
   Session,
+  StoreThemeSettings,
+  ThemeOption,
   User,
 };
 
