@@ -9,10 +9,12 @@ import {
   galleryImages,
   handleLinkClick,
   isAvailable,
+  nextTier,
   safeImageUrl,
+  tierRows,
 } from "../../lib/product";
 import { api } from "../../services/client";
-import type { Cart, Product } from "../../shared/types/domain";
+import type { Cart, PricingTier, Product } from "../../shared/types/domain";
 import { addToCart, type Extras, type Loaded, loadProduct } from "./loader";
 
 type PageProps = {
@@ -102,28 +104,111 @@ function QuantityField({
   onQuantity(value: number): void;
 }) {
   const [draft, setDraft] = useState(String(quantity));
+  const set = (value: number) => {
+    const next = clampQuantity(value, stock);
+    setDraft(String(next));
+    onQuantity(next);
+  };
   return (
-    <label className="pdp-qty">
-      <span>Quantidade</span>
-      <input
-        type="number"
-        inputMode="numeric"
-        min={1}
-        max={Math.max(stock, 1)}
-        value={draft}
-        disabled={disabled}
-        onChange={(event) => {
-          setDraft(event.target.value);
-          if (event.target.value !== "")
-            onQuantity(clampQuantity(Number(event.target.value), stock));
-        }}
-        onBlur={() => {
-          const next = clampQuantity(draft === "" ? 1 : Number(draft), stock);
-          setDraft(String(next));
-          onQuantity(next);
-        }}
-      />
-    </label>
+    <div className="pdp-qty">
+      <label htmlFor="pdp-qty-input">Quantidade</label>
+      <div className="pdp-stepper">
+        <button
+          type="button"
+          aria-label="Diminuir quantidade"
+          disabled={disabled || quantity <= 1}
+          onClick={() => set(quantity - 1)}
+        >
+          −
+        </button>
+        <input
+          id="pdp-qty-input"
+          type="number"
+          inputMode="numeric"
+          min={1}
+          max={Math.max(stock, 1)}
+          value={draft}
+          disabled={disabled}
+          onChange={(event) => {
+            setDraft(event.target.value);
+            if (event.target.value !== "")
+              onQuantity(clampQuantity(Number(event.target.value), stock));
+          }}
+          onBlur={() => set(draft === "" ? 1 : Number(draft))}
+        />
+        <button
+          type="button"
+          aria-label="Aumentar quantidade"
+          disabled={disabled || quantity >= Math.max(stock, 1)}
+          onClick={() => set(quantity + 1)}
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TierTable({ rows, active }: { rows: PricingTier[]; active?: string }) {
+  const [open, setOpen] = useState(true);
+  return (
+    <section className="pdp-tiers" aria-label="Preço por quantidade">
+      <button
+        type="button"
+        className="pdp-tiers-toggle"
+        aria-expanded={open}
+        aria-controls="pdp-tiers-table"
+        onClick={() => setOpen(!open)}
+      >
+        Ver tabela de preços
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+      {open && (
+        <div id="pdp-tiers-table">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Quantidade</th>
+                <th scope="col">Preço</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((item, index) => {
+                const on = item.id === active;
+                const following = rows[index + 1];
+                return (
+                  <tr key={item.id} className={on ? "active" : ""}>
+                    <td>
+                      <span className="tier-mark" aria-hidden="true" />
+                      {following
+                        ? `${item.min_quantity} a ${following.min_quantity - 1}`
+                        : `${item.min_quantity} ou mais`}
+                    </td>
+                    <td>
+                      {money(item.unit_price)}
+                      {on && <span> · seu preço</span>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <p className="pdp-note">Exibição informativa; o valor final é calculado pelo servidor.</p>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -151,7 +236,10 @@ export function ProductView({
   const titleRef = useRef<HTMLHeadingElement>(null);
   // biome-ignore lint/correctness/useExhaustiveDependencies: foco só ao abrir outro produto.
   useEffect(() => titleRef.current?.focus(), [product.id]);
-  const tier = applicableTier(extras.tiers, quantity);
+  const rows = variant ? tierRows(variant.base_price, extras.tiers) : [];
+  const tier = applicableTier(rows, quantity);
+  const upcoming = nextTier(rows, quantity);
+  const unitPrice = Number(tier?.unit_price ?? variant?.base_price ?? 0);
   const category = product.categories[0]?.name;
   return (
     <article className="pdp wrap">
@@ -205,10 +293,26 @@ export function ProductView({
           {product.complementary_description?.trim() && (
             <RichText className="pdp-description" value={product.complementary_description} />
           )}
-          <p className="pdp-price">
-            {variant ? money(variant.base_price) : "—"}
-            <small>valor unitário · confirmado pelo servidor no carrinho</small>
-          </p>
+          <div className="pdp-price">
+            <span className="price-value pdp-total" aria-live="polite">
+              {variant ? money(unitPrice * quantity) : "—"}
+            </span>
+            {variant && (
+              <span className="price-side">
+                {quantity} × {money(unitPrice)}/{variant.variation_name}
+              </span>
+            )}
+            {variant && rows.length > 1 && (
+              <span className="price-hint">
+                {upcoming
+                  ? `Leve ${upcoming.min_quantity} e pague ${money(upcoming.unit_price)} cada (mais ${upcoming.min_quantity - quantity})`
+                  : "Você está na melhor faixa"}
+              </span>
+            )}
+            <small className="pdp-note">
+              Total estimado; o servidor confirma o valor no carrinho.
+            </small>
+          </div>
           {variants.length > 0 && (
             <fieldset className="pdp-variants">
               <legend>Variação</legend>
@@ -233,37 +337,7 @@ export function ProductView({
               })}
             </fieldset>
           )}
-          {extras.tiers.length > 0 && (
-            <section className="pdp-tiers" aria-labelledby="pdp-tiers-title">
-              <h2 id="pdp-tiers-title">Preço por quantidade</h2>
-              <table>
-                <thead>
-                  <tr>
-                    <th scope="col">A partir de</th>
-                    <th scope="col">Preço unitário</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {extras.tiers.map((item) => (
-                    <tr
-                      key={item.id}
-                      className={item.id === tier?.id ? "active" : ""}
-                      aria-current={item.id === tier?.id ? "true" : undefined}
-                    >
-                      <td>{item.min_quantity} un.</td>
-                      <td>
-                        {money(item.unit_price)}
-                        {item.id === tier?.id && <span> · sua faixa</span>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <p className="pdp-note">
-                Exibição informativa; o valor final é calculado pelo servidor.
-              </p>
-            </section>
-          )}
+          {rows.length > 1 && <TierTable rows={rows} active={tier?.id} />}
           <div className="pdp-buy">
             <QuantityField
               key={variant?.id}

@@ -59,7 +59,7 @@ describe("página de produto", () => {
     expect(html).toContain("Arroz Tipo 1");
     expect(html).toContain("Grãos selecionados");
     expect(html).toContain("AR");
-    expect(html).toContain("sua faixa");
+    expect(html).toContain("seu preço");
     expect(html).toContain("Nota 4 de 5");
     expect(html).toContain("Sim");
     expect(html).toContain("Adicionar ao carrinho");
