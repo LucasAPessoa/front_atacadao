@@ -92,8 +92,7 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 .site-footer button:focus-visible,
-.site-footer a:focus-visible,
-.auth-layout button:focus-visible {
+.site-footer a:focus-visible {
   outline-color: var(--on-ink);
 }
 .cart-button:focus-visible {
