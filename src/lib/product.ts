@@ -25,6 +25,19 @@ export const applicableTier = (tiers: PricingTier[], quantity: number): PricingT
     .filter((tier) => tier.min_quantity <= quantity)
     .sort((a, b) => b.min_quantity - a.min_quantity)[0];
 
+/** Faixas exibíveis: a faixa 1 é o preço base da variação (o servidor só guarda faixas acima de 1). */
+export const tierRows = (basePrice: string, tiers: PricingTier[]): PricingTier[] => {
+  const sorted = [...tiers].sort((a, b) => a.min_quantity - b.min_quantity);
+  if (sorted.some((tier) => tier.min_quantity <= 1)) return sorted;
+  return [{ id: "base", product_id: "", min_quantity: 1, unit_price: basePrice }, ...sorted];
+};
+
+/** Primeira faixa acima da quantidade. Só exibição. */
+export const nextTier = (rows: PricingTier[], quantity: number): PricingTier | undefined =>
+  [...rows]
+    .filter((tier) => tier.min_quantity > quantity)
+    .sort((a, b) => a.min_quantity - b.min_quantity)[0];
+
 /** Imagens da variação escolhida; sem nenhuma, as do produto. Principal primeiro. */
 export const galleryImages = (images: ProductImage[], variantId?: string): ProductImage[] => {
   const own = variantId ? images.filter((image) => image.variant_id === variantId) : [];
