@@ -2,7 +2,9 @@ import { Tabs } from "../../ui/Tabs";
 import { useState } from "react";
 import { Link } from "react-router";
 import type { AdminProductDetail, AdminVariant } from "../../api/types";
+import { sanitizeHtml } from "../../../shared/sanitize-html";
 import { PresentationForm } from "./PresentationForm";
+import { PricingTab } from "./PricingEditor";
 import { formatBRL, pendingLabels } from "./format";
 
 const num = (value: number | null, unit: string) => (value === null ? "—" : `${value} ${unit}`);
@@ -51,9 +53,9 @@ function VariantRow({ v }: { v: AdminVariant }) {
 }
 
 export function BlingTab({ product }: { product: AdminProductDetail }) {
-  const images = product.variants.flatMap((v) =>
-    v.images.map((url) => ({ url, sku: v.bling_sku })),
-  );
+  const images = product.images.length
+    ? product.images.map((url) => ({ url, sku: product.code }))
+    : product.variants.flatMap((v) => v.images.map((url) => ({ url, sku: v.bling_sku })));
   return (
     <div role="tabpanel" aria-label="Bling" className="adm-stack">
       <section className="adm-card" aria-labelledby="bling-data">
@@ -62,7 +64,7 @@ export function BlingTab({ product }: { product: AdminProductDetail }) {
         </h2>
         <dl className="adm-dl">
           <dt>Nome no Bling</dt>
-          <dd>{product.presentation.name.bling ?? "—"}</dd>
+          <dd>{product.name || "—"}</dd>
           <dt>Código</dt>
           <dd>{product.code}</dd>
           <dt>ID no Bling</dt>
@@ -73,9 +75,24 @@ export function BlingTab({ product }: { product: AdminProductDetail }) {
           <dd>{product.unit ?? "—"}</dd>
           <dt>Situação</dt>
           <dd>{product.is_active ? "À venda" : "Fora de venda"}</dd>
+          <dt>Categorias</dt>
+          <dd>
+            {product.categories.length ? product.categories.map((c) => c.name).join(", ") : "—"}
+          </dd>
           <dt>Atualizado no Bling</dt>
           <dd>{dt(product.bling_updated_at)}</dd>
         </dl>
+        {[product.description, product.complementary_description].map(
+          (html, index) =>
+            html?.trim() && (
+              <div
+                key={index === 0 ? "description" : "complementary"}
+                // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML sanitizado por DOMPurify (tags de texto, sem atributos).
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }}
+              />
+            ),
+        )}
+        <p className="adm-muted">Nome, descrição, imagens e categorias: edite no Bling.</p>
       </section>
 
       <section className="adm-card" aria-labelledby="bling-variants">
@@ -138,7 +155,7 @@ const PRODUCT_TABS = [
 
 export function ProductDetailView({ product }: { product: AdminProductDetail }) {
   const [tab, setTab] = useState<"bling" | "store" | "prices">("bling");
-  const name = product.presentation.name.site ?? product.presentation.name.bling ?? product.code;
+  const name = product.name || product.code;
   return (
     <section aria-labelledby="adm-page-title">
       <div className="adm-page-header">
@@ -153,11 +170,7 @@ export function ProductDetailView({ product }: { product: AdminProductDetail }) 
       />
       {tab === "bling" && <BlingTab product={product} />}
       {tab === "store" && <PresentationForm product={product} />}
-      {tab === "prices" && (
-        <div role="tabpanel" aria-label="Preços" className="adm-stack">
-          {/* TODO(back #128, brief 2): editor da tabela por variação (adminApi.savePricingTable). */}
-        </div>
-      )}
+      {tab === "prices" && <PricingTab product={product} />}
     </section>
   );
 }

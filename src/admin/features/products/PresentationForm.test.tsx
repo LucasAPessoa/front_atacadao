@@ -7,23 +7,11 @@ import type { AdminProductDetail, Presentation } from "../../api/types";
 import { adminTokens } from "../../auth/session";
 import { waitFor } from "../../test-utils";
 import { ToastProvider } from "../../ui/Toast";
-import { PresentationForm, buildPatch, toFormValues } from "./PresentationForm";
+import { PresentationForm, buildPatch } from "./PresentationForm";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const presentation = (extra: Partial<Presentation> = {}): Presentation => ({
-  name: { bling: "Nome Bling", site: "Nome site", locked: true },
-  description: {
-    bling: "<p>Desc <script>alert(1)</script><b>Bling</b></p>",
-    site: null,
-    locked: false,
-  },
-  complementary_description: { bling: null, site: null, locked: false },
-  categories: {
-    bling: [{ id: "c1", name: "Bebidas" }],
-    site: [{ id: "c2", name: "Promoções", is_active: false }],
-    locked: true,
-  },
   visible: true,
   featured: false,
   updated_at: null,
@@ -35,12 +23,16 @@ const product = (p: Presentation): AdminProductDetail => ({
   id: "p1",
   bling_id: 1,
   code: "A",
+  name: "Nome Bling",
+  description: null,
+  complementary_description: null,
+  images: [],
+  categories: [],
   is_active: true,
   brand: null,
   unit: null,
   bling_updated_at: null,
   variants: [],
-  pricing_tiers: [],
   presentation: p,
 });
 
@@ -60,18 +52,7 @@ beforeEach(() => {
   patchReply = () => new Response(JSON.stringify({ data: presentation() }), { status: 200 });
   vi.stubGlobal(
     "fetch",
-    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      if (url.includes("/catalog/categories"))
-        return new Response(
-          JSON.stringify({
-            data: [
-              { id: "c1", name: "Bebidas", is_active: true },
-              { id: "c2", name: "Promoções", is_active: false },
-            ],
-          }),
-          { status: 200 },
-        );
+    vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       if (init?.method === "PATCH") {
         patches.push(JSON.parse(String(init.body)));
         return patchReply();
@@ -96,95 +77,58 @@ async function mount(p = presentation()) {
       </QueryClientProvider>,
     );
   });
-  await waitFor(() => expect(box.textContent).not.toContain("Carregando categorias"));
   return { box, invalidate };
 }
 
-const switchOf = (box: HTMLElement, legend: string) =>
-  Array.from(box.querySelectorAll("fieldset"))
-    .find((f) => f.querySelector("legend")?.textContent === legend)
-    ?.querySelector("input[type=checkbox]") as HTMLInputElement;
-const type = (el: HTMLInputElement | HTMLTextAreaElement, value: string) =>
-  act(async () => {
-    const proto = el instanceof HTMLTextAreaElement ? HTMLTextAreaElement : HTMLInputElement;
-    Object.getOwnPropertyDescriptor(proto.prototype, "value")?.set?.call(el, value);
-    el.dispatchEvent(new Event("input", { bubbles: true }));
-  });
 const save = (box: HTMLElement) =>
   act(async () => (box.querySelector("button[type=submit]") as HTMLButtonElement).click());
+const check = (box: HTMLElement, label: string) =>
+  act(async () => {
+    const found = Array.from(box.querySelectorAll("label")).find((l) =>
+      l.textContent?.includes(label),
+    );
+    found?.querySelector("input")?.click();
+  });
 
 describe("buildPatch", () => {
   it("envia só chaves alteradas", () => {
-    const initial = toFormValues(presentation());
+    const initial = { visible: true, featured: false };
     expect(buildPatch(initial, initial)).toEqual({});
     expect(buildPatch({ ...initial, featured: true }, initial)).toEqual({ featured: true });
   });
 });
 
 describe("PresentationForm", () => {
-  it("mostra valor travado, valor do Bling e HTML sanitizado", async () => {
+  it("só tem visibilidade e destaque, com a nota 'Edite no Bling'", async () => {
     const { box } = await mount();
-    expect((box.querySelector("#pf-name-value") as HTMLInputElement).value).toBe("Nome site");
-    expect(box.textContent).toContain("Nome Bling");
-    expect(box.querySelector("script")).toBeNull();
-    expect(box.querySelector("b")?.textContent).toBe("Bling");
-    expect(box.textContent).toContain("Categoria inativa");
+    expect(box.querySelectorAll("input[type=checkbox]")).toHaveLength(2);
+    expect(box.querySelector("input[type=text], textarea")).toBeNull();
+    expect(box.textContent).toContain("Edite no Bling");
   });
 
-  it("travar com valor envia locked:true e value aparado", async () => {
+  it("salva só o que mudou e recarrega o detalhe e a lista", async () => {
     const { box, invalidate } = await mount();
-    await act(async () => switchOf(box, "Descrição").click());
-    await type(box.querySelector("#pf-description-value") as HTMLTextAreaElement, "  Novo texto  ");
+    await check(box, "Destaque");
     await save(box);
     await waitFor(() => expect(patches).toHaveLength(1));
-    expect(patches[0]).toEqual({ description: { locked: true, value: "Novo texto" } });
+    expect(patches[0]).toEqual({ featured: true });
     await waitFor(() => expect(box.textContent).toContain("Apresentação na loja salva."));
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ["admin", "product", "p1"] });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ["admin", "products"] });
   });
 
-  it("destravar envia locked:false", async () => {
+  it("sem alteração não chama a API", async () => {
     const { box } = await mount();
-    await act(async () => switchOf(box, "Nome").click());
     await save(box);
-    await waitFor(() => expect(patches).toHaveLength(1));
-    expect(patches[0]).toEqual({ name: { locked: false } });
-  });
-
-  it("valida vazio e mais de 255 caracteres sem chamar a API", async () => {
-    const { box } = await mount();
-    const name = box.querySelector("#pf-name-value") as HTMLInputElement;
-    await type(name, "   ");
-    await save(box);
-    await waitFor(() => expect(box.textContent).toContain("Nome: informe um valor."));
-    await type(name, "x".repeat(256));
-    await save(box);
-    await waitFor(() => expect(box.textContent).toContain("no máximo 255"));
+    await waitFor(() => expect(box.textContent).toContain("Nenhuma alteração"));
     expect(patches).toHaveLength(0);
   });
 
-  it("422 é mapeado para o campo", async () => {
-    patchReply = () =>
-      new Response(
-        JSON.stringify({
-          detail: [{ loc: ["body", "name", "value"], msg: "Nome já usado" }],
-        }),
-        { status: 422 },
-      );
+  it("erro do servidor aparece como aviso", async () => {
+    patchReply = () => new Response(JSON.stringify({ detail: "x" }), { status: 500 });
     const { box } = await mount();
-    await type(box.querySelector("#pf-name-value") as HTMLInputElement, "Outro");
+    await check(box, "Visível");
     await save(box);
-    await waitFor(() =>
-      expect(box.querySelector("#pf-name-value-error")?.textContent).toBe("Nome já usado"),
-    );
-  });
-
-  it("400 vira erro do campo categorias", async () => {
-    patchReply = () =>
-      new Response(JSON.stringify({ detail: "Categoria inexistente" }), { status: 400 });
-    const { box } = await mount();
-    await act(async () => (box.querySelector("input[value=c1]") as HTMLInputElement).click());
-    await save(box);
-    await waitFor(() => expect(box.textContent).toContain("Categoria inexistente"));
+    await waitFor(() => expect(box.textContent).toContain("Erro no servidor"));
   });
 });

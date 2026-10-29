@@ -25,7 +25,6 @@ const product = (n: number, extra: Partial<AdminProductSummary> = {}): AdminProd
   is_active: true,
   visible: true,
   featured: false,
-  customized: false,
   min_price: "19.90",
   max_price: "1234.50",
   stock: 10,
@@ -115,6 +114,46 @@ describe("ProductsList", () => {
     expect(box.textContent).toContain("R$ 19,90 – R$ 1.234,50");
     expect(box.textContent).toContain("1 item");
     expect(box.textContent).toContain("Baixo");
+  });
+
+  it("mostra o estado do produto na loja do site e os avisos", async () => {
+    reply = (url) =>
+      categoriesReply(url) ?? {
+        data: [
+          product(1),
+          product(2, { pricing_status: "pending" }),
+          product(3, { store_listed: false }),
+          product(4, { warnings: ["store_price_missing"] }),
+        ],
+        meta: { total: 4, skip: 0, limit: 25 },
+      };
+    const box = await mount();
+    const rows = [...box.querySelectorAll("tbody tr")].map((r) => r.textContent ?? "");
+    expect(rows[0]).toContain("Ativo");
+    expect(rows[1]).toContain("Aguardando preços");
+    expect(rows[2]).toContain("Fora da loja do site");
+    expect(rows[3]).toContain("não tem preço para esta variação");
+  });
+
+  it("filtros de preços, aviso e loja vão para a consulta e para a URL", async () => {
+    reply = (url) =>
+      categoriesReply(url) ?? { data: [product(1)], meta: { total: 1, skip: 0, limit: 25 } };
+    const box = await mount("/produtos?pricing_status=pending&warning=bogus&listed=false");
+    const call = productCalls().at(-1) ?? "";
+    expect(call).toContain("pricing_status=pending");
+    expect(call).toContain("listed=false");
+    expect(call).not.toContain("bogus");
+    expect((box.querySelector("#flt-pricing_status") as HTMLSelectElement).value).toBe("pending");
+    const select = box.querySelector("#flt-warning") as HTMLSelectElement;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set?.call(
+        select,
+        "tier_not_below_unit",
+      );
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await waitFor(() => expect(search).toContain("warning=tier_not_below_unit"));
+    expect(productCalls().at(-1)).toContain("warning=tier_not_below_unit");
   });
 
   it("restaura filtros da URL na consulta e nos controles", async () => {

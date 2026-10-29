@@ -33,6 +33,13 @@ const appearance = {
     import("./features/appearance/AppearancePage").then((m) => ({ Component: m.AppearancePage })),
 };
 
+const pricingSettings = {
+  lazy: () =>
+    import("./features/pricing/PricingSettingsPage").then((m) => ({
+      Component: m.PricingSettingsPage,
+    })),
+};
+
 const comingSoonRoutes: RouteObject[] = comingSoonSections.map((section) => ({
   path: section.path,
   lazy: () =>
@@ -60,6 +67,7 @@ export const routes: RouteObject[] = [
           { path: "integracoes/bling", ...bling },
           { path: "configuracoes", element: <Navigate to="/configuracoes/aparencia" replace /> },
           { path: "configuracoes/aparencia", ...appearance },
+          { path: "configuracoes/precos", ...pricingSettings },
           ...comingSoonRoutes,
         ],
       },

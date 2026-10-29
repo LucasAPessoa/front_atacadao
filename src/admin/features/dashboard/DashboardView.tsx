@@ -133,6 +133,26 @@ export function DashboardView(p: DashboardViewProps) {
               <p className="adm-muted">Cadastro incompleto vindo do Bling</p>
               <Link to="/bling">Ver pendências do Bling</Link>
             </div>
+            <div className="adm-card">
+              <h2 className="adm-kpi-title">Aguardando preços</h2>
+              <p className="adm-kpi-value">{summary.pricing_pending_products}</p>
+              <p className="adm-muted">Produtos fora da loja até confirmar os preços</p>
+              <Link to="/produtos?pricing_status=pending">Ver produtos aguardando preços</Link>
+            </div>
+            <div className="adm-card">
+              <h2 className="adm-kpi-title">Faixas com aviso</h2>
+              <p className="adm-kpi-value">{summary.tier_warning_products}</p>
+              <p className="adm-muted">Faixa com preço não menor que o de 1 unidade</p>
+              <Link to="/produtos?warning=tier_not_below_unit">
+                Ver produtos com faixa em aviso
+              </Link>
+            </div>
+            <div className="adm-card">
+              <h2 className="adm-kpi-title">Sem preço na loja</h2>
+              <p className="adm-kpi-value">{summary.store_price_missing_products}</p>
+              <p className="adm-muted">A loja do site no Bling não tem preço</p>
+              <Link to="/produtos?warning=store_price_missing">Ver produtos sem preço na loja</Link>
+            </div>
           </div>
           <div className="adm-card">
             <h2>Pedidos por status</h2>

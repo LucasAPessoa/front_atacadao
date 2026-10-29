@@ -53,7 +53,6 @@ export type ProductListParams = {
   featured?: boolean;
   low_stock?: boolean;
   pending?: boolean;
-  customized?: boolean;
   pricing_status?: PricingStatus;
   warning?: PricingWarning;
   listed?: boolean;
@@ -71,7 +70,6 @@ export type AdminProductSummary = {
   is_active: boolean;
   visible: boolean;
   featured: boolean;
-  customized: boolean;
   min_price: string;
   max_price: string;
   stock: number;
@@ -105,41 +103,30 @@ export type AdminVariant = {
   pricing_tiers: AdminPricingTier[];
   warnings: PricingWarning[];
 };
-export type Overridable<T> = { bling: T; site: T | null; locked: boolean };
 export type Presentation = {
-  name: Overridable<string | null>;
-  description: Overridable<string | null>;
-  complementary_description: Overridable<string | null>;
-  categories: {
-    bling: { id: string; name: string }[];
-    site: { id: string; name: string; is_active: boolean }[];
-    locked: boolean;
-  };
   visible: boolean;
   featured: boolean;
   updated_at: string | null;
   updated_by: { id: string; full_name: string } | null;
 };
+/** Nome, descrições, imagens e categorias vêm do Bling e são somente leitura. */
 export type AdminProductDetail = {
   id: string;
   bling_id: number;
   code: string;
+  name: string;
+  description: string | null;
+  complementary_description: string | null;
+  images: string[];
+  categories: { id: string; name: string }[];
   is_active: boolean;
   brand: string | null;
   unit: string | null;
   bling_updated_at: string | null;
   variants: AdminVariant[];
-  pricing_tiers: { id: string; min_quantity: number; unit_price: string }[];
   presentation: Presentation;
 };
-export type PresentationPatch = {
-  name?: { locked: boolean; value?: string };
-  description?: { locked: boolean; value?: string };
-  complementary_description?: { locked: boolean; value?: string };
-  categories?: { locked: boolean; category_ids?: string[] };
-  visible?: boolean;
-  featured?: boolean;
-};
+export type PresentationPatch = { visible?: boolean; featured?: boolean };
 export type BulkPresentationPatch = {
   product_ids: string[];
   visible?: boolean;
