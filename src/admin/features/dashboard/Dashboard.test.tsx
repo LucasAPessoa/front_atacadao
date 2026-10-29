@@ -125,14 +125,14 @@ describe("dashboard", () => {
       },
     });
     const box = await mount("/");
-    await waitFor(() => expect(box.textContent).toContain("Aguardando preços"));
+    await waitFor(() => expect(box.textContent).toContain("Produtos aguardando preços"));
     const value = (title: string) =>
       [...box.querySelectorAll(".adm-card")]
         .find((c) => c.querySelector(".adm-kpi-title")?.textContent === title)
         ?.querySelector(".adm-kpi-value")?.textContent;
-    expect(value("Aguardando preços")).toBe("7");
-    expect(value("Faixas com aviso")).toBe("2");
-    expect(value("Sem preço na loja")).toBe("4");
+    expect(value("Produtos aguardando preços")).toBe("7");
+    expect(value("Faixas iguais ou acima do preço de 1 unidade")).toBe("2");
+    expect(value("Sem preço na loja do Bling")).toBe("4");
   });
 
   it("formata BRL a partir da string e traduz status", async () => {

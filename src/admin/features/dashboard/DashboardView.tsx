@@ -134,24 +134,22 @@ export function DashboardView(p: DashboardViewProps) {
               <Link to="/bling">Ver pendências do Bling</Link>
             </div>
             <div className="adm-card">
-              <h2 className="adm-kpi-title">Aguardando preços</h2>
+              <h2 className="adm-kpi-title">Produtos aguardando preços</h2>
               <p className="adm-kpi-value">{summary.pricing_pending_products}</p>
-              <p className="adm-muted">Produtos fora da loja até confirmar os preços</p>
+              <p className="adm-muted">Ficam fora da loja até você confirmar os preços</p>
               <Link to="/produtos?pricing_status=pending">Ver produtos aguardando preços</Link>
             </div>
             <div className="adm-card">
-              <h2 className="adm-kpi-title">Faixas com aviso</h2>
+              <h2 className="adm-kpi-title">Faixas iguais ou acima do preço de 1 unidade</h2>
               <p className="adm-kpi-value">{summary.tier_warning_products}</p>
-              <p className="adm-muted">Faixa com preço não menor que o de 1 unidade</p>
-              <Link to="/produtos?warning=tier_not_below_unit">
-                Ver produtos com faixa em aviso
-              </Link>
+              <p className="adm-muted">Produtos com faixa que não dá desconto</p>
+              <Link to="/produtos?warning=tier_not_below_unit">Ver produtos com essas faixas</Link>
             </div>
             <div className="adm-card">
-              <h2 className="adm-kpi-title">Sem preço na loja</h2>
+              <h2 className="adm-kpi-title">Sem preço na loja do Bling</h2>
               <p className="adm-kpi-value">{summary.store_price_missing_products}</p>
-              <p className="adm-muted">A loja do site no Bling não tem preço</p>
-              <Link to="/produtos?warning=store_price_missing">Ver produtos sem preço na loja</Link>
+              <p className="adm-muted">A loja do site no Bling não tem preço para eles</p>
+              <Link to="/produtos?warning=store_price_missing">Ver produtos sem preço</Link>
             </div>
           </div>
           <div className="adm-card">
