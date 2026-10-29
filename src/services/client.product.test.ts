@@ -14,12 +14,11 @@ beforeEach(() => {
 });
 
 describe("catálogo do produto", () => {
-  it("filtra imagens, faixas, avaliações e perguntas por product_id", async () => {
+  it("filtra imagens, avaliações e perguntas por product_id", async () => {
     const id = "11111111-1111-4111-8111-111111111111";
     await Promise.all([
       api.product(id),
       api.productImages(id),
-      api.variantPricingTiers("vv"),
       api.productReviews(id),
       api.productQuestions(id),
     ]);
@@ -29,7 +28,6 @@ describe("catálogo do produto", () => {
     expect(urls.map((u) => u.replace(/^.*?(\/catalog)/, "$1"))).toEqual([
       `/catalog/products/${id}`,
       `/catalog/product-images/?product_id=${id}`,
-      `/catalog/pricing-tiers/?variant_id=vv`,
       `/catalog/product-reviews/?product_id=${id}`,
       `/catalog/product-questions/?product_id=${id}`,
     ]);

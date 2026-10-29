@@ -10,7 +10,7 @@ const links = [
   { to: "/pedidos", label: "Pedidos" },
   { to: "/moderacao", label: "Moderação" },
   { to: "/bling", label: "Bling" },
-  { to: "/configuracoes", label: "Configurações" },
+  { to: "/configuracoes", label: "Configurações", end: true },
   { to: "/configuracoes/precos", label: "Preços" },
 ];
 

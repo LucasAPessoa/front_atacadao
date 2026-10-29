@@ -4,7 +4,6 @@ import type {
   Category,
   CheckoutPreview,
   Order,
-  PricingTier,
   Product,
   ProductImage,
   ProductQuestion,
@@ -91,10 +90,6 @@ export const api = {
   product: (id: string) => request<Product>(`/catalog/products/${encodeURIComponent(id)}`),
   productImages: (productId: string) =>
     request<ProductImage[]>(`/catalog/product-images/?product_id=${encodeURIComponent(productId)}`),
-  pricingTiers: (productId: string) =>
-    request<PricingTier[]>(`/catalog/pricing-tiers/?product_id=${encodeURIComponent(productId)}`),
-  variantPricingTiers: (variantId: string) =>
-    request<PricingTier[]>(`/catalog/pricing-tiers/?variant_id=${encodeURIComponent(variantId)}`),
   productReviews: (productId: string) =>
     request<ProductReview[]>(
       `/catalog/product-reviews/?product_id=${encodeURIComponent(productId)}`,

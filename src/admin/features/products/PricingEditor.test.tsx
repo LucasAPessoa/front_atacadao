@@ -192,6 +192,22 @@ describe("editor da tabela por variação", () => {
       await waitFor(() => expect(box.querySelector("[role=alert]")?.textContent).toBe(detail));
     });
 
+  it("422 do pydantic (detail em lista) mostra as mensagens dos campos", async () => {
+    reply = () =>
+      new Response(
+        JSON.stringify({
+          detail: [{ loc: ["body", "tiers", 0, "unit_price"], msg: "Preço inválido." }],
+        }),
+        { status: 422 },
+      );
+    const box = await mount([variant()]);
+    await type(input(box, "Preço da faixa 1"), "24,90");
+    await click(button(box, "Salvar e confirmar"));
+    await waitFor(() =>
+      expect(box.querySelector("[role=alert]")?.textContent).toBe("Preço inválido."),
+    );
+  });
+
   it("Confirmar preços usa confirm-pricing do produto e só vale com variação pendente", async () => {
     const box = await mount([variant()]);
     expect(button(box, "Confirmar preços").disabled).toBe(true);

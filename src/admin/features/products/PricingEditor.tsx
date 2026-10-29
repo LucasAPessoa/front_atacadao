@@ -27,10 +27,12 @@ const draftsOf = (variant: AdminVariant): TierDraft[] =>
     }));
 
 /** Mensagens do back (422, 409, 502) aparecem como vieram; o resto usa o texto padrão do portal. */
-const serverMessage = (error: unknown) =>
-  error instanceof ApiError && [409, 422, 502].includes(error.status)
-    ? error.message
-    : errorMessage(error);
+const serverMessage = (error: unknown) => {
+  if (!(error instanceof ApiError) || ![409, 422, 502].includes(error.status))
+    return errorMessage(error);
+  // 422 do pydantic traz `detail` em lista: as mensagens ficam em `errors`.
+  return error.errors.length ? error.errors.map((e) => e.msg).join(" ") : error.message;
+};
 
 export function VariantPricingEditor({
   productId,
