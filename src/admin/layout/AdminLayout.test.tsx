@@ -50,7 +50,7 @@ describe("menu mobile do admin", () => {
     act(() => toggle().click());
     expect(toggle().getAttribute("aria-expanded")).toBe("true");
     expect(host.querySelector(".adm-sidebar")?.getAttribute("data-open")).toBe("true");
-    expect(host.querySelector(".adm-overlay")).not.toBeNull();
+    expect(host.querySelector(".adm-nav-scrim")).not.toBeNull();
     expect(host.querySelector(".adm-sidebar")?.contains(document.activeElement)).toBe(true);
   });
 
@@ -59,14 +59,14 @@ describe("menu mobile do admin", () => {
     act(() => toggle().click());
     press("Escape");
     expect(toggle().getAttribute("aria-expanded")).toBe("false");
-    expect(host.querySelector(".adm-overlay")).toBeNull();
+    expect(host.querySelector(".adm-nav-scrim")).toBeNull();
     expect(document.activeElement).toBe(toggle());
   });
 
   it("clique no overlay fecha", () => {
     mount();
     act(() => toggle().click());
-    act(() => host.querySelector<HTMLButtonElement>(".adm-overlay")?.click());
+    act(() => host.querySelector<HTMLButtonElement>(".adm-nav-scrim")?.click());
     expect(toggle().getAttribute("aria-expanded")).toBe("false");
     expect(document.activeElement).toBe(toggle());
   });

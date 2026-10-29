@@ -104,7 +104,7 @@ export function AdminLayout() {
       {menuOpen && (
         <button
           type="button"
-          className="adm-overlay"
+          className="adm-nav-scrim"
           aria-label="Fechar menu"
           tabIndex={-1}
           onClick={() => setMenuOpen(false)}

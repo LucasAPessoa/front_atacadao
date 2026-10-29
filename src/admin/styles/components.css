@@ -120,7 +120,7 @@
     overflow-y: auto;
     padding: var(--adm-space-3) var(--adm-space-2);
   }
-  .adm-overlay {
+  .adm-nav-scrim {
     position: fixed;
     inset: var(--adm-topbar-height, 3.5rem) 0 0 0;
     z-index: 10;
