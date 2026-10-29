@@ -11,6 +11,8 @@ import { formatBRL } from "./format";
 import {
   type TierDraft,
   currentUnitPrice,
+  noPriceInstruction,
+  noPriceSourceLabel,
   priceSourceLabels,
   pricingStatusLabels,
   validatePricing,
@@ -84,6 +86,7 @@ export function VariantPricingEditor({
     ]);
   };
 
+  const before = currentUnitPrice(variant);
   const onSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     const check = validatePricing(unit, drafts);
@@ -91,7 +94,6 @@ export function VariantPricingEditor({
     setServerError("");
     if (!check.input) return;
     // A linha de 1 unidade grava no Bling: pede confirmação quando ela mudou.
-    const before = currentUnitPrice(variant);
     if (check.input.unit_price !== before) setPendingInput(check.input);
     else void submit(check.input);
   };
@@ -115,9 +117,16 @@ export function VariantPricingEditor({
         >
           {pricingStatusLabels[variant.pricing_status]}
         </span>{" "}
-        <span className="adm-muted">{priceSourceLabels[variant.price_source]}</span>
+        <span className="adm-muted">
+          {variant.price_source ? priceSourceLabels[variant.price_source] : noPriceSourceLabel}
+        </span>
         {!variant.published && <span className="adm-muted"> · Fora da loja do site</span>}
       </p>
+      {variant.pricing_status === "pending" && currentUnitPrice(variant) === null && (
+        <p className="adm-alert adm-alert-warning" role="status">
+          {noPriceInstruction}
+        </p>
+      )}
       {variant.warnings.length > 0 && (
         <ul className="adm-alert adm-alert-warning" aria-label="Avisos">
           {variant.warnings.map((w) => (
@@ -144,28 +153,27 @@ export function VariantPricingEditor({
           <p className="adm-muted">Nenhuma faixa: vale só o preço de 1 unidade.</p>
         )}
         {drafts.map((d, index) => (
-          <div className="adm-actions" key={d.key}>
-            <label>
-              <span className="adm-sr-only">Quantidade mínima da faixa {index + 1}</span>
+          <div className="adm-tier-row" role="group" aria-label={`Faixa ${index + 1}`} key={d.key}>
+            <div className="adm-field">
+              <label htmlFor={`${uid}-min-${d.key}`}>A partir de (un.)</label>
               <input
+                id={`${uid}-min-${d.key}`}
                 type="text"
                 inputMode="numeric"
-                placeholder="A partir de (un.)"
-                aria-label={`Quantidade mínima da faixa ${index + 1}`}
                 value={d.min}
                 onChange={(e) => update(d.key, { min: e.target.value })}
               />
-            </label>
-            <label>
+            </div>
+            <div className="adm-field">
+              <label htmlFor={`${uid}-price-${d.key}`}>Preço (R$)</label>
               <input
+                id={`${uid}-price-${d.key}`}
                 type="text"
                 inputMode="decimal"
-                placeholder="Preço (R$)"
-                aria-label={`Preço da faixa ${index + 1}`}
                 value={d.price}
                 onChange={(e) => update(d.key, { price: e.target.value })}
               />
-            </label>
+            </div>
             <button
               type="button"
               className="adm-btn"
@@ -200,15 +208,15 @@ export function VariantPricingEditor({
         </p>
       )}
       <div>
-        <button type="submit" className="adm-btn adm-btn-primary" disabled={save.isPending}>
+        <button type="submit" className="adm-btn" disabled={save.isPending}>
           {save.isPending ? "Salvando…" : "Salvar e confirmar"}
         </button>
       </div>
       <ConfirmDialog
         open={pendingInput !== null}
-        title="Alterar o preço no Bling?"
-        message="Isso altera o preço desta variação no Bling (loja do site)."
-        confirmLabel="Alterar e salvar"
+        title={before === null ? "Definir preço no Bling?" : "Alterar o preço no Bling?"}
+        message={`De ${formatBRL(before)} para ${formatBRL(pendingInput?.unit_price ?? null)}. Isso grava o preço de 1 unidade desta variação no Bling (loja do site).`}
+        confirmLabel={before === null ? "Definir e salvar" : "Alterar e salvar"}
         busy={save.isPending}
         onCancel={() => setPendingInput(null)}
         onConfirm={() => {
@@ -248,12 +256,15 @@ export function PricingTab({ product }: { product: AdminProductDetail }) {
           type="button"
           className="adm-btn adm-btn-primary"
           disabled={!pending || confirm.isPending}
+          aria-describedby="adm-confirm-hint"
           onClick={() => void onConfirm()}
         >
           {confirm.isPending ? "Confirmando…" : "Confirmar preços"}
         </button>
-        <span className="adm-muted">
-          Confirma as variações aguardando preços com a tabela atual (sem alterar o Bling).
+        <span className="adm-muted" id="adm-confirm-hint">
+          {pending
+            ? "Confirma as variações aguardando preços com a tabela atual (sem alterar o Bling)."
+            : "Nenhuma variação publicada aguardando confirmação."}
         </span>
       </div>
       {error && (

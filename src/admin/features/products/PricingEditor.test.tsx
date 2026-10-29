@@ -78,8 +78,14 @@ async function mount(variants: AdminVariant[]) {
   });
   return box;
 }
-const input = (box: HTMLElement, label: string) =>
-  box.querySelector(`input[aria-label="${label}"]`) as HTMLInputElement;
+// "Preço da faixa 1" / "Quantidade mínima da faixa 1": campo dentro do grupo "Faixa N" com rótulo visível.
+const input = (box: HTMLElement, label: string) => {
+  const n = label.match(/faixa (\d+)$/)?.[1];
+  const text = label.startsWith("Preço") ? "Preço (R$)" : "A partir de (un.)";
+  const group = box.querySelector(`[role=group][aria-label="Faixa ${n}"]`);
+  const field = [...(group?.querySelectorAll("label") ?? [])].find((l) => l.textContent === text);
+  return field?.parentElement?.querySelector("input") as HTMLInputElement;
+};
 const unitInput = (box: HTMLElement) =>
   [...box.querySelectorAll("label")]
     .find((l) => l.textContent === "Preço de 1 unidade (R$)")
@@ -167,9 +173,10 @@ describe("editor da tabela por variação", () => {
     await type(unitInput(box), "28,90");
     await click(button(box, "Salvar e confirmar"));
     const dialog = box.querySelector("[role=alertdialog]");
-    expect(dialog?.textContent).toContain(
-      "Isso altera o preço desta variação no Bling (loja do site)",
-    );
+    expect(dialog?.textContent).toContain("Alterar o preço no Bling?");
+    expect(dialog?.textContent?.replace(/\s/g, " ")).toContain("De R$ 27,90 para R$ 28,90");
+    const described = dialog?.getAttribute("aria-describedby");
+    expect(described && document.getElementById(described)?.textContent).toContain("De R$");
     expect(saves()).toHaveLength(0);
     await click(button(box, "Cancelar"));
     expect(saves()).toHaveLength(0);
@@ -218,5 +225,40 @@ describe("editor da tabela por variação", () => {
     expect(calls.find((c) => c.method === "POST")?.url).toContain(
       "/admin/products/p1/confirm-pricing",
     );
+  });
+
+  it("variação pendente sem preço mostra origem, instrução e define o preço no diálogo", async () => {
+    const box = await mount([
+      variant({
+        pricing_status: "pending",
+        price_source: null,
+        store_price: null,
+        pricing_tiers: [],
+        warnings: ["price_not_set"],
+      }),
+    ]);
+    expect(box.textContent).toContain("Sem preço definido no Bling");
+    expect(box.textContent).toContain("Informe o preço de 1 unidade e salve para liberar na loja.");
+    await type(unitInput(box), "30,00");
+    await click(button(box, "Salvar e confirmar"));
+    expect(box.querySelector("[role=alertdialog]")?.textContent).toContain(
+      "Definir preço no Bling?",
+    );
+  });
+
+  it("Confirmar preços desabilitado explica o motivo", async () => {
+    const box = await mount([variant()]);
+    const confirm = button(box, "Confirmar preços");
+    expect(confirm.disabled).toBe(true);
+    const hint = document.getElementById(confirm.getAttribute("aria-describedby") ?? "");
+    expect(hint?.textContent).toBe("Nenhuma variação publicada aguardando confirmação.");
+  });
+
+  it("faixas têm rótulos visíveis e só há um botão primário na aba", async () => {
+    const box = await mount([variant()]);
+    const group = box.querySelector("[role=group][aria-label='Faixa 1']");
+    expect(group?.textContent).toContain("A partir de (un.)");
+    expect(group?.textContent).toContain("Preço (R$)");
+    expect(box.querySelectorAll(".adm-btn-primary")).toHaveLength(1);
   });
 });

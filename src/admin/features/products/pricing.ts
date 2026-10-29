@@ -7,6 +7,9 @@ export const priceSourceLabels: Record<PriceSource, string> = {
   general: "Preço geral do Bling (sem preço da loja)",
 };
 
+export const noPriceSourceLabel = "Sem preço definido no Bling";
+export const noPriceInstruction = "Informe o preço de 1 unidade e salve para liberar na loja.";
+
 export const pricingStatusLabels = {
   pending: "Aguardando preços",
   confirmed: "Confirmado",

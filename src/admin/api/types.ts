@@ -95,7 +95,7 @@ export type AdminVariant = {
   pending_reason: PendingReason | null;
   images: string[];
   published: boolean;
-  price_source: PriceSource;
+  price_source: PriceSource | null;
   store_price: string | null;
   pricing_status: PricingStatus;
   pricing_confirmed_at: string | null;
