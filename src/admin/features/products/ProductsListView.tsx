@@ -42,7 +42,7 @@ const triFilters: [keyof ProductFilters, string][] = [
 /** Estado dos preços na loja do site (a coluna "À venda" mostra o ativo no Bling, separado). */
 export const productState = (p: AdminProductSummary) =>
   !p.is_active
-    ? { label: "Inativo no Bling", tone: undefined }
+    ? { label: "Inativo", tone: undefined }
     : !p.store_listed
       ? { label: "Fora da loja do site", tone: undefined }
       : p.warnings.includes("price_not_set") || p.warnings.includes("store_price_missing")

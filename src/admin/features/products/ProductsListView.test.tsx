@@ -133,7 +133,7 @@ describe("ProductsList", () => {
     expect(rows[0]).toContain("Preços confirmados");
     expect(rows[1]).toContain("Aguardando preços");
     expect(rows[2]).toContain("Fora da loja do site");
-    expect(rows[4]).toContain("Inativo no Bling");
+    expect(rows[4]).toContain("Inativo");
     expect(rows[3]).toContain("Sem preço");
     expect(rows[3]).toContain("não tem preço para esta variação");
   });

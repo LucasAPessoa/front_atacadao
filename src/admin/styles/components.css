@@ -264,6 +264,7 @@
   font-weight: 600;
   background: var(--adm-info-bg);
   color: var(--adm-info-text);
+  white-space: nowrap;
 }
 .adm-badge[data-tone="success"] {
   background: var(--adm-success-bg);
