@@ -102,9 +102,6 @@
 }
 
 @media (max-width: 768px) {
-  .adm-dl {
-    grid-template-columns: minmax(0, 1fr);
-  }
   .adm-shell {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -114,6 +111,29 @@
   }
   .adm-sidebar[data-open="true"] {
     display: block;
+    position: fixed;
+    top: var(--adm-topbar-height, 3.5rem);
+    bottom: 0;
+    left: 0;
+    z-index: 20;
+    width: min(18rem, 85vw);
+    overflow-y: auto;
+    padding: var(--adm-space-3) var(--adm-space-2);
+  }
+  .adm-nav-scrim {
+    position: fixed;
+    inset: var(--adm-topbar-height, 3.5rem) 0 0 0;
+    z-index: 10;
+    border: 0;
+    padding: 0;
+    background: var(--adm-nav-bg);
+    opacity: 0.55;
+    cursor: default;
+  }
+  .adm-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
   }
   .adm-brand {
     display: none;
@@ -288,6 +308,9 @@
 }
 
 /* Tabela */
+.adm-field.adm-sort-select {
+  display: none;
+}
 .adm-table-wrap {
   overflow-x: auto;
   background: var(--adm-surface);
@@ -314,6 +337,7 @@
   background: var(--adm-info-bg);
 }
 .adm-table .adm-num {
+  white-space: nowrap;
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
@@ -454,6 +478,7 @@
 }
 .adm-stack {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--adm-space-3);
 }
 .adm-tabs {
@@ -485,6 +510,15 @@
 }
 .adm-dl dd {
   margin: 0;
+  overflow-wrap: anywhere;
+}
+.adm-dl-money dd {
+  white-space: nowrap;
+}
+@media (max-width: 768px) {
+  .adm-dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .adm-gallery {
   display: flex;
@@ -563,6 +597,7 @@
   color: var(--adm-text-muted);
 }
 .adm-kpi-value {
+  white-space: nowrap;
   margin: var(--adm-space-2) 0;
   font-size: 1.5rem;
   font-weight: 600;
@@ -662,4 +697,55 @@
   padding: 0 var(--adm-space-4);
   border-radius: var(--adm-radius);
   font-weight: 600;
+}
+
+/* Tabelas como cartões por linha (mobile) */
+@media (max-width: 768px) {
+  .adm-table-wrap.adm-table-cards {
+    background: transparent;
+    border: 0;
+    overflow: visible;
+  }
+  .adm-table-cards .adm-table,
+  .adm-table-cards .adm-table tbody {
+    display: block;
+  }
+  .adm-table-cards .adm-table thead {
+    display: none;
+  }
+  .adm-field.adm-sort-select {
+    display: grid;
+    margin-bottom: var(--adm-space-2);
+  }
+  .adm-table-cards .adm-table tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--adm-space-1) var(--adm-space-3);
+    margin-bottom: var(--adm-space-2);
+    padding: var(--adm-space-2) var(--adm-space-3);
+    background: var(--adm-surface);
+    border: 1px solid var(--adm-border);
+    border-radius: var(--adm-radius);
+  }
+  .adm-table-cards .adm-table td {
+    display: none;
+    padding: 0;
+    border: 0;
+  }
+  .adm-table-cards .adm-table td.adm-col-check,
+  .adm-table-cards .adm-table td[data-card] {
+    display: block;
+  }
+  .adm-table-cards .adm-table td[data-card="title"] {
+    flex: 1 1 60%;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-weight: 600;
+  }
+  .adm-table-cards .adm-table td[data-label]:not([data-card="title"])::before {
+    content: attr(data-label) ": ";
+    color: var(--adm-text-muted);
+    font-size: var(--adm-font-size-small);
+  }
 }

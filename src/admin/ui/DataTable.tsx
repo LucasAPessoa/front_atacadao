@@ -10,6 +10,8 @@ export type Column<T> = {
   /** Presente = coluna ordenável; o valor vai para `sort` na API. */
   sortKey?: string;
   align?: "left" | "right";
+  /** Em ≤ 768px a tabela vira cartões e só colunas com `card` aparecem; "title" destaca a coluna. */
+  card?: "title" | "field";
 };
 
 export type DataTableProps<T> = {
@@ -58,9 +60,18 @@ export function DataTable<T>({
   };
   const toggleAll = () => onSelectedChange?.(allSelected ? new Set() : new Set(keys));
 
-  return (
-    // biome-ignore lint/a11y/noNoninteractiveTabindex: região rolável precisa de foco para rolar por teclado
-    <section className="adm-table-wrap" aria-busy={loading} aria-label={caption} tabIndex={0}>
+  const cards = columns.some((column) => column.card !== undefined);
+  const sortable = columns.filter((column) => column.sortKey !== undefined);
+  const sortValue = sort ? `${sort.key}:${sort.order}` : "";
+
+  const table = (
+    <section
+      className={cards ? "adm-table-wrap adm-table-cards" : "adm-table-wrap"}
+      aria-busy={loading}
+      aria-label={caption}
+      // biome-ignore lint/a11y/noNoninteractiveTabindex: região rolável precisa de foco para rolar por teclado
+      tabIndex={0}
+    >
       <table className="adm-table">
         <caption className="adm-sr-only">{caption}</caption>
         <thead>
@@ -121,7 +132,12 @@ export function DataTable<T>({
                   </td>
                 )}
                 {columns.map((column) => (
-                  <td key={column.key} className={column.align === "right" ? "adm-num" : undefined}>
+                  <td
+                    key={column.key}
+                    className={column.align === "right" ? "adm-num" : undefined}
+                    data-card={column.card}
+                    data-label={column.header}
+                  >
                     {column.render(row)}
                   </td>
                 ))}
@@ -131,5 +147,31 @@ export function DataTable<T>({
         </tbody>
       </table>
     </section>
+  );
+
+  if (!cards || sortable.length === 0 || !onSortChange) return table;
+  return (
+    <>
+      <div className="adm-field adm-sort-select">
+        <label htmlFor="adm-sort-select">Ordenar por</label>
+        <select
+          id="adm-sort-select"
+          value={sortValue}
+          onChange={(e) => {
+            const [key, order] = e.target.value.split(":");
+            onSortChange({ key, order: order === "desc" ? "desc" : "asc" });
+          }}
+        >
+          {sortable.flatMap((column) =>
+            (["asc", "desc"] as const).map((order) => (
+              <option key={`${column.sortKey}:${order}`} value={`${column.sortKey}:${order}`}>
+                {column.header} ({order === "asc" ? "crescente" : "decrescente"})
+              </option>
+            )),
+          )}
+        </select>
+      </div>
+      {table}
+    </>
   );
 }

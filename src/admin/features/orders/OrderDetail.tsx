@@ -148,7 +148,7 @@ export function OrderDetailView({
             </tbody>
           </table>
         </div>
-        <dl className="adm-dl">
+        <dl className="adm-dl adm-dl-money">
           <dt>Subtotal</dt>
           <dd>{formatBRL(order.subtotal_amount)}</dd>
           {order.discount_amount && order.discount_amount !== "0.00" && (

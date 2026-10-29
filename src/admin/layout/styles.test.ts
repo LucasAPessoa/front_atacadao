@@ -23,3 +23,24 @@ describe("botão Menu (regressão: .adm-btn sobrescrevia display: none)", () => 
     expect(css).not.toMatch(/(^|[^\w-.])\.adm-menu-toggle/);
   });
 });
+
+describe("grids que estouravam a largura em 360px", () => {
+  it(".adm-stack tem coluna minmax(0, 1fr)", () => {
+    expect(rule(css, ".adm-stack")).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+  });
+
+  it("o @media de .adm-dl vem depois da regra base (senão é anulado)", () => {
+    const baseAt = css.search(/(?:^|\n)\.adm-dl\s*\{/);
+    const mediaDl = /@media \(max-width: 768px\)\s*\{\s*\.adm-dl\s*\{[^}]*minmax\(0,\s*1fr\)/.exec(
+      css,
+    );
+    expect(baseAt).toBeGreaterThan(-1);
+    expect(mediaDl).not.toBeNull();
+    expect(mediaDl?.index).toBeGreaterThan(baseAt);
+  });
+
+  it("valores numéricos de tabela não quebram linha", () => {
+    expect(rule(css, ".adm-table .adm-num")).toMatch(/white-space:\s*nowrap/);
+    expect(rule(css, ".adm-dl-money dd")).toMatch(/white-space:\s*nowrap/);
+  });
+});
