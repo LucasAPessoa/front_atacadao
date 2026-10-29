@@ -308,6 +308,9 @@
 }
 
 /* Tabela */
+.adm-field.adm-sort-select {
+  display: none;
+}
 .adm-table-wrap {
   overflow-x: auto;
   background: var(--adm-surface);
@@ -708,11 +711,11 @@
     display: block;
   }
   .adm-table-cards .adm-table thead {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
+    display: none;
+  }
+  .adm-field.adm-sort-select {
+    display: grid;
+    margin-bottom: var(--adm-space-2);
   }
   .adm-table-cards .adm-table tr {
     display: flex;

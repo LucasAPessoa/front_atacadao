@@ -24,12 +24,22 @@ export function AdminLayout() {
 
   // A gaveta começa logo abaixo da topbar, que quebra de linha em telas estreitas.
   useLayoutEffect(() => {
-    if (menuOpen && topbarRef.current && shellRef.current) {
-      shellRef.current.style.setProperty(
-        "--adm-topbar-height",
-        `${topbarRef.current.getBoundingClientRect().height}px`,
-      );
-    }
+    if (!menuOpen) return;
+    const measure = () => {
+      if (window.innerWidth > 768) {
+        setMenuOpen(false);
+        return;
+      }
+      if (topbarRef.current && shellRef.current) {
+        shellRef.current.style.setProperty(
+          "--adm-topbar-height",
+          `${topbarRef.current.getBoundingClientRect().height}px`,
+        );
+      }
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
   }, [menuOpen]);
 
   useEffect(() => {

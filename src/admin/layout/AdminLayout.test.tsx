@@ -12,6 +12,7 @@ let host: HTMLDivElement;
 let unmount: () => void;
 
 function mount() {
+  vi.stubGlobal("innerWidth", 360);
   vi.stubGlobal("localStorage", {
     getItem: () => null,
     setItem: () => undefined,
@@ -33,6 +34,7 @@ function mount() {
 }
 
 afterEach(() => {
+  vi.unstubAllGlobals();
   unmount();
   host.remove();
 });
@@ -80,5 +82,17 @@ describe("menu mobile do admin", () => {
     expect(document.activeElement).toBe(first);
     press("Tab", { shiftKey: true });
     expect(document.activeElement).toBe(toggle());
+  });
+});
+
+describe("menu mobile e resize", () => {
+  it("fecha a gaveta quando a largura passa de 768px", () => {
+    mount();
+    act(() => toggle().click());
+    vi.stubGlobal("innerWidth", 1024);
+    act(() => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    expect(toggle().getAttribute("aria-expanded")).toBe("false");
   });
 });
