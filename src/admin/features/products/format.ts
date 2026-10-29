@@ -17,4 +17,7 @@ export const pendingLabels: Record<PendingReason, string> = {
   INCOMPLETE_WEIGHT: "Sem peso",
   INCOMPLETE_DIMENSIONS: "Sem medidas",
   INCOMPLETE_PRICE: "Preço zero",
+  PRICE_NOT_SET: "Sem preço (Bling e loja)",
+  STORE_PRICE_MISSING: "Sem preço na loja do Bling (usando preço geral)",
+  TIER_NOT_BELOW_UNIT: "Faixa igual ou acima do preço de 1 unidade",
 };

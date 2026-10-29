@@ -41,7 +41,13 @@ export type PricingSettings = {
   store_id: number | null;
 };
 
-export type PendingReason = "INCOMPLETE_WEIGHT" | "INCOMPLETE_DIMENSIONS" | "INCOMPLETE_PRICE";
+export type PendingReason =
+  | "INCOMPLETE_WEIGHT"
+  | "INCOMPLETE_DIMENSIONS"
+  | "INCOMPLETE_PRICE"
+  | "PRICE_NOT_SET"
+  | "STORE_PRICE_MISSING"
+  | "TIER_NOT_BELOW_UNIT";
 
 // Produtos
 export type ProductSortKey = "name" | "price" | "stock" | "updated_at";
