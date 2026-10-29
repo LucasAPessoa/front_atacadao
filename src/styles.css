@@ -1102,10 +1102,15 @@ h4,
   min-width: 0;
   text-align: right;
 }
-.unit-price {
+.unit-price,
+.tier-applied {
   color: var(--muted);
   font: 400 var(--fs-support) var(--font-body);
   font-variant-numeric: tabular-nums;
+}
+.cart-notice:not(:empty) {
+  margin-bottom: var(--space-4);
+  font: 400 var(--fs-support) var(--font-body);
 }
 .line-total {
   font: 800 var(--fs-lg) / var(--lh-tight) var(--font-display);
