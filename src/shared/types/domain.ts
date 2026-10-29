@@ -1,10 +1,16 @@
 export type Role = "admin" | "user";
 export type User = { id: string; email: string; full_name?: string; role: { name: Role } };
+/** Linha da tabela de preços da variação (a partir de min_quantity = 1). */
+export type VariantTier = { id: string; min_quantity: number; unit_price: string };
 export type Variant = {
   id: string;
   product_id?: string;
   variation_name: string;
   base_price: string;
+  /** Preço da linha de 1 unidade, vindo do servidor. */
+  unit_price?: string;
+  /** Tabela completa da variação, a partir de min_quantity = 1. */
+  pricing_tiers?: VariantTier[];
   stock_quantity: number;
   is_active: boolean;
 };
@@ -100,7 +106,8 @@ export type ProductImage = {
 };
 export type PricingTier = {
   id: string;
-  product_id: string;
+  variant_id?: string;
+  product_id?: string;
   min_quantity: number;
   unit_price: string;
 };

@@ -13,9 +13,10 @@ import {
   packPlural,
   safeImageUrl,
   tierRows,
+  variantUnitPrice,
 } from "../../lib/product";
 import { api } from "../../services/client";
-import type { Cart, PricingTier, Product } from "../../shared/types/domain";
+import type { Cart, Product, VariantTier } from "../../shared/types/domain";
 import { addToCart, type Extras, type Loaded, loadProduct } from "./loader";
 
 type PageProps = {
@@ -160,7 +161,7 @@ function QuantityField({
   );
 }
 
-function TierTable({ rows, active }: { rows: PricingTier[]; active?: string }) {
+function TierTable({ rows, active }: { rows: VariantTier[]; active?: string }) {
   const [open, setOpen] = useState(true);
   return (
     <section className="pdp-tiers" aria-label="Preço por quantidade">
@@ -245,10 +246,10 @@ export function ProductView({
   const titleRef = useRef<HTMLHeadingElement>(null);
   // biome-ignore lint/correctness/useExhaustiveDependencies: foco só ao abrir outro produto.
   useEffect(() => titleRef.current?.focus(), [product.id]);
-  const rows = variant ? tierRows(variant.base_price, extras.tiers) : [];
+  const rows = variant ? tierRows(variant) : [];
   const tier = applicableTier(rows, quantity);
   const upcoming = nextTier(rows, quantity);
-  const unitPrice = Number(tier?.unit_price ?? variant?.base_price ?? 0);
+  const unitPrice = Number(tier?.unit_price ?? (variant ? variantUnitPrice(variant) : 0));
   const category = product.categories[0]?.name;
   return (
     <article className="pdp wrap">
@@ -337,7 +338,7 @@ export function ProductView({
                       onChange={() => onVariant(item.id)}
                     />
                     <span>{item.variation_name}</span>
-                    <span>{money(item.base_price)}</span>
+                    <span>{money(variantUnitPrice(item))}</span>
                     <span className={ok ? "pdp-stock" : "pdp-stock out"}>
                       {ok ? "Disponível" : "Indisponível"}
                     </span>
@@ -459,6 +460,10 @@ export function ProductPage({ id, token, onLogin, onCart, onError }: PageProps) 
       onLogin,
       onCart,
       onError,
+      onStockConflict: ({ message, available }) => {
+        setMessage(message);
+        if (available >= 1) setQuantity(clampQuantity(available, available));
+      },
     });
     if (ok && variant)
       setMessage(

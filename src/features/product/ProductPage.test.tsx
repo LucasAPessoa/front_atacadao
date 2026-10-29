@@ -15,6 +15,11 @@ const product: Product = {
       id: "v1",
       variation_name: "Fardo 5kg",
       base_price: "20.00",
+      unit_price: "20.00",
+      pricing_tiers: [
+        { id: "t1", min_quantity: 1, unit_price: "20.00" },
+        { id: "t2", min_quantity: 5, unit_price: "18.00" },
+      ],
       stock_quantity: 3,
       is_active: true,
     },
@@ -22,17 +27,27 @@ const product: Product = {
       id: "v2",
       variation_name: "Fardo 10kg",
       base_price: "38.00",
+      unit_price: "38.00",
+      pricing_tiers: [
+        { id: "t3", min_quantity: 1, unit_price: "38.00" },
+        { id: "t4", min_quantity: 2, unit_price: "35.00" },
+      ],
       stock_quantity: 0,
+      is_active: true,
+    },
+    {
+      id: "v3",
+      variation_name: "Fardo 20kg",
+      base_price: "70.00",
+      unit_price: "70.00",
+      pricing_tiers: [{ id: "t5", min_quantity: 1, unit_price: "70.00" }],
+      stock_quantity: 9,
       is_active: true,
     },
   ],
 };
 const extras = {
   images: [],
-  tiers: [
-    { id: "t1", product_id: "p1", min_quantity: 1, unit_price: "20.00" },
-    { id: "t2", product_id: "p1", min_quantity: 5, unit_price: "18.00" },
-  ],
   reviews: [{ id: "r", product_id: "p1", rating: 4, comment: "Ótimo", is_approved: true }],
   questions: [{ id: "q", product_id: "p1", question_text: "Rende?", answer_text: "Sim" }],
 };
@@ -65,6 +80,18 @@ describe("página de produto", () => {
     expect(html.replace(/\u00a0/g, " ")).toContain("Adicionar 5 fardos 5kg · R$ 90,00");
     expect(html).toContain("Máximo de 3 em estoque");
     expect(html).toContain('aria-live="polite"');
+  });
+  it("trocar a variação troca a tabela: faixas de uma variação não aparecem em outra", () => {
+    const first = render("v1", 1);
+    expect(first).toContain("5 ou mais");
+    expect(first).toContain("18,00");
+    expect(first).not.toContain("35,00");
+    const second = render("v2", 1);
+    expect(second).toContain("35,00");
+    expect(second).toContain("2 ou mais");
+    expect(second).not.toContain("18,00");
+    // Variação só com a linha de 1 unidade não mostra tabela.
+    expect(render("v3", 1)).not.toContain("Ver tabela de preços");
   });
   it("variação sem estoque fica indisponível e sem botão de adicionar", () => {
     const html = render("v2", 1);

@@ -20,7 +20,6 @@ const product = {
 const fakeApi = (over: Partial<ProductApi> = {}): ProductApi => ({
   product: async () => product,
   productImages: async () => [],
-  pricingTiers: async () => [],
   productReviews: async () => [],
   productQuestions: async () => [],
   ...over,
@@ -67,7 +66,6 @@ describe("loadProduct", () => {
       "p",
       fakeApi({
         productImages: fail,
-        pricingTiers: fail,
         productReviews: fail,
         productQuestions: fail,
       }),
@@ -75,7 +73,6 @@ describe("loadProduct", () => {
     expect(result.status).toBe("ready");
     if (result.status === "ready") {
       expect(result.extras.images).toEqual([]);
-      expect(result.extras.tiers).toEqual([]);
       expect(result.extras.reviews).toBeNull();
       expect(result.extras.questions).toBeNull();
     }
@@ -110,5 +107,16 @@ describe("addToCart", () => {
     d.addCartItem.mockRejectedValueOnce(boom);
     expect(await addToCart({ ...d, token: "t", variant: variant(5), quantity: 1 })).toBe(false);
     expect(d.onError).toHaveBeenCalledWith(boom);
+  });
+  it("409 de estoque com available vai para onStockConflict, não para onError", async () => {
+    const d = deps();
+    const error = new ApiError(409, "Só temos 2.", [], undefined, 2);
+    d.addCartItem = vi.fn(async () => Promise.reject(error)) as never;
+    const onStockConflict = vi.fn();
+    expect(
+      await addToCart({ ...d, onStockConflict, token: "t", variant: variant(2), quantity: 5 }),
+    ).toBe(false);
+    expect(onStockConflict).toHaveBeenCalledWith({ message: "Só temos 2.", available: 2 });
+    expect(d.onError).not.toHaveBeenCalled();
   });
 });

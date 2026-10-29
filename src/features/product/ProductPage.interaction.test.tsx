@@ -13,15 +13,23 @@ const product: Product = {
   is_active: true,
   categories: [],
   variants: [
-    { id: "v1", variation_name: "Fardo", base_price: "20.00", stock_quantity: 50, is_active: true },
+    {
+      id: "v1",
+      variation_name: "Fardo",
+      base_price: "20.00",
+      unit_price: "20.00",
+      pricing_tiers: [
+        { id: "t1", min_quantity: 1, unit_price: "20.00" },
+        { id: "t5", min_quantity: 5, unit_price: "18.00" },
+        { id: "t10", min_quantity: 10, unit_price: "15.00" },
+      ],
+      stock_quantity: 50,
+      is_active: true,
+    },
   ],
 };
 const extras = {
   images: [],
-  tiers: [
-    { id: "t5", product_id: "p1", min_quantity: 5, unit_price: "18.00" },
-    { id: "t10", product_id: "p1", min_quantity: 10, unit_price: "15.00" },
-  ],
   reviews: [],
   questions: [],
 };

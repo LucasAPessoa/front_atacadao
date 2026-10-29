@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import type { Category, PricingTier, Product, ProductImage, Variant } from "../shared/types/domain";
+import type { Category, Product, ProductImage, Variant, VariantTier } from "../shared/types/domain";
 import {
+  appliedTier,
   applicableTier,
   clampQuantity,
   defaultVariant,
@@ -13,11 +14,13 @@ import {
   productIdFromPath,
   productPath,
   safeImageUrl,
+  stockConflict,
+  tierRows,
+  variantUnitPrice,
 } from "./product";
 
-const tier = (id: string, min_quantity: number, unit_price: string): PricingTier => ({
+const tier = (id: string, min_quantity: number, unit_price: string): VariantTier => ({
   id,
-  product_id: "p",
   min_quantity,
   unit_price,
 });
@@ -150,5 +153,49 @@ describe("departamentos com produtos", () => {
     expect(effectiveCategoryId("a", list)).toBe("a");
     expect(effectiveCategoryId("b", list)).toBe("");
     expect(effectiveCategoryId("", list)).toBe("");
+  });
+});
+
+describe("tabela da variação", () => {
+  const withTable = (pricing_tiers?: VariantTier[], unit_price?: string): Variant => ({
+    ...variant("v", 5),
+    unit_price,
+    pricing_tiers,
+  });
+  it("usa a tabela da própria variação, ordenada, com a linha de 1 unidade", () => {
+    const rows = tierRows(withTable([tier("b", 10, "9"), tier("a", 1, "10")], "10.00"));
+    expect(rows.map((r) => r.min_quantity)).toEqual([1, 10]);
+  });
+  it("sem linha de 1 unidade, completa com unit_price e cai em base_price", () => {
+    expect(tierRows(withTable([tier("b", 10, "9")], "12.00"))[0]?.unit_price).toBe("12.00");
+    expect(tierRows(withTable(undefined))[0]?.unit_price).toBe("10.00");
+    expect(variantUnitPrice(withTable(undefined, "11.00"))).toBe("11.00");
+  });
+  it("faixas de uma variação não vazam para outra", () => {
+    const a = withTable([tier("a1", 1, "10"), tier("a5", 5, "8")], "10");
+    const b = { ...withTable([tier("b1", 1, "20")], "20"), id: "w" };
+    expect(tierRows(a)).toHaveLength(2);
+    expect(tierRows(b).map((r) => r.id)).toEqual(["b1"]);
+  });
+  it("faixa aplicada no item: só acima de 1 unidade e até a quantidade", () => {
+    const v = withTable([tier("a", 1, "10.00"), tier("b", 10, "9.00"), tier("c", 50, "8.00")]);
+    expect(appliedTier(v, "10.00", 3)).toBeUndefined();
+    expect(appliedTier(v, "9.00", 12)?.min_quantity).toBe(10);
+    expect(appliedTier(v, "8.00", 60)?.min_quantity).toBe(50);
+    expect(appliedTier(v, "8.00", 12)).toBeUndefined();
+    expect(appliedTier(v, undefined, 12)).toBeUndefined();
+  });
+});
+
+describe("conflito de estoque", () => {
+  it("só o 409 com available numérico vira conflito", () => {
+    expect(stockConflict({ status: 409, available: 3, message: "Sem estoque" })).toEqual({
+      message: "Sem estoque",
+      available: 3,
+    });
+    expect(stockConflict({ status: 409, available: 0 })?.available).toBe(0);
+    expect(stockConflict({ status: 409 })).toBeNull();
+    expect(stockConflict({ status: 500, available: 3 })).toBeNull();
+    expect(stockConflict(null)).toBeNull();
   });
 });

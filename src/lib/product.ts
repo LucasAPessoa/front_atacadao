@@ -1,4 +1,4 @@
-import type { Category, PricingTier, Product, ProductImage, Variant } from "../shared/types/domain";
+import type { Category, Product, ProductImage, Variant, VariantTier } from "../shared/types/domain";
 
 export const productPath = (id: string) => `/produtos/${encodeURIComponent(id)}`;
 
@@ -20,20 +20,49 @@ export const defaultVariant = (variants: Variant[]): Variant | undefined =>
   variants.find(isAvailable) ?? variants.find((item) => item.is_active) ?? variants[0];
 
 /** Faixa de maior min_quantity que não excede a quantidade. Só exibição: o servidor decide o preço. */
-export const applicableTier = (tiers: PricingTier[], quantity: number): PricingTier | undefined =>
+export const applicableTier = (tiers: VariantTier[], quantity: number): VariantTier | undefined =>
   [...tiers]
     .filter((tier) => tier.min_quantity <= quantity)
     .sort((a, b) => b.min_quantity - a.min_quantity)[0];
 
-/** Faixas exibíveis: a faixa 1 é o preço base da variação (o servidor só guarda faixas acima de 1). */
-export const tierRows = (basePrice: string, tiers: PricingTier[]): PricingTier[] => {
-  const sorted = [...tiers].sort((a, b) => a.min_quantity - b.min_quantity);
+/** Preço de 1 unidade da variação: `unit_price` do servidor (cai em base_price só em respostas antigas). */
+export const variantUnitPrice = (variant: Variant): string =>
+  variant.unit_price ?? variant.base_price;
+
+/**
+ * Tabela exibível da variação: a linha de 1 unidade e as faixas dela (nunca de outra variação).
+ * Só exibição: o servidor decide o preço.
+ */
+export const tierRows = (variant: Variant): VariantTier[] => {
+  const sorted = [...(variant.pricing_tiers ?? [])].sort((a, b) => a.min_quantity - b.min_quantity);
   if (sorted.some((tier) => tier.min_quantity <= 1)) return sorted;
-  return [{ id: "base", product_id: "", min_quantity: 1, unit_price: basePrice }, ...sorted];
+  return [
+    { id: `base-${variant.id}`, min_quantity: 1, unit_price: variantUnitPrice(variant) },
+    ...sorted,
+  ];
+};
+
+/**
+ * Faixa aplicada a um item do carrinho: a de maior quantidade mínima, até a quantidade do item, cujo `unit_price` coincide com o do item,
+ * quando não é a linha de 1 unidade. Sem faixa (ou preço de 1 unidade) devolve undefined.
+ */
+export const appliedTier = (
+  variant: Variant,
+  itemUnitPrice?: string,
+  quantity = Number.POSITIVE_INFINITY,
+): VariantTier | undefined => {
+  if (itemUnitPrice === undefined) return undefined;
+  const rows = tierRows(variant);
+  const match = rows
+    .filter(
+      (tier) => Number(tier.unit_price) === Number(itemUnitPrice) && tier.min_quantity <= quantity,
+    )
+    .sort((a, b) => b.min_quantity - a.min_quantity)[0];
+  return match && match.min_quantity > 1 ? match : undefined;
 };
 
 /** Primeira faixa acima da quantidade. Só exibição. */
-export const nextTier = (rows: PricingTier[], quantity: number): PricingTier | undefined =>
+export const nextTier = (rows: VariantTier[], quantity: number): VariantTier | undefined =>
   [...rows]
     .filter((tier) => tier.min_quantity > quantity)
     .sort((a, b) => a.min_quantity - b.min_quantity)[0];
@@ -118,4 +147,17 @@ export const packPlural = (name: string, count = 2) => {
               ? `${head}es`
               : `${head}s`;
   return [plural, ...rest].join(" ");
+};
+
+export type StockConflict = { message: string; available: number };
+
+/** 409 de estoque do carrinho (`{"detail", "available"}`); qualquer outro erro devolve null. */
+export const stockConflict = (error: unknown): StockConflict | null => {
+  const { status, available, message } = (error ?? {}) as {
+    status?: number;
+    available?: number;
+    message?: string;
+  };
+  if (status !== 409 || typeof available !== "number") return null;
+  return { message: message || "Estoque insuficiente para essa quantidade.", available };
 };

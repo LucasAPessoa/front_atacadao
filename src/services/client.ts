@@ -93,7 +93,8 @@ export const api = {
     request<ProductImage[]>(`/catalog/product-images/?product_id=${encodeURIComponent(productId)}`),
   pricingTiers: (productId: string) =>
     request<PricingTier[]>(`/catalog/pricing-tiers/?product_id=${encodeURIComponent(productId)}`),
-  allPricingTiers: () => request<PricingTier[]>("/catalog/pricing-tiers/?limit=500"),
+  variantPricingTiers: (variantId: string) =>
+    request<PricingTier[]>(`/catalog/pricing-tiers/?variant_id=${encodeURIComponent(variantId)}`),
   productReviews: (productId: string) =>
     request<ProductReview[]>(
       `/catalog/product-reviews/?product_id=${encodeURIComponent(productId)}`,

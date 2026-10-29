@@ -10,9 +10,10 @@ import {
   nextTier,
   productPath,
   tierRows,
+  variantUnitPrice,
 } from "../../lib/product";
 import { api } from "../../services/client";
-import type { Cart, Category, PricingTier, Product } from "../../shared/types/domain";
+import type { Cart, Category, Product } from "../../shared/types/domain";
 
 type Props = {
   token: string;
@@ -26,7 +27,6 @@ type ProductGridProps = {
   loading: boolean;
   unavailable: boolean;
   visible: Product[];
-  tiers?: PricingTier[];
   adding: string;
   onAdd(product: Product): void;
   onOpen(event: React.MouseEvent<HTMLAnchorElement>, id: string): void;
@@ -36,7 +36,6 @@ export function ProductGrid({
   loading,
   unavailable,
   visible,
-  tiers = [],
   adding,
   onAdd,
   onOpen,
@@ -66,12 +65,7 @@ export function ProductGrid({
                 (item) => item.is_active && item.stock_quantity > 0,
               );
               const unavailableProduct = !variant;
-              const rows = variant
-                ? tierRows(
-                    variant.base_price,
-                    tiers.filter((tier) => tier.product_id === product.id),
-                  )
-                : [];
+              const rows = variant ? tierRows(variant) : [];
               const next = variant ? nextTier(rows, 1) : undefined;
               const tiersOpen = openTiers.has(product.id);
               const panelId = `tiers-${product.id}`;
@@ -106,7 +100,7 @@ export function ProductGrid({
                   </span>
                   <div className="product-buy">
                     <span className="product-price">
-                      <strong>{variant ? money(variant.base_price) : "—"}</strong>
+                      <strong>{variant ? money(variantUnitPrice(variant)) : "—"}</strong>
                       {variant && <span> a unidade</span>}
                     </span>
                     {hint && <span className="product-hint">{hint}</span>}
@@ -180,14 +174,6 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
   const [adding, setAdding] = useState("");
-  const [tiers, setTiers] = useState<PricingTier[]>([]);
-  useEffect(() => {
-    // Dica da próxima faixa é opcional: falha aqui não derruba o catálogo.
-    api
-      .allPricingTiers()
-      .then(setTiers)
-      .catch(() => setTiers([]));
-  }, []);
   useEffect(() => {
     setLoading(true);
     Promise.all([api.products(), api.categories()])
@@ -395,7 +381,6 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
                   loading={loading}
                   unavailable={unavailable}
                   visible={visible}
-                  tiers={tiers}
                   adding={adding}
                   onAdd={add}
                   onOpen={openProduct}
@@ -408,7 +393,6 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
               loading={loading}
               unavailable={unavailable}
               visible={visible}
-              tiers={tiers}
               adding={adding}
               onAdd={add}
               onOpen={openProduct}
