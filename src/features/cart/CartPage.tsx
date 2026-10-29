@@ -180,19 +180,21 @@ export function CartPage({
     cart?.items
       .reduce(
         (sum, item) =>
-          sum + Number(item.subtotal ?? Number(item.variant.base_price) * item.quantity),
+          sum + Number(item.subtotal ?? Number(item.variant?.base_price ?? 0) * item.quantity),
         0,
       )
       .toFixed(2) ??
     "0";
-  const tierOf = (item: CartItem) =>
-    appliedTier(tables[item.variant_id] ?? item.variant, item.unit_price, item.quantity);
+  const tierOf = (item: CartItem) => {
+    const table = tables[item.variant_id] ?? item.variant;
+    return table ? appliedTier(table, item.unit_price, item.quantity) : undefined;
+  };
   const selectedShipping = preview?.shipping_options.find((item) => item.service_id === shippingId);
   const itemName = (item: CartItem) =>
     cartItemName(
       preview?.items?.find((p) => p.variant_id === item.variant_id)?.product_name ??
-        (item.variant.product_id ? productNames[item.variant.product_id] : undefined),
-      item.variant.variation_name,
+        (item.variant?.product_id ? productNames[item.variant.product_id] : undefined),
+      item.variant?.variation_name ?? "Item",
     );
   const amounts = summaryAmounts(preview?.subtotal_amount ?? total, selectedShipping);
   const step = preview ? 2 : 1;
@@ -279,10 +281,15 @@ export function CartPage({
                   </div>
                   <div className="line-sum">
                     <span className="line-total">
-                      {money(item.subtotal ?? Number(item.variant.base_price) * item.quantity)}
+                      {money(
+                        item.subtotal ?? Number(item.variant?.base_price ?? 0) * item.quantity,
+                      )}
                     </span>
                     <span className="unit-price">
-                      {money(item.unit_price ?? variantUnitPrice(item.variant))} a unidade
+                      {money(
+                        item.unit_price ?? (item.variant ? variantUnitPrice(item.variant) : 0),
+                      )}{" "}
+                      a unidade
                     </span>
                     {tierOf(item) && (
                       <span className="tier-applied">
