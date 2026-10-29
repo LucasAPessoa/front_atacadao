@@ -720,7 +720,7 @@ h4,
 }
 .product-hint,
 .price-hint {
-  color: var(--tier-tip);
+  color: var(--muted);
   font-size: var(--fs-support);
   font-weight: 600;
 }
@@ -1941,6 +1941,13 @@ h4,
   font-weight: 700;
   line-height: var(--lh-tight);
   overflow-wrap: anywhere;
+}
+.pdp-desc-body {
+  max-height: 4.5em;
+  overflow: hidden;
+}
+.pdp-desc-body[data-open] {
+  max-height: none;
 }
 .pdp-description {
   color: var(--muted);

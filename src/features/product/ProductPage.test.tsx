@@ -77,7 +77,7 @@ describe("página de produto", () => {
     expect(html).toContain("seu preço");
     expect(html).toContain("Nota 4 de 5");
     expect(html).toContain("Sim");
-    expect(html.replace(/\u00a0/g, " ")).toContain("Adicionar 5 fardos 5kg · R$ 90,00");
+    expect(html.replace(/\u00a0/g, " ")).toContain("Adicionar 5 ao carrinho · R$ 90,00");
     expect(html).toContain("Máximo de 3 em estoque");
     expect(html).toContain('aria-live="polite"');
   });
