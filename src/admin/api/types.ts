@@ -25,6 +25,22 @@ export type {
   User,
 };
 
+export type PricingStatus = "pending" | "confirmed";
+export type PricingWarning = "tier_not_below_unit" | "store_price_missing" | "price_not_set";
+export type PriceSource = "variant_link" | "parent_link" | "general";
+export type AdminPricingTier = { id: string; min_quantity: number; unit_price: string };
+export type PricingTableInput = {
+  unit_price: string;
+  /** Sem a linha de 1 unidade; min_quantity >= 2 e único; preço menor que unit_price. */
+  tiers: { min_quantity: number; unit_price: string }[];
+};
+export type ConfirmPricingResult = { confirmed: number; skipped: unknown[] };
+export type PricingSettings = {
+  auto_confirm: boolean;
+  store_configured: boolean;
+  store_id: number | null;
+};
+
 export type PendingReason = "INCOMPLETE_WEIGHT" | "INCOMPLETE_DIMENSIONS" | "INCOMPLETE_PRICE";
 
 // Produtos
@@ -38,6 +54,9 @@ export type ProductListParams = {
   low_stock?: boolean;
   pending?: boolean;
   customized?: boolean;
+  pricing_status?: PricingStatus;
+  warning?: PricingWarning;
+  listed?: boolean;
   sort?: ProductSortKey;
   order?: "asc" | "desc";
   skip?: number;
@@ -58,6 +77,9 @@ export type AdminProductSummary = {
   stock: number;
   low_stock: boolean;
   pending_count: number;
+  store_listed: boolean;
+  pricing_status: PricingStatus;
+  warnings: PricingWarning[];
   updated_at: string;
 };
 export type AdminVariant = {
@@ -74,6 +96,14 @@ export type AdminVariant = {
   length_cm: number | null;
   pending_reason: PendingReason | null;
   images: string[];
+  published: boolean;
+  price_source: PriceSource;
+  store_price: string | null;
+  pricing_status: PricingStatus;
+  pricing_confirmed_at: string | null;
+  /** Sempre começa pela linha de min_quantity = 1. */
+  pricing_tiers: AdminPricingTier[];
+  warnings: PricingWarning[];
 };
 export type Overridable<T> = { bling: T; site: T | null; locked: boolean };
 export type Presentation = {
@@ -215,6 +245,9 @@ export type DashboardSummary = {
   low_stock_products: number;
   low_stock_threshold: number;
   bling_pending_products: number;
+  pricing_pending_products: number;
+  tier_warning_products: number;
+  store_price_missing_products: number;
 };
 
 // Moderação

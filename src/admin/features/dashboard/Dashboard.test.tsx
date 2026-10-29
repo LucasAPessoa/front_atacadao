@@ -23,6 +23,9 @@ const zeros: DashboardSummary = {
   low_stock_products: 0,
   low_stock_threshold: 5,
   bling_pending_products: 0,
+  pricing_pending_products: 0,
+  tier_warning_products: 0,
+  store_price_missing_products: 0,
 };
 
 const memory = new Map<string, string>();

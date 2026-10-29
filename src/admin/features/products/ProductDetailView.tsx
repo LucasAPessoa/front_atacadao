@@ -3,8 +3,6 @@ import { useState } from "react";
 import { Link } from "react-router";
 import type { AdminProductDetail, AdminVariant } from "../../api/types";
 import { PresentationForm } from "./PresentationForm";
-import { PricingTiersEditor } from "./PricingTiersEditor";
-import { VariantPriceEditor } from "./VariantPriceEditor";
 import { formatBRL, pendingLabels } from "./format";
 
 const num = (value: number | null, unit: string) => (value === null ? "—" : `${value} ${unit}`);
@@ -157,8 +155,7 @@ export function ProductDetailView({ product }: { product: AdminProductDetail }) 
       {tab === "store" && <PresentationForm product={product} />}
       {tab === "prices" && (
         <div role="tabpanel" aria-label="Preços" className="adm-stack">
-          <VariantPriceEditor productId={product.id} variants={product.variants} />
-          <PricingTiersEditor productId={product.id} tiers={product.pricing_tiers} />
+          {/* TODO(back #128, brief 2): editor da tabela por variação (adminApi.savePricingTable). */}
         </div>
       )}
     </section>

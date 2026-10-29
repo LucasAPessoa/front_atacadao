@@ -17,7 +17,10 @@ import type {
   ModerationReview,
   OrderListParams,
   PresentationPatch,
-  PricingTier,
+  PricingTableInput,
+  PricingSettings,
+  ConfirmPricingResult,
+  AdminVariant,
   ProductListParams,
   QuestionFilter,
   ReconciliationQueueItem,
@@ -100,21 +103,29 @@ export const adminApi = {
     ),
   bulkPresentation: (patch: BulkPresentationPatch) =>
     call<{ updated: number }>("/admin/products/presentation", json("PATCH", patch)),
-  updateVariantPrice: (variantId: string, basePrice: string) =>
-    call<unknown>(
-      `/catalog/product-variants/${encodeURIComponent(variantId)}`,
-      json("PATCH", { base_price: basePrice }),
+  /** Substitui a tabela inteira da variação e confirma. `tiers` não inclui a linha de 1 unidade. */
+  savePricingTable: (productId: string, variantId: string, body: PricingTableInput) =>
+    call<AdminVariant>(
+      `/admin/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}/pricing`,
+      json("PUT", body),
     ),
+  /** Confirma as variações pendentes do produto com a tabela atual (sem escrita no Bling). */
+  confirmProductPricing: (productId: string) =>
+    call<AdminProductDetail>(
+      `/admin/products/${encodeURIComponent(productId)}/confirm-pricing`,
+      json("POST"),
+    ),
+  confirmPricingBatch: (productIds: string[]) =>
+    call<ConfirmPricingResult>(
+      "/admin/products/confirm-pricing",
+      json("POST", { product_ids: productIds }),
+    ),
+  getPricingSettings: (signal?: AbortSignal) =>
+    call<PricingSettings>("/admin/store/pricing-settings", {}, signal),
+  updatePricingSettings: (body: { auto_confirm: boolean }) =>
+    call<PricingSettings>("/admin/store/pricing-settings", json("PUT", body)),
   categories: (signal?: AbortSignal) =>
     call<Category[]>("/catalog/categories/?limit=100", {}, signal),
-  pricingTiers: (productId: string, signal?: AbortSignal) =>
-    call<PricingTier[]>(`/catalog/pricing-tiers/${qs({ product_id: productId })}`, {}, signal),
-  createPricingTier: (input: { product_id: string; min_quantity: number; unit_price: string }) =>
-    call<PricingTier>("/catalog/pricing-tiers/", json("POST", input)),
-  updatePricingTier: (id: string, input: { min_quantity?: number; unit_price?: string }) =>
-    call<PricingTier>(`/catalog/pricing-tiers/${encodeURIComponent(id)}`, json("PATCH", input)),
-  deletePricingTier: (id: string) =>
-    call<void>(`/catalog/pricing-tiers/${encodeURIComponent(id)}`, json("DELETE")),
 
   // Pedidos
   orders: (params: OrderListParams = {}, signal?: AbortSignal) =>
