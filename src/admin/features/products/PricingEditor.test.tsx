@@ -82,7 +82,9 @@ async function mount(variants: AdminVariant[]) {
 const input = (box: HTMLElement, label: string) => {
   const n = label.match(/faixa (\d+)$/)?.[1];
   const text = label.startsWith("Preço") ? "Preço (R$)" : "A partir de (un.)";
-  const group = box.querySelector(`[role=group][aria-label="Faixa ${n}"]`);
+  const group = [...box.querySelectorAll("fieldset.adm-tier-row")].find(
+    (f) => f.querySelector("legend")?.textContent === `Faixa ${n}`,
+  );
   const field = [...(group?.querySelectorAll("label") ?? [])].find((l) => l.textContent === text);
   return field?.parentElement?.querySelector("input") as HTMLInputElement;
 };
@@ -256,7 +258,7 @@ describe("editor da tabela por variação", () => {
 
   it("faixas têm rótulos visíveis e só há um botão primário na aba", async () => {
     const box = await mount([variant()]);
-    const group = box.querySelector("[role=group][aria-label='Faixa 1']");
+    const group = box.querySelector("fieldset.adm-tier-row");
     expect(group?.textContent).toContain("A partir de (un.)");
     expect(group?.textContent).toContain("Preço (R$)");
     expect(box.querySelectorAll(".adm-btn-primary")).toHaveLength(1);

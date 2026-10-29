@@ -67,6 +67,8 @@ describe("configuração de preços", () => {
     const box = await mount();
     expect(toggle(box).checked).toBe(false);
     expect(box.textContent).toContain("206347377");
+    expect(box.querySelector("h1")?.textContent).toBe("Configurações de preços");
+    expect(box.textContent).toContain("os já pendentes continuam pendentes");
   });
 
   it("ligar envia PUT só com auto_confirm", async () => {

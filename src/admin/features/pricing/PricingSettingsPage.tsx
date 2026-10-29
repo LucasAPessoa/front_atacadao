@@ -19,21 +19,23 @@ export function PricingSettingsView({ settings, saving, error, onToggle }: ViewP
   return (
     <>
       <div className="adm-page-header">
-        <h1 id="adm-page-title">Preços</h1>
+        <h1 id="adm-page-title">Configurações de preços</h1>
       </div>
       <div className="adm-card">
         <label className="adm-switch">
           <input
             type="checkbox"
+            aria-describedby="adm-auto-confirm-hint"
             checked={settings.auto_confirm}
             disabled={saving}
             onChange={(e) => onToggle(e.target.checked)}
           />
           Confirmação automática de preços
         </label>
-        <p className="adm-muted">
+        <p className="adm-muted" id="adm-auto-confirm-hint">
           Ligada: variações novas entram na loja já com a tabela atual. Desligada: ficam aguardando
-          preços até você confirmar.
+          preços até você confirmar. Vale para produtos importados a partir de agora; os já
+          pendentes continuam pendentes.
         </p>
         {error && (
           <p className="adm-alert adm-alert-danger" role="alert">

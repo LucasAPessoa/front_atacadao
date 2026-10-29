@@ -153,7 +153,8 @@ export function VariantPricingEditor({
           <p className="adm-muted">Nenhuma faixa: vale só o preço de 1 unidade.</p>
         )}
         {drafts.map((d, index) => (
-          <div className="adm-tier-row" role="group" aria-label={`Faixa ${index + 1}`} key={d.key}>
+          <fieldset className="adm-tier-row" key={d.key}>
+            <legend>Faixa {index + 1}</legend>
             <div className="adm-field">
               <label htmlFor={`${uid}-min-${d.key}`}>A partir de (un.)</label>
               <input
@@ -182,7 +183,7 @@ export function VariantPricingEditor({
             >
               Remover
             </button>
-          </div>
+          </fieldset>
         ))}
         <button
           type="button"
