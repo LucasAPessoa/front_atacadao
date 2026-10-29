@@ -243,9 +243,10 @@ describe("editor da tabela por variação", () => {
     expect(box.textContent).toContain("Informe o preço de 1 unidade e salve para liberar na loja.");
     await type(unitInput(box), "30,00");
     await click(button(box, "Salvar e confirmar"));
-    expect(box.querySelector("[role=alertdialog]")?.textContent).toContain(
-      "Definir preço no Bling?",
-    );
+    const dialog = box.querySelector("[role=alertdialog]")?.textContent?.replace(/\s/g, " ");
+    expect(dialog).toContain("Definir preço no Bling?");
+    expect(dialog).toContain("Definir preço de 1 unidade em R$ 30,00 no Bling");
+    expect(dialog).not.toContain("De —");
   });
 
   it("Confirmar preços desabilitado explica o motivo", async () => {

@@ -216,7 +216,11 @@ export function VariantPricingEditor({
       <ConfirmDialog
         open={pendingInput !== null}
         title={before === null ? "Definir preço no Bling?" : "Alterar o preço no Bling?"}
-        message={`De ${formatBRL(before)} para ${formatBRL(pendingInput?.unit_price ?? null)}. Isso grava o preço de 1 unidade desta variação no Bling (loja do site).`}
+        message={
+          before === null
+            ? `Definir preço de 1 unidade em ${formatBRL(pendingInput?.unit_price ?? null)} no Bling (loja do site).`
+            : `De ${formatBRL(before)} para ${formatBRL(pendingInput?.unit_price ?? null)}. Isso grava o preço de 1 unidade desta variação no Bling (loja do site).`
+        }
         confirmLabel={before === null ? "Definir e salvar" : "Alterar e salvar"}
         busy={save.isPending}
         onCancel={() => setPendingInput(null)}
