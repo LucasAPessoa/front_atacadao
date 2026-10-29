@@ -36,16 +36,20 @@ const triFilters: [keyof ProductFilters, string][] = [
   ["featured", "Destaque"],
   ["low_stock", "Estoque baixo"],
   ["pending", "Pendência"],
-  ["listed", "Na loja do site"],
+  ["listed", "Publicado na loja"],
 ];
 
-/** Estado do produto na loja do site: fora da loja, aguardando preços ou ativo. */
+/** Estado dos preços na loja do site (a coluna "À venda" mostra o ativo no Bling, separado). */
 export const productState = (p: AdminProductSummary) =>
-  !p.store_listed
-    ? { label: "Fora da loja do site", tone: undefined }
-    : p.pricing_status === "pending"
-      ? { label: pricingStatusLabels.pending, tone: "warning" }
-      : { label: "Ativo", tone: "success" };
+  !p.is_active
+    ? { label: "Inativo no Bling", tone: undefined }
+    : !p.store_listed
+      ? { label: "Fora da loja do site", tone: undefined }
+      : p.warnings.includes("price_not_set") || p.warnings.includes("store_price_missing")
+        ? { label: "Sem preço", tone: "warning" }
+        : p.pricing_status === "pending"
+          ? { label: pricingStatusLabels.pending, tone: "warning" }
+          : { label: "Preços confirmados", tone: "success" };
 
 const yesNo = (value: boolean) => (
   <span className="adm-badge" data-tone={value ? "success" : undefined}>

@@ -124,14 +124,17 @@ describe("ProductsList", () => {
           product(2, { pricing_status: "pending" }),
           product(3, { store_listed: false }),
           product(4, { warnings: ["store_price_missing"] }),
+          product(5, { is_active: false }),
         ],
-        meta: { total: 4, skip: 0, limit: 25 },
+        meta: { total: 5, skip: 0, limit: 25 },
       };
     const box = await mount();
     const rows = [...box.querySelectorAll("tbody tr")].map((r) => r.textContent ?? "");
-    expect(rows[0]).toContain("Ativo");
+    expect(rows[0]).toContain("Preços confirmados");
     expect(rows[1]).toContain("Aguardando preços");
     expect(rows[2]).toContain("Fora da loja do site");
+    expect(rows[4]).toContain("Inativo no Bling");
+    expect(rows[3]).toContain("Sem preço");
     expect(rows[3]).toContain("não tem preço para esta variação");
   });
 
