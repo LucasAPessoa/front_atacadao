@@ -25,6 +25,7 @@ const columns: Column<AdminOrderSummary>[] = [
   {
     key: "code",
     header: "Código",
+    card: "title",
     render: (o) => <Link to={`/pedidos/${o.id}`}>{o.order_code}</Link>,
   },
   { key: "date", header: "Data", render: (o) => formatDateTime(o.created_at) },
@@ -41,6 +42,7 @@ const columns: Column<AdminOrderSummary>[] = [
   {
     key: "status",
     header: "Status",
+    card: "field",
     render: (o) => (
       <span className="adm-badge" data-tone={statusTone(o.status)}>
         {statusLabel(o.status)}
@@ -48,7 +50,13 @@ const columns: Column<AdminOrderSummary>[] = [
     ),
   },
   { key: "items", header: "Itens", align: "right", render: (o) => o.items_count },
-  { key: "total", header: "Total", align: "right", render: (o) => formatBRL(o.total_amount) },
+  {
+    key: "total",
+    header: "Total",
+    align: "right",
+    card: "field",
+    render: (o) => formatBRL(o.total_amount),
+  },
 ];
 
 export type OrdersListViewProps = {

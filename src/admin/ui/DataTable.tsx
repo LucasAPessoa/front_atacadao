@@ -10,6 +10,8 @@ export type Column<T> = {
   /** Presente = coluna ordenável; o valor vai para `sort` na API. */
   sortKey?: string;
   align?: "left" | "right";
+  /** Em ≤ 768px a tabela vira cartões e só colunas com `card` aparecem; "title" destaca a coluna. */
+  card?: "title" | "field";
 };
 
 export type DataTableProps<T> = {
@@ -59,8 +61,13 @@ export function DataTable<T>({
   const toggleAll = () => onSelectedChange?.(allSelected ? new Set() : new Set(keys));
 
   return (
-    // biome-ignore lint/a11y/noNoninteractiveTabindex: região rolável precisa de foco para rolar por teclado
-    <section className="adm-table-wrap" aria-busy={loading} aria-label={caption} tabIndex={0}>
+    <section
+      className="adm-table-wrap adm-table-cards"
+      aria-busy={loading}
+      aria-label={caption}
+      // biome-ignore lint/a11y/noNoninteractiveTabindex: região rolável precisa de foco para rolar por teclado
+      tabIndex={0}
+    >
       <table className="adm-table">
         <caption className="adm-sr-only">{caption}</caption>
         <thead>
@@ -121,7 +128,12 @@ export function DataTable<T>({
                   </td>
                 )}
                 {columns.map((column) => (
-                  <td key={column.key} className={column.align === "right" ? "adm-num" : undefined}>
+                  <td
+                    key={column.key}
+                    className={column.align === "right" ? "adm-num" : undefined}
+                    data-card={column.card}
+                    data-label={column.header}
+                  >
                     {column.render(row)}
                   </td>
                 ))}

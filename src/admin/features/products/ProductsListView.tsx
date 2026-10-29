@@ -56,6 +56,7 @@ const columns: Column<AdminProductSummary>[] = [
   {
     key: "name",
     header: "Produto",
+    card: "title",
     sortKey: "name",
     render: (p) => (
       <>
@@ -67,6 +68,7 @@ const columns: Column<AdminProductSummary>[] = [
   {
     key: "price",
     header: "Preço",
+    card: "field",
     sortKey: "price",
     align: "right",
     render: (p) => formatPriceRange(p.min_price, p.max_price),
@@ -74,6 +76,7 @@ const columns: Column<AdminProductSummary>[] = [
   {
     key: "stock",
     header: "Estoque",
+    card: "field",
     sortKey: "stock",
     align: "right",
     render: (p) => (
