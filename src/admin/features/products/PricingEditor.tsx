@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useId, useState } from "react";
+import { formatVariationName } from "../../../shared/variation";
 import { ApiError } from "../../../shared/http";
 import { adminApi } from "../../api";
 import type { AdminProductDetail, AdminVariant, PricingTableInput } from "../../api/types";
@@ -73,7 +74,10 @@ export function VariantPricingEditor({
       setServerError(serverMessage(error));
       return;
     }
-    toast.push("success", `Tabela de preços de ${variant.variation_name} salva e confirmada.`);
+    toast.push(
+      "success",
+      `Tabela de preços de ${formatVariationName(variant.variation_name)} salva e confirmada.`,
+    );
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["admin", "product", productId] }),
       queryClient.invalidateQueries({ queryKey: ["admin", "products"] }),
@@ -103,7 +107,7 @@ export function VariantPricingEditor({
       noValidate
       data-variant={variant.id}
     >
-      <h3 id={`${uid}-title`}>{variant.variation_name}</h3>
+      <h3 id={`${uid}-title`}>{formatVariationName(variant.variation_name)}</h3>
       <p>
         <span
           className="adm-badge"

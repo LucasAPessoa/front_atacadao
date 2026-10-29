@@ -15,6 +15,7 @@ import {
   tierRows,
   variantUnitPrice,
 } from "../../lib/product";
+import { formatVariationName } from "../../shared/variation";
 import { api } from "../../services/client";
 import type { Cart, Product, VariantTier } from "../../shared/types/domain";
 import { addToCart, type Extras, type Loaded, loadProduct } from "./loader";
@@ -337,7 +338,7 @@ export function ProductView({
                       checked={item.id === variant?.id}
                       onChange={() => onVariant(item.id)}
                     />
-                    <span>{item.variation_name}</span>
+                    <span>{formatVariationName(item.variation_name)}</span>
                     <span>{money(variantUnitPrice(item))}</span>
                     <span className={ok ? "pdp-stock" : "pdp-stock out"}>
                       {ok ? "Disponível" : "Indisponível"}
@@ -467,7 +468,7 @@ export function ProductPage({ id, token, onLogin, onCart, onError }: PageProps) 
     });
     if (ok && variant)
       setMessage(
-        `${quantity} × ${state.product.name} (${variant.variation_name}) adicionado ao carrinho.`,
+        `${quantity} × ${state.product.name} (${formatVariationName(variant.variation_name)}) adicionado ao carrinho.`,
       );
     setAdding(false);
   };

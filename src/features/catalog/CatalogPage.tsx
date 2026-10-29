@@ -1,3 +1,4 @@
+import { formatVariationName } from "../../shared/variation";
 import { useEffect, useMemo, useState } from "react";
 import { ProductThumb } from "../../components/ProductThumb";
 import { navigate } from "../../components/Layout";
@@ -96,7 +97,9 @@ export function ProductGrid({
                     </a>
                   </h3>
                   <span className="product-unit">
-                    {variant?.variation_name ?? "Indisponível no momento"}
+                    {variant
+                      ? formatVariationName(variant.variation_name)
+                      : "Indisponível no momento"}
                   </span>
                   <div className="product-buy">
                     <span className="product-price">

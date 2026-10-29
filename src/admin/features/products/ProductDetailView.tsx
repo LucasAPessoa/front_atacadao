@@ -1,3 +1,4 @@
+import { formatVariationName } from "../../../shared/variation";
 import { Tabs } from "../../ui/Tabs";
 import { useState } from "react";
 import { Link } from "react-router";
@@ -20,7 +21,7 @@ function VariantRow({ v }: { v: AdminVariant }) {
   return (
     <tr>
       <td>
-        {v.variation_name}
+        {formatVariationName(v.variation_name)}
         <div className="adm-muted">
           SKU {v.bling_sku}
           {v.gtin ? ` · GTIN ${v.gtin}` : ""}
