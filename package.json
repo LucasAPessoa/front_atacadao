@@ -17,7 +17,7 @@
     "check:isolation": "node scripts/check-isolation.mjs"
   },
   "dependencies": {
-    "@hookform/resolvers": "5.9.1",
+    "@hookform/resolvers": "6.0.0",
     "@tanstack/react-query": "5.104.5",
     "@vitejs/plugin-react": "6.1.2",
     "dompurify": "3.4.17",
