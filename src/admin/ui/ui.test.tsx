@@ -42,6 +42,19 @@ describe("Pagination", () => {
   });
 });
 
+const probeDefaults = { q: "", skip: "0", sort: "name" };
+const probe = {
+  update: (() => {}) as ReturnType<typeof useUrlState<typeof probeDefaults>>[1],
+  search: "",
+};
+
+function Probe() {
+  const [, set] = useUrlState(probeDefaults);
+  probe.update = set;
+  probe.search = useLocation().search;
+  return null;
+}
+
 describe("useUrlState", () => {
   const defaults = { q: "", skip: "0", sort: "name" };
   it("lê com padrões e escreve só o que difere, resetando a página", () => {
@@ -56,14 +69,6 @@ describe("useUrlState", () => {
     expect(same.toString()).toBe("q=b&skip=25");
   });
   it("hook sincroniza com a query string", () => {
-    let update: ReturnType<typeof useUrlState<typeof defaults>>[1] = () => {};
-    let search = "";
-    function Probe() {
-      const [, set] = useUrlState(defaults);
-      update = set;
-      search = useLocation().search;
-      return null;
-    }
     const box = document.createElement("div");
     act(() =>
       createRoot(box).render(
@@ -72,8 +77,8 @@ describe("useUrlState", () => {
         </MemoryRouter>,
       ),
     );
-    act(() => update({ q: "abc" }));
-    expect(search).toBe("?q=abc");
+    act(() => probe.update({ q: "abc" }));
+    expect(probe.search).toBe("?q=abc");
   });
 });
 
