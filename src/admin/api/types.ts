@@ -76,8 +76,8 @@ export type AdminProductSummary = {
   is_active: boolean;
   visible: boolean;
   featured: boolean;
-  min_price: string;
-  max_price: string;
+  min_price: string | null;
+  max_price: string | null;
   stock: number;
   low_stock: boolean;
   pending_count: number;

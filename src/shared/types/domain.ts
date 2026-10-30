@@ -7,8 +7,8 @@ export type Variant = {
   product_id?: string;
   variation_name: string;
   base_price: string;
-  /** Preço da linha de 1 unidade, vindo do servidor. */
-  unit_price?: string;
+  /** Preço da linha de 1 unidade, vindo do servidor (null sem preço confirmado). */
+  unit_price?: string | null;
   /** Tabela completa da variação, a partir de min_quantity = 1. */
   pricing_tiers?: VariantTier[];
   stock_quantity: number;

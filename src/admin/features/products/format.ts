@@ -9,7 +9,7 @@ export function formatBRL(value: string | null | undefined): string {
   return `${negative ? "-" : ""}R$ ${grouped},${frac.padEnd(2, "0").slice(0, 2)}`;
 }
 
-export function formatPriceRange(min: string, max: string): string {
+export function formatPriceRange(min: string | null, max: string | null): string {
   return min === max ? formatBRL(min) : `${formatBRL(min)} – ${formatBRL(max)}`;
 }
 
