@@ -969,7 +969,7 @@ h4,
 
 /* Campos */
 :where(.auth-card, .address-form, .order-summary)
-:is(input:not([type="radio"], [type="checkbox"]), select, textarea) {
+  :is(input:not([type="radio"], [type="checkbox"]), select, textarea) {
   width: 100%;
   min-height: 44px;
   padding: 0 12px;

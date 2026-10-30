@@ -37,7 +37,7 @@ const comingSoonRoutes: RouteObject[] = comingSoonSections.map((section) => ({
   path: section.path,
   lazy: () =>
     import("./features/coming-soon/ComingSoon").then((m) => ({
-      Component: () => <m.ComingSoon title={section.label} />,
+      element: <m.ComingSoon title={section.label} />,
     })),
 }));
 
