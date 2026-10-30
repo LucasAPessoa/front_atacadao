@@ -1,3 +1,4 @@
+import { formatVariationName } from "../shared/variation";
 import type { CheckoutPreview } from "../shared/types/domain";
 
 type ShippingOption = CheckoutPreview["shipping_options"][number];
@@ -24,7 +25,8 @@ export function shippingLabel(option: Pick<ShippingOption, "company_name" | "ser
 }
 
 export function cartItemName(productName: string | undefined, variationName: string): string {
-  return productName ? `${productName} · ${variationName}` : variationName;
+  const variation = formatVariationName(variationName);
+  return productName ? `${productName} · ${variation}` : variation;
 }
 
 // Valores vêm da API: frete = price, total = total_amount (servidor é a autoridade).

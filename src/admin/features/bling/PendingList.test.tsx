@@ -122,6 +122,18 @@ describe("pendências do Bling", () => {
     expect(search).toContain("motivo=INCOMPLETE_PRICE");
   });
 
+  it("filtro de motivo inclui os motivos de preço com rótulos legíveis", async () => {
+    const box = await mount("/integracoes/bling?aba=pendencias");
+    await waitFor(() => expect(box.textContent).toContain("Café"));
+    const select = box.querySelector("#bling-pending-reason") as HTMLSelectElement;
+    const options = new Map([...select.options].map((o) => [o.value, o.textContent]));
+    expect(options.get("PRICE_NOT_SET")).toBe("Sem preço (Bling e loja)");
+    expect(options.get("STORE_PRICE_MISSING")).toBe(
+      "Sem preço na loja do Bling (usando preço geral)",
+    );
+    expect(options.get("TIER_NOT_BELOW_UNIT")).toBe("Faixa igual ou acima do preço de 1 unidade");
+  });
+
   it("paginação grava skip na URL e consulta a próxima página", async () => {
     total = 45;
     const box = await mount("/integracoes/bling?aba=pendencias");

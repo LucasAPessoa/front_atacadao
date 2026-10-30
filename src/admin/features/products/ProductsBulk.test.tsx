@@ -17,11 +17,13 @@ const product = (n: number): AdminProductSummary => ({
   code: `COD-${n}`,
   name: `Produto ${n}`,
   bling_name: `Bling ${n}`,
+  store_listed: true,
+  pricing_status: "confirmed",
+  warnings: [],
   main_image_url: null,
   is_active: true,
   visible: true,
   featured: false,
-  customized: false,
   min_price: "10.00",
   max_price: "10.00",
   stock: 10,
@@ -46,11 +48,18 @@ beforeEach(() => {
   listCalls = 0;
   urls = [];
   patches = [];
+  posts = [];
   patchReply = () => new Response(JSON.stringify({ data: { updated: 3 } }), { status: 200 });
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
+      if (init?.method === "POST" && url.includes("/admin/products/confirm-pricing")) {
+        posts.push({ url, body: JSON.parse(String(init.body)) });
+        return new Response(JSON.stringify({ data: { confirmed: 2, skipped: ["id-3"] } }), {
+          status: 200,
+        });
+      }
       if (init?.method === "PATCH") {
         patches.push({ url, body: JSON.parse(String(init.body)) });
         return patchReply();
@@ -77,6 +86,7 @@ const Nav = () => {
   return null;
 };
 let urls: string[];
+let posts: { url: string; body: unknown }[];
 
 async function mount(initial = "/produtos") {
   const box = document.createElement("div");
@@ -122,6 +132,21 @@ describe("ações em lote", () => {
     ]);
     await waitFor(() => expect(listCalls).toBeGreaterThan(before));
     expect(box.querySelector("[role=toolbar]")).toBeNull();
+  });
+
+  it("confirmar preços em lote envia os ids e mostra confirmados e ignorados", async () => {
+    const box = await mount();
+    await click(box.querySelector("input[aria-label='Selecionar todos']") as HTMLElement);
+    await click(button(box, "Confirmar preços"));
+    expect(box.querySelector("[role=alertdialog]")?.textContent).toContain(
+      "Confirmar preços de 3 produtos?",
+    );
+    expect(posts).toHaveLength(0);
+    await click(button(box, "Confirmar"));
+    await waitFor(() => expect(box.textContent).toContain("2 produto(s) com preços confirmados."));
+    expect(box.textContent).toContain("1 ignorado(s)");
+    expect(posts[0]?.body).toEqual({ product_ids: ["id-1", "id-2", "id-3"] });
+    expect(patches).toHaveLength(0);
   });
 
   it("cancelar não envia nada", async () => {

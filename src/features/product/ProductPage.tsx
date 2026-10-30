@@ -10,12 +10,13 @@ import {
   handleLinkClick,
   isAvailable,
   nextTier,
-  packPlural,
   safeImageUrl,
   tierRows,
+  variantUnitPrice,
 } from "../../lib/product";
+import { formatVariationName } from "../../shared/variation";
 import { api } from "../../services/client";
-import type { Cart, PricingTier, Product } from "../../shared/types/domain";
+import type { Cart, Product, VariantTier } from "../../shared/types/domain";
 import { addToCart, type Extras, type Loaded, loadProduct } from "./loader";
 
 type PageProps = {
@@ -97,13 +98,11 @@ function QuantityField({
   quantity,
   stock,
   disabled,
-  packName,
   onQuantity,
 }: {
   quantity: number;
   stock: number;
   disabled: boolean;
-  packName: string;
   onQuantity(value: number): void;
 }) {
   const [draft, setDraft] = useState(String(quantity));
@@ -115,7 +114,7 @@ function QuantityField({
   const max = Math.max(stock, 1);
   return (
     <div className="pdp-qty">
-      <label htmlFor="pdp-qty-input">Quantidade de {packPlural(packName)}</label>
+      <label htmlFor="pdp-qty-input">Quantidade</label>
       <div className="pdp-stepper">
         <button
           type="button"
@@ -160,7 +159,7 @@ function QuantityField({
   );
 }
 
-function TierTable({ rows, active }: { rows: PricingTier[]; active?: string }) {
+function TierTable({ rows, active }: { rows: VariantTier[]; active?: string }) {
   const [open, setOpen] = useState(true);
   return (
     <section className="pdp-tiers" aria-label="Preço por quantidade">
@@ -221,6 +220,34 @@ function TierTable({ rows, active }: { rows: PricingTier[]; active?: string }) {
   );
 }
 
+/** Descrição longa do Bling recolhida: preço e compra ficam à vista sem rolar. */
+function Description({ parts }: { parts: Array<string | null | undefined> }) {
+  const [open, setOpen] = useState(false);
+  const texts = parts.filter((part): part is string => Boolean(part?.trim()));
+  if (texts.length === 0) return null;
+  const long = texts.join("").length > 240 || texts.length > 1;
+  return (
+    <div className="pdp-desc">
+      <div id="pdp-desc-body" className="pdp-desc-body" data-open={open || !long ? "" : undefined}>
+        {texts.map((text) => (
+          <RichText key={text} className="pdp-description" value={text} />
+        ))}
+      </div>
+      {long && (
+        <button
+          type="button"
+          className="link-button"
+          aria-expanded={open}
+          aria-controls="pdp-desc-body"
+          onClick={() => setOpen(!open)}
+        >
+          {open ? "Ver menos" : "Ver mais"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 const stars = (rating: number) => "★".repeat(rating) + "☆".repeat(Math.max(0, 5 - rating));
 
 export function ProductView({
@@ -245,10 +272,10 @@ export function ProductView({
   const titleRef = useRef<HTMLHeadingElement>(null);
   // biome-ignore lint/correctness/useExhaustiveDependencies: foco só ao abrir outro produto.
   useEffect(() => titleRef.current?.focus(), [product.id]);
-  const rows = variant ? tierRows(variant.base_price, extras.tiers) : [];
+  const rows = variant ? tierRows(variant) : [];
   const tier = applicableTier(rows, quantity);
   const upcoming = nextTier(rows, quantity);
-  const unitPrice = Number(tier?.unit_price ?? variant?.base_price ?? 0);
+  const unitPrice = Number(tier?.unit_price ?? (variant ? variantUnitPrice(variant) : 0));
   const category = product.categories[0]?.name;
   return (
     <article className="pdp wrap">
@@ -296,12 +323,10 @@ export function ProductView({
           <h1 className="pdp-title" ref={titleRef} tabIndex={-1}>
             {product.name}
           </h1>
-          {product.description?.trim() && (
-            <RichText className="pdp-description" value={product.description} />
-          )}
-          {product.complementary_description?.trim() && (
-            <RichText className="pdp-description" value={product.complementary_description} />
-          )}
+          <Description
+            key={product.id}
+            parts={[product.description, product.complementary_description]}
+          />
           <div className="pdp-price">
             <span className="price-value pdp-total" aria-live="polite">
               {variant ? money(unitPrice * quantity) : "—"}
@@ -314,7 +339,7 @@ export function ProductView({
             {variant && rows.length > 1 && (
               <span className="price-hint">
                 {upcoming
-                  ? `Leve ${upcoming.min_quantity} e pague ${money(upcoming.unit_price)} cada (mais ${upcoming.min_quantity - quantity})`
+                  ? `Leve ${upcoming.min_quantity} e pague ${money(upcoming.unit_price)} cada · faltam ${upcoming.min_quantity - quantity} para este preço`
                   : "Você está na melhor faixa"}
               </span>
             )}
@@ -336,8 +361,8 @@ export function ProductView({
                       checked={item.id === variant?.id}
                       onChange={() => onVariant(item.id)}
                     />
-                    <span>{item.variation_name}</span>
-                    <span>{money(item.base_price)}</span>
+                    <span>{formatVariationName(item.variation_name)}</span>
+                    <span>{money(variantUnitPrice(item))}</span>
                     <span className={ok ? "pdp-stock" : "pdp-stock out"}>
                       {ok ? "Disponível" : "Indisponível"}
                     </span>
@@ -353,7 +378,6 @@ export function ProductView({
               quantity={quantity}
               stock={variant?.stock_quantity ?? 1}
               disabled={!available}
-              packName={variant?.variation_name ?? ""}
               onQuantity={onQuantity}
             />
             <button
@@ -366,7 +390,7 @@ export function ProductView({
                 ? "Indisponível"
                 : adding
                   ? "Adicionando…"
-                  : `Adicionar ${quantity} ${packPlural(variant?.variation_name ?? "", quantity)} · ${money(unitPrice * quantity)}`}
+                  : `Adicionar ${quantity} ao carrinho · ${money(unitPrice * quantity)}`}
             </button>
           </div>
           <p className="pdp-feedback" role="status" aria-live="polite">
@@ -459,10 +483,14 @@ export function ProductPage({ id, token, onLogin, onCart, onError }: PageProps) 
       onLogin,
       onCart,
       onError,
+      onStockConflict: ({ message, available }) => {
+        setMessage(message);
+        if (available >= 1) setQuantity(clampQuantity(available, available));
+      },
     });
     if (ok && variant)
       setMessage(
-        `${quantity} × ${state.product.name} (${variant.variation_name}) adicionado ao carrinho.`,
+        `${quantity} × ${state.product.name} (${formatVariationName(variant.variation_name)}) adicionado ao carrinho.`,
       );
     setAdding(false);
   };

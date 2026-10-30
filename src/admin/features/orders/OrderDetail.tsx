@@ -1,3 +1,4 @@
+import { formatVariationName } from "../../../shared/variation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useParams } from "react-router";
@@ -137,7 +138,9 @@ export function OrderDetailView({
                 <tr key={item.id}>
                   <td>
                     {item.product_name_snapshot}
-                    <div className="adm-muted">{item.variation_name_snapshot}</div>
+                    <div className="adm-muted">
+                      {formatVariationName(item.variation_name_snapshot)}
+                    </div>
                   </td>
                   <td>{item.sku_snapshot}</td>
                   <td className="adm-num">{item.quantity}</td>

@@ -9,6 +9,7 @@ import { FilterBar } from "../../ui/FilterBar";
 import { Pagination } from "../../ui/Pagination";
 import { SearchInput } from "../../ui/SearchInput";
 import { formatPriceRange } from "./format";
+import { pricingStatusLabels, warningLabels, warningText } from "./pricing";
 
 export const PAGE_SIZE = 25;
 
@@ -20,7 +21,9 @@ export const productFilterDefaults = {
   featured: "",
   low_stock: "",
   pending: "",
-  customized: "",
+  pricing_status: "",
+  warning: "",
+  listed: "",
   sort: "name",
   order: "asc",
   skip: "0",
@@ -33,8 +36,20 @@ const triFilters: [keyof ProductFilters, string][] = [
   ["featured", "Destaque"],
   ["low_stock", "Estoque baixo"],
   ["pending", "Pendência"],
-  ["customized", "Personalizado"],
+  ["listed", "Publicado na loja"],
 ];
+
+/** Estado dos preços na loja do site (a coluna "À venda" mostra o ativo no Bling, separado). */
+export const productState = (p: AdminProductSummary) =>
+  !p.is_active
+    ? { label: "Inativo", tone: undefined }
+    : !p.store_listed
+      ? { label: "Fora da loja do site", tone: undefined }
+      : p.warnings.includes("price_not_set") || p.warnings.includes("store_price_missing")
+        ? { label: "Sem preço", tone: "warning" }
+        : p.pricing_status === "pending"
+          ? { label: pricingStatusLabels.pending, tone: "warning" }
+          : { label: "Preços confirmados", tone: "success" };
 
 const yesNo = (value: boolean) => (
   <span className="adm-badge" data-tone={value ? "success" : undefined}>
@@ -106,7 +121,28 @@ const columns: Column<AdminProductSummary>[] = [
         "0"
       ),
   },
-  { key: "customized", header: "Personalizado", render: (p) => yesNo(p.customized) },
+  {
+    key: "pricing",
+    header: "Preços",
+    card: "field",
+    render: (p) => {
+      const state = productState(p);
+      return (
+        <>
+          <span className="adm-badge" data-tone={state.tone}>
+            {state.label}
+          </span>
+          {p.warnings.length > 0 && (
+            <ul className="adm-muted" aria-label={`Avisos de ${p.name}`}>
+              {p.warnings.map((w) => (
+                <li key={w}>{warningText(w)}</li>
+              ))}
+            </ul>
+          )}
+        </>
+      );
+    },
+  },
   {
     key: "updated",
     header: "Atualizado",
@@ -117,18 +153,20 @@ const columns: Column<AdminProductSummary>[] = [
 
 export const BULK_MAX = 100;
 
-export type BulkAction = "hide" | "show" | "feature" | "unfeature";
+export type BulkAction = "hide" | "show" | "feature" | "unfeature" | "confirm_pricing";
 export const bulkActions: { key: BulkAction; label: string }[] = [
   { key: "hide", label: "Ocultar da loja" },
   { key: "show", label: "Mostrar na loja" },
   { key: "feature", label: "Destacar" },
   { key: "unfeature", label: "Remover destaque" },
+  { key: "confirm_pricing", label: "Confirmar preços" },
 ];
 const plural = (n: number) => `${n} ${n === 1 ? "produto" : "produtos"}`;
 export function bulkTitle(action: BulkAction, n: number): string {
   const items = plural(n);
   if (action === "hide") return `Ocultar ${items}?`;
   if (action === "show") return `Mostrar ${items} na loja?`;
+  if (action === "confirm_pricing") return `Confirmar preços de ${items}?`;
   if (action === "feature") return `Destacar ${items}?`;
   return `Remover destaque de ${items}?`;
 }
@@ -204,6 +242,33 @@ export function ProductsListView(p: ProductsListViewProps) {
             </select>
           </div>
         ))}
+        <div className="adm-field">
+          <label htmlFor="flt-pricing_status">Preços</label>
+          <select
+            id="flt-pricing_status"
+            value={filters.pricing_status}
+            onChange={(e) => p.onChange({ pricing_status: e.target.value })}
+          >
+            <option value="">Todos</option>
+            <option value="pending">{pricingStatusLabels.pending}</option>
+            <option value="confirmed">{pricingStatusLabels.confirmed}</option>
+          </select>
+        </div>
+        <div className="adm-field">
+          <label htmlFor="flt-warning">Aviso</label>
+          <select
+            id="flt-warning"
+            value={filters.warning}
+            onChange={(e) => p.onChange({ warning: e.target.value })}
+          >
+            <option value="">Todos</option>
+            {Object.entries(warningLabels).map(([key, label]) => (
+              <option key={key} value={key}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
       </FilterBar>
 
       {p.selected.size > 0 && (
@@ -230,7 +295,11 @@ export function ProductsListView(p: ProductsListViewProps) {
       <ConfirmDialog
         open={p.pendingAction !== null}
         title={p.pendingAction ? bulkTitle(p.pendingAction, p.selected.size) : ""}
-        message="A alteração vale para todos os produtos selecionados."
+        message={
+          p.pendingAction === "confirm_pricing"
+            ? "Confirma as variações aguardando preços com a tabela atual. Nada é gravado no Bling."
+            : "A alteração vale para todos os produtos selecionados."
+        }
         busy={p.bulkBusy}
         onConfirm={p.onBulkConfirm}
         onCancel={p.onBulkCancel}

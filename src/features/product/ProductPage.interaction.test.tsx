@@ -13,24 +13,32 @@ const product: Product = {
   is_active: true,
   categories: [],
   variants: [
-    { id: "v1", variation_name: "Fardo", base_price: "20.00", stock_quantity: 50, is_active: true },
+    {
+      id: "v1",
+      variation_name: "Fardo",
+      base_price: "20.00",
+      unit_price: "20.00",
+      pricing_tiers: [
+        { id: "t1", min_quantity: 1, unit_price: "20.00" },
+        { id: "t5", min_quantity: 5, unit_price: "18.00" },
+        { id: "t10", min_quantity: 10, unit_price: "15.00" },
+      ],
+      stock_quantity: 50,
+      is_active: true,
+    },
   ],
 };
 const extras = {
   images: [],
-  tiers: [
-    { id: "t5", product_id: "p1", min_quantity: 5, unit_price: "18.00" },
-    { id: "t10", product_id: "p1", min_quantity: 10, unit_price: "15.00" },
-  ],
   reviews: [],
   questions: [],
 };
 
-function Harness() {
+function Harness({ description }: { description?: string }) {
   const [quantity, setQuantity] = useState(1);
   return (
     <ProductView
-      product={product}
+      product={{ ...product, description }}
       extras={extras}
       variantId="v1"
       quantity={quantity}
@@ -50,11 +58,11 @@ afterEach(() => {
   act(() => root?.unmount());
   document.body.innerHTML = "";
 });
-const mount = () => {
+const mount = (props: { description?: string } = {}) => {
   const host = document.createElement("div");
   document.body.append(host);
   root = createRoot(host);
-  act(() => root?.render(<Harness />));
+  act(() => root?.render(<Harness {...props} />));
 };
 const click = (el: Element | null) => act(() => (el as HTMLElement).click());
 const norm = (text: string | null | undefined) => (text ?? "").replace(/\s/g, " ");
@@ -72,7 +80,9 @@ describe("preço na página do produto", () => {
     expect(norm(active?.textContent)).toContain("5 a 9");
     expect(active?.textContent).toContain("seu preço");
     expect(document.querySelectorAll("tr.active")).toHaveLength(1);
-    expect(document.querySelector(".price-hint")?.textContent).toContain("mais 5");
+    expect(document.querySelector(".price-hint")?.textContent).toContain(
+      "faltam 5 para este preço",
+    );
   });
 
   it("dropdown da tabela abre por padrão e alterna aria-expanded", () => {
@@ -89,12 +99,24 @@ describe("preço na página do produto", () => {
     expect(toggle?.getAttribute("aria-expanded")).toBe("true");
   });
 
-  it("CTA mostra quantidade, embalagem no plural e total", () => {
+  it("CTA mostra quantidade e total sem plural do nome da variação", () => {
     mount();
     const cta = () => norm(document.querySelector(".pdp-buy .primary")?.textContent);
-    expect(cta()).toBe("Adicionar 1 fardo · R$ 20,00");
+    expect(cta()).toBe("Adicionar 1 ao carrinho · R$ 20,00");
     click(document.querySelector('[aria-label="Aumentar quantidade"]'));
-    expect(cta()).toBe("Adicionar 2 fardos · R$ 40,00");
-    expect(document.querySelector(".pdp-qty label")?.textContent).toBe("Quantidade de fardos");
+    expect(cta()).toBe("Adicionar 2 ao carrinho · R$ 40,00");
+    expect(document.querySelector(".pdp-qty label")?.textContent).toBe("Quantidade");
+  });
+
+  it("descrição longa começa recolhida e Ver mais expande", () => {
+    mount({ description: "Texto longo. ".repeat(60) });
+    const body = document.querySelector<HTMLElement>("#pdp-desc-body");
+    const toggle = [...document.querySelectorAll("button")].find(
+      (b) => b.textContent === "Ver mais",
+    );
+    expect(body?.hasAttribute("data-open")).toBe(false);
+    click(toggle ?? null);
+    expect(body?.hasAttribute("data-open")).toBe(true);
+    expect(toggle?.getAttribute("aria-expanded")).toBe("true");
   });
 });

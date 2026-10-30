@@ -25,7 +25,29 @@ export type {
   User,
 };
 
-export type PendingReason = "INCOMPLETE_WEIGHT" | "INCOMPLETE_DIMENSIONS" | "INCOMPLETE_PRICE";
+export type PricingStatus = "pending" | "confirmed";
+export type PricingWarning = "tier_not_below_unit" | "store_price_missing" | "price_not_set";
+export type PriceSource = "variant_link" | "parent_link" | "general";
+export type AdminPricingTier = { id: string; min_quantity: number; unit_price: string };
+export type PricingTableInput = {
+  unit_price: string;
+  /** Sem a linha de 1 unidade; min_quantity >= 2 e único; preço menor que unit_price. */
+  tiers: { min_quantity: number; unit_price: string }[];
+};
+export type ConfirmPricingResult = { confirmed: number; skipped: unknown[] };
+export type PricingSettings = {
+  auto_confirm: boolean;
+  store_configured: boolean;
+  store_id: number | null;
+};
+
+export type PendingReason =
+  | "INCOMPLETE_WEIGHT"
+  | "INCOMPLETE_DIMENSIONS"
+  | "INCOMPLETE_PRICE"
+  | "PRICE_NOT_SET"
+  | "STORE_PRICE_MISSING"
+  | "TIER_NOT_BELOW_UNIT";
 
 // Produtos
 export type ProductSortKey = "name" | "price" | "stock" | "updated_at";
@@ -37,7 +59,9 @@ export type ProductListParams = {
   featured?: boolean;
   low_stock?: boolean;
   pending?: boolean;
-  customized?: boolean;
+  pricing_status?: PricingStatus;
+  warning?: PricingWarning;
+  listed?: boolean;
   sort?: ProductSortKey;
   order?: "asc" | "desc";
   skip?: number;
@@ -52,12 +76,14 @@ export type AdminProductSummary = {
   is_active: boolean;
   visible: boolean;
   featured: boolean;
-  customized: boolean;
-  min_price: string;
-  max_price: string;
+  min_price: string | null;
+  max_price: string | null;
   stock: number;
   low_stock: boolean;
   pending_count: number;
+  store_listed: boolean;
+  pricing_status: PricingStatus;
+  warnings: PricingWarning[];
   updated_at: string;
 };
 export type AdminVariant = {
@@ -74,42 +100,39 @@ export type AdminVariant = {
   length_cm: number | null;
   pending_reason: PendingReason | null;
   images: string[];
+  published: boolean;
+  price_source: PriceSource | null;
+  store_price: string | null;
+  pricing_status: PricingStatus;
+  pricing_confirmed_at: string | null;
+  /** Sempre começa pela linha de min_quantity = 1. */
+  pricing_tiers: AdminPricingTier[];
+  warnings: PricingWarning[];
 };
-export type Overridable<T> = { bling: T; site: T | null; locked: boolean };
 export type Presentation = {
-  name: Overridable<string | null>;
-  description: Overridable<string | null>;
-  complementary_description: Overridable<string | null>;
-  categories: {
-    bling: { id: string; name: string }[];
-    site: { id: string; name: string; is_active: boolean }[];
-    locked: boolean;
-  };
   visible: boolean;
   featured: boolean;
   updated_at: string | null;
   updated_by: { id: string; full_name: string } | null;
 };
+/** Nome, descrições, imagens e categorias vêm do Bling e são somente leitura. */
 export type AdminProductDetail = {
   id: string;
   bling_id: number;
   code: string;
+  name: string;
+  description: string | null;
+  complementary_description: string | null;
+  images: string[];
+  categories: { id: string; name: string }[];
   is_active: boolean;
   brand: string | null;
   unit: string | null;
   bling_updated_at: string | null;
   variants: AdminVariant[];
-  pricing_tiers: { id: string; min_quantity: number; unit_price: string }[];
   presentation: Presentation;
 };
-export type PresentationPatch = {
-  name?: { locked: boolean; value?: string };
-  description?: { locked: boolean; value?: string };
-  complementary_description?: { locked: boolean; value?: string };
-  categories?: { locked: boolean; category_ids?: string[] };
-  visible?: boolean;
-  featured?: boolean;
-};
+export type PresentationPatch = { visible?: boolean; featured?: boolean };
 export type BulkPresentationPatch = {
   product_ids: string[];
   visible?: boolean;
@@ -215,6 +238,9 @@ export type DashboardSummary = {
   low_stock_products: number;
   low_stock_threshold: number;
   bling_pending_products: number;
+  pricing_pending_products: number;
+  tier_warning_products: number;
+  store_price_missing_products: number;
 };
 
 // Moderação

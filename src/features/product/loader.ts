@@ -1,8 +1,7 @@
-import { isAvailable } from "../../lib/product";
+import { isAvailable, type StockConflict, stockConflict } from "../../lib/product";
 import { ApiError } from "../../services/client";
 import type {
   Cart,
-  PricingTier,
   Product,
   ProductImage,
   ProductQuestion,
@@ -12,7 +11,6 @@ import type {
 
 export type Extras = {
   images: ProductImage[];
-  tiers: PricingTier[];
   reviews: ProductReview[] | null;
   questions: ProductQuestion[] | null;
 };
@@ -25,7 +23,6 @@ export type Loaded =
 export type ProductApi = {
   product(id: string): Promise<Product>;
   productImages(id: string): Promise<ProductImage[]>;
-  pricingTiers(id: string): Promise<PricingTier[]>;
   productReviews(id: string): Promise<ProductReview[]>;
   productQuestions(id: string): Promise<ProductQuestion[]>;
 };
@@ -36,10 +33,9 @@ export async function loadProduct(
   api: ProductApi,
 ): Promise<Exclude<Loaded, { status: "loading" }>> {
   try {
-    const [product, images, tiers, reviews, questions] = await Promise.all([
+    const [product, images, reviews, questions] = await Promise.all([
       api.product(id),
       api.productImages(id).catch(() => [] as ProductImage[]),
-      api.pricingTiers(id).catch(() => [] as PricingTier[]),
       api.productReviews(id).catch(() => null),
       api.productQuestions(id).catch(() => null),
     ]);
@@ -49,7 +45,6 @@ export async function loadProduct(
       product,
       extras: {
         images,
-        tiers: [...tiers].sort((a, b) => a.min_quantity - b.min_quantity),
         reviews,
         questions: questions?.filter((item) => item.answer_text) ?? null,
       },
@@ -70,6 +65,8 @@ type AddDeps = {
   onLogin(): void;
   onCart(cart: Cart): void;
   onError(error: unknown): void;
+  /** 409 de estoque com `available`: a página mostra a mensagem e ajusta a quantidade. */
+  onStockConflict?(conflict: StockConflict): void;
 };
 
 /** Retorna true se o item foi adicionado. Sem token pede login; indisponível não chama a API. */
@@ -84,7 +81,9 @@ export async function addToCart(deps: AddDeps): Promise<boolean> {
     deps.onCart(await deps.addCartItem(token, variant.id, Math.max(1, Math.floor(quantity))));
     return true;
   } catch (error) {
-    deps.onError(error);
+    const conflict = deps.onStockConflict ? stockConflict(error) : null;
+    if (conflict) deps.onStockConflict?.(conflict);
+    else deps.onError(error);
     return false;
   }
 }

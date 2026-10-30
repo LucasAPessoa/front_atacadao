@@ -20,6 +20,8 @@ export class ApiError extends Error {
     public readonly errors: FieldError[] = [],
     /** Segundos indicados em Retry-After (429/503), quando presentes. */
     public readonly retryAfter?: number,
+    /** Estoque disponível informado pelo servidor no 409 de estoque (campo `available` na raiz). */
+    public readonly available?: number,
   ) {
     super(message);
   }
@@ -68,6 +70,9 @@ async function sendEnvelope<T>(
       detail ?? body?.message ?? genericMessage,
       fieldErrors(body),
       parseRetryAfter(response.headers?.get?.("Retry-After") ?? null),
+      typeof body?.available === "number" && Number.isFinite(body.available)
+        ? Math.max(0, body.available)
+        : undefined,
     );
   }
   return body;

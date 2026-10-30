@@ -10,7 +10,6 @@ vi.mock("../../services/client", () => ({
   api: {
     products: async () => [product],
     categories: async () => [],
-    allPricingTiers: async () => [],
     addCartItem,
   },
 }));
@@ -31,6 +30,20 @@ const product = {
       base_price: "25.00",
       is_active: true,
       stock_quantity: 4,
+    },
+  ],
+} as unknown as Product;
+
+const withTiers = {
+  ...product,
+  variants: [
+    {
+      ...product.variants[0],
+      unit_price: "25.00",
+      pricing_tiers: [
+        { id: "t1", min_quantity: 1, unit_price: "25.00" },
+        { id: "t", min_quantity: 5, unit_price: "22.00" },
+      ],
     },
   ],
 } as unknown as Product;
@@ -112,8 +125,7 @@ describe("ProductGrid", () => {
         <ProductGrid
           loading={false}
           unavailable={false}
-          visible={[product]}
-          tiers={[{ id: "t", product_id: "p-1", min_quantity: 5, unit_price: "22.00" }]}
+          visible={[withTiers]}
           adding=""
           onAdd={() => {}}
           onOpen={() => {}}
@@ -134,8 +146,7 @@ describe("ProductGrid", () => {
         <ProductGrid
           loading={false}
           unavailable={false}
-          visible={[product]}
-          tiers={[{ id: "t", product_id: "p-1", min_quantity: 5, unit_price: "22.00" }]}
+          visible={[withTiers]}
           adding=""
           onAdd={() => {}}
           onOpen={() => {}}

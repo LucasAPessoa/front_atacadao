@@ -23,6 +23,9 @@ const zeros: DashboardSummary = {
   low_stock_products: 0,
   low_stock_threshold: 5,
   bling_pending_products: 0,
+  pricing_pending_products: 0,
+  tier_warning_products: 0,
+  store_price_missing_products: 0,
 };
 
 const memory = new Map<string, string>();
@@ -103,7 +106,33 @@ describe("dashboard", () => {
     const hrefs = [...box.querySelectorAll("a")].map((a) => a.getAttribute("href"));
     expect(hrefs).toContain("/produtos?low_stock=true");
     expect(hrefs).toContain("/bling");
+    expect(hrefs).toContain("/produtos?pricing_status=pending");
+    expect(hrefs).toContain("/produtos?warning=tier_not_below_unit");
+    expect(hrefs).toContain("/produtos?warning=store_price_missing");
     expect(box.querySelectorAll(".adm-bar-row").length).toBeGreaterThan(0);
+  });
+
+  it("mostra os contadores de preços da loja do site", async () => {
+    respond = () => ({
+      status: 200,
+      body: {
+        data: {
+          ...zeros,
+          pricing_pending_products: 7,
+          tier_warning_products: 2,
+          store_price_missing_products: 4,
+        },
+      },
+    });
+    const box = await mount("/");
+    await waitFor(() => expect(box.textContent).toContain("Produtos aguardando preços"));
+    const value = (title: string) =>
+      [...box.querySelectorAll(".adm-card")]
+        .find((c) => c.querySelector(".adm-kpi-title")?.textContent === title)
+        ?.querySelector(".adm-kpi-value")?.textContent;
+    expect(value("Produtos aguardando preços")).toBe("7");
+    expect(value("Faixas iguais ou acima do preço de 1 unidade")).toBe("2");
+    expect(value("Sem preço na loja do Bling")).toBe("4");
   });
 
   it("formata BRL a partir da string e traduz status", async () => {

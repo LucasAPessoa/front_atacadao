@@ -18,6 +18,11 @@ const detail: AdminProductDetail = {
   id: "p1",
   bling_id: 123,
   code: "ABC-1",
+  name: "Nome Bling",
+  description: "<p>Descrição <script>x</script>do Bling</p>",
+  complementary_description: null,
+  images: ["https://img/1.jpg"],
+  categories: [{ id: "c1", name: "Bebidas" }],
   is_active: true,
   brand: "Marca X",
   unit: "UN",
@@ -37,6 +42,13 @@ const detail: AdminProductDetail = {
       length_cm: 30,
       pending_reason: null,
       images: ["https://img/1.jpg"],
+      published: true,
+      price_source: "variant_link",
+      store_price: null,
+      pricing_status: "confirmed",
+      pricing_confirmed_at: null,
+      pricing_tiers: [],
+      warnings: [],
     },
     {
       id: "v2",
@@ -52,6 +64,13 @@ const detail: AdminProductDetail = {
       length_cm: null,
       pending_reason: "INCOMPLETE_WEIGHT",
       images: [],
+      published: true,
+      price_source: "variant_link",
+      store_price: null,
+      pricing_status: "confirmed",
+      pricing_confirmed_at: null,
+      pricing_tiers: [],
+      warnings: [],
     },
     {
       id: "v3",
@@ -67,6 +86,13 @@ const detail: AdminProductDetail = {
       length_cm: null,
       pending_reason: "INCOMPLETE_DIMENSIONS",
       images: [],
+      published: true,
+      price_source: "variant_link",
+      store_price: null,
+      pricing_status: "confirmed",
+      pricing_confirmed_at: null,
+      pricing_tiers: [],
+      warnings: [],
     },
     {
       id: "v4",
@@ -82,14 +108,16 @@ const detail: AdminProductDetail = {
       length_cm: 1,
       pending_reason: "INCOMPLETE_PRICE",
       images: [],
+      published: true,
+      price_source: "variant_link",
+      store_price: null,
+      pricing_status: "confirmed",
+      pricing_confirmed_at: null,
+      pricing_tiers: [],
+      warnings: [],
     },
   ],
-  pricing_tiers: [{ id: "t1", min_quantity: 10, unit_price: "17.90" }],
   presentation: {
-    name: { bling: "Nome Bling", site: "Nome site", locked: true },
-    description: { bling: "<p>x</p>", site: null, locked: false },
-    complementary_description: { bling: null, site: null, locked: false },
-    categories: { bling: [], site: [], locked: false },
     visible: true,
     featured: false,
     updated_at: null,
@@ -118,6 +146,13 @@ describe("ProductDetailView (aba Bling)", () => {
     expect(html).toContain("Motivo: Sem medidas");
     expect(html).toContain("Motivo: Preço zero");
     expect(html).toContain("1.2 kg");
+  });
+
+  it("nome, descrição e categorias são só leitura, com a nota Edite no Bling", () => {
+    expect(html).toContain("Bebidas");
+    expect(html).toContain("<p>Descrição do Bling</p>");
+    expect(html).not.toContain("<script");
+    expect(html).toContain("edite no Bling");
   });
 
   it("não tem campos editáveis", () => {
@@ -193,7 +228,7 @@ describe("ProductDetail (container)", () => {
       vi.fn(async () => new Response(JSON.stringify({ data: detail }), { status: 200 })),
     );
     const box = await mount();
-    await waitFor(() => expect(box.textContent).toContain("Nome site"));
+    await waitFor(() => expect(box.textContent).toContain("Nome Bling"));
     expect(box.textContent).toContain("vem do Bling");
   });
 });

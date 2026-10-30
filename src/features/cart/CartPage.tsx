@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../../services/client";
-import type { Address, Cart, CartItem, CheckoutPreview } from "../../shared/types/domain";
+import type { Address, Cart, CartItem, CheckoutPreview, Variant } from "../../shared/types/domain";
 import { money } from "../../lib/format";
 import {
   cartItemName,
@@ -9,6 +9,7 @@ import {
   shippingLabel,
   summaryAmounts,
 } from "../../lib/checkout";
+import { appliedTier, stockConflict, variantUnitPrice } from "../../lib/product";
 import { navigate } from "../../components/Layout";
 import { AddressForm } from "../account/AddressForm";
 
@@ -34,11 +35,13 @@ export function CartPage({
   const [shippingId, setShippingId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [notice, setNotice] = useState("");
   const [removed, setRemoved] = useState<{
     variantId: string;
     quantity: number;
     name: string;
   } | null>(null);
+  const [tables, setTables] = useState<Record<string, Variant>>({});
   const [productNames, setProductNames] = useState<Record<string, string>>({});
   const preferred = useRef("");
   const undoRef = useRef<HTMLButtonElement>(null);
@@ -46,7 +49,11 @@ export function CartPage({
   useEffect(() => {
     api
       .products()
-      .then((list) => setProductNames(Object.fromEntries(list.map((p) => [p.id, p.name]))))
+      .then((list) => {
+        setProductNames(Object.fromEntries(list.map((p) => [p.id, p.name])));
+        // A tabela de faixas vem da variação do catálogo; o item do carrinho só traz o preço aplicado.
+        setTables(Object.fromEntries(list.flatMap((p) => p.variants.map((v) => [v.id, v]))));
+      })
       .catch(() => {});
   }, []);
   useEffect(() => {
@@ -84,11 +91,22 @@ export function CartPage({
   async function quantity(item: CartItem, next: number) {
     if (next < 1 || busy) return;
     setBusy(true);
+    setNotice("");
     try {
       onCart(await api.updateCartItem(token, item.id, next));
       setPreview(null);
     } catch (error) {
-      onError(error);
+      const conflict = stockConflict(error);
+      if (!conflict) return onError(error);
+      setNotice(conflict.message);
+      setPreview(null);
+      // Ajusta para o estoque informado pelo servidor; sem estoque, só avisa (remover é com o cliente).
+      if (conflict.available >= 1 && conflict.available !== item.quantity)
+        try {
+          onCart(await api.updateCartItem(token, item.id, conflict.available));
+        } catch (retry) {
+          onError(retry);
+        }
     } finally {
       setBusy(false);
     }
@@ -101,7 +119,9 @@ export function CartPage({
       setRemoved(null);
       setPreview(null);
     } catch (error) {
-      onError(error);
+      const conflict = stockConflict(error);
+      if (conflict) setNotice(conflict.message);
+      else onError(error);
     } finally {
       setBusy(false);
     }
@@ -160,17 +180,21 @@ export function CartPage({
     cart?.items
       .reduce(
         (sum, item) =>
-          sum + Number(item.subtotal ?? Number(item.variant.base_price) * item.quantity),
+          sum + Number(item.subtotal ?? Number(item.variant?.base_price ?? 0) * item.quantity),
         0,
       )
       .toFixed(2) ??
     "0";
+  const tierOf = (item: CartItem) => {
+    const table = tables[item.variant_id] ?? item.variant;
+    return table ? appliedTier(table, item.unit_price, item.quantity) : undefined;
+  };
   const selectedShipping = preview?.shipping_options.find((item) => item.service_id === shippingId);
   const itemName = (item: CartItem) =>
     cartItemName(
       preview?.items?.find((p) => p.variant_id === item.variant_id)?.product_name ??
-        (item.variant.product_id ? productNames[item.variant.product_id] : undefined),
-      item.variant.variation_name,
+        (item.variant?.product_id ? productNames[item.variant.product_id] : undefined),
+      item.variant?.variation_name ?? "Item",
     );
   const amounts = summaryAmounts(preview?.subtotal_amount ?? total, selectedShipping);
   const step = preview ? 2 : 1;
@@ -213,6 +237,9 @@ export function CartPage({
           </div>
         )}
       </div>
+      <p className="cart-notice" role="alert">
+        {notice}
+      </p>
       {!cart?.items.length ? (
         <div className="empty-cart">
           <h2>Seu carrinho está vazio.</h2>
@@ -254,11 +281,21 @@ export function CartPage({
                   </div>
                   <div className="line-sum">
                     <span className="line-total">
-                      {money(item.subtotal ?? Number(item.variant.base_price) * item.quantity)}
+                      {money(
+                        item.subtotal ?? Number(item.variant?.base_price ?? 0) * item.quantity,
+                      )}
                     </span>
                     <span className="unit-price">
-                      {money(item.unit_price ?? item.variant.base_price)} a unidade
+                      {money(
+                        item.unit_price ?? (item.variant ? variantUnitPrice(item.variant) : 0),
+                      )}{" "}
+                      a unidade
                     </span>
+                    {tierOf(item) && (
+                      <span className="tier-applied">
+                        a partir de {tierOf(item)?.min_quantity} un.
+                      </span>
+                    )}
                   </div>
                   <button
                     type="button"

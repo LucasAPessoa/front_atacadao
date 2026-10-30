@@ -24,6 +24,7 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   const titleId = useId();
+  const messageId = useId();
   const cancelRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   // Refs evitam refazer o efeito (e perder o botão de origem) quando o pai re-renderiza aberto.
@@ -71,9 +72,10 @@ export function ConfirmDialog({
         role="alertdialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        aria-describedby={messageId}
       >
         <h2 id={titleId}>{title}</h2>
-        <p>{message}</p>
+        <p id={messageId}>{message}</p>
         <div className="adm-dialog-actions">
           <button
             type="button"

@@ -20,10 +20,11 @@ import {
 } from "./services/client";
 import type { Address, Cart, User } from "./shared/types/domain";
 
-const messageFor = (error: unknown) =>
+export const messageFor = (error: unknown) =>
   error instanceof ApiError && error.status === 401
     ? "Sua sessão expirou. Entre novamente para continuar."
-    : error instanceof ApiError && error.status === 409
+    : // 409 de estoque (com `available`): a mensagem do servidor diz quanto ainda cabe.
+      error instanceof ApiError && error.status === 409 && error.available === undefined
       ? "O carrinho foi alterado. Revise os valores antes de continuar."
       : error instanceof ApiError
         ? error.message
