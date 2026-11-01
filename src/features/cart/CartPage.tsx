@@ -10,7 +10,7 @@ import {
   summaryAmounts,
 } from "../../lib/checkout";
 import { appliedTier, stockConflict, variantUnitPrice } from "../../lib/product";
-import { navigate } from "../../components/Layout";
+import { AppLink } from "../../components/AppLink";
 import { AddressForm } from "../account/AddressForm";
 
 export function CartPage({
@@ -249,9 +249,9 @@ export function CartPage({
         <div className="empty-cart">
           <h2>Seu carrinho está vazio.</h2>
           <p>Escolha produtos no catálogo para começar.</p>
-          <button type="button" className="primary" onClick={() => navigate("/")}>
+          <AppLink href="/produtos" className="primary">
             Ver produtos
-          </button>
+          </AppLink>
         </div>
       ) : (
         <div className="cart-layout">
