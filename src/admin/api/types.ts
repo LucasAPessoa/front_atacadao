@@ -28,6 +28,8 @@ export type {
 export type PricingStatus = "pending" | "confirmed";
 export type PricingWarning = "tier_not_below_unit" | "store_price_missing" | "price_not_set";
 export type PriceSource = "variant_link" | "parent_link" | "general";
+/** Vínculo da variação com a loja do site no Bling: próprio, herdado do pai ou nenhum. */
+export type StoreLink = "own" | "inherited" | "none";
 export type AdminPricingTier = { id: string; min_quantity: number; unit_price: string };
 export type PricingTableInput = {
   unit_price: string;
@@ -103,6 +105,7 @@ export type AdminVariant = {
   published: boolean;
   price_source: PriceSource | null;
   store_price: string | null;
+  store_link: StoreLink;
   pricing_status: PricingStatus;
   pricing_confirmed_at: string | null;
   /** Sempre começa pela linha de min_quantity = 1. */
