@@ -5,10 +5,13 @@ import type { Column } from "../../ui/DataTable";
 import { EmptyState } from "../../ui/EmptyState";
 import { ErrorState } from "../../ui/ErrorState";
 import { FilterBar } from "../../ui/FilterBar";
+import { MultiSelect } from "../../ui/MultiSelect";
 import { Pagination } from "../../ui/Pagination";
 import { SearchInput } from "../../ui/SearchInput";
 import { formatBRL } from "../products/format";
 import { ORDER_STATUSES, formatDateTime, statusLabel, statusTone } from "./labels";
+
+const STATUS_OPTIONS = ORDER_STATUSES.map((value) => ({ value, label: statusLabel(value) }));
 
 export const PAGE_SIZE = 25;
 
@@ -81,12 +84,6 @@ export function OrdersListView(p: OrdersListViewProps) {
   const dirty = (Object.keys(orderFilterDefaults) as (keyof OrderFilters)[]).some(
     (key) => filters[key] !== orderFilterDefaults[key],
   );
-  const toggle = (status: string) => {
-    const next = selected.includes(status)
-      ? selected.filter((s) => s !== status)
-      : ORDER_STATUSES.filter((s) => s === status || selected.includes(s));
-    p.onChange({ status: next.join(",") });
-  };
 
   return (
     <>
@@ -115,23 +112,12 @@ export function OrdersListView(p: OrdersListViewProps) {
             onChange={(e) => p.onChange({ created_to: e.target.value })}
           />
         </div>
-        <fieldset className="adm-field">
-          <legend>Status</legend>
-          <div className="adm-check-group">
-            {ORDER_STATUSES.map((status) => (
-              <label key={status} className="adm-check-label">
-                <input
-                  type="checkbox"
-                  name="status"
-                  value={status}
-                  checked={selected.includes(status)}
-                  onChange={() => toggle(status)}
-                />
-                {statusLabel(status)}
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        <MultiSelect
+          label="Status"
+          options={STATUS_OPTIONS}
+          selected={selected}
+          onChange={(next) => p.onChange({ status: next.join(",") })}
+        />
       </FilterBar>
       {p.error && p.items.length === 0 ? (
         <ErrorState error={p.error} onRetry={p.onRetry} />

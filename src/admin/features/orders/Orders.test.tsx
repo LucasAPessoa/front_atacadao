@@ -125,6 +125,7 @@ const click = async (el: Element | undefined) => {
 };
 const findButton = (box: HTMLElement, text: string) =>
   [...box.querySelectorAll("button")].find((b) => b.textContent === text);
+const dialog = () => document.querySelector("[role=alertdialog]") as HTMLElement;
 const listCalls = () => calls.filter((c) => c.url.includes("/admin/orders?"));
 
 describe("lista de pedidos", () => {
@@ -168,10 +169,70 @@ describe("lista de pedidos", () => {
     });
     const box = await mount("/pedidos?skip=25");
     await waitFor(() => expect(box.textContent).toContain("PED-0001"));
-    const paid = box.querySelector("input[value=PAID]") as HTMLInputElement;
-    await click(paid);
+    // Filtro compacto: um botão na barra; os status ficam no painel.
+    const toggle = box.querySelector(".adm-multiselect-toggle") as HTMLButtonElement;
+    expect(toggle.textContent).toContain("Todos");
+    expect(box.querySelector("input[value=PAID]")).toBeNull();
+    await click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    await click(box.querySelector("input[value=PAID]") as HTMLInputElement);
     expect(search).toContain("status=PAID");
     expect(search).not.toContain("skip");
+    expect(toggle.textContent).toContain("Pago");
+    await click(box.querySelector("input[value=SHIPPED]") as HTMLInputElement);
+    expect(search).toContain("status=PAID%2CSHIPPED");
+    expect(toggle.textContent).toContain("Pago, Enviado");
+  });
+
+  it("painel de status fecha com Esc e devolve o foco ao botão", async () => {
+    respond = () => ({
+      status: 200,
+      body: { data: [summary], meta: { total: 1, skip: 0, limit: 25 } },
+    });
+    const box = await mount("/pedidos");
+    await waitFor(() => expect(box.textContent).toContain("PED-0001"));
+    const toggle = box.querySelector(".adm-multiselect-toggle") as HTMLButtonElement;
+    await click(toggle);
+    const paid = box.querySelector("input[value=PAID]") as HTMLInputElement;
+    paid.focus();
+    await act(async () => {
+      paid.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    });
+    expect(box.querySelector(".adm-multiselect-panel")).toBeNull();
+    expect(document.activeElement).toBe(toggle);
+  });
+
+  it("painel de status fecha ao clicar fora, mas não ao clicar dentro", async () => {
+    respond = () => ({
+      status: 200,
+      body: { data: [summary], meta: { total: 1, skip: 0, limit: 25 } },
+    });
+    const box = await mount("/pedidos");
+    await waitFor(() => expect(box.textContent).toContain("PED-0001"));
+    await click(box.querySelector(".adm-multiselect-toggle") as HTMLButtonElement);
+    const panel = () => box.querySelector(".adm-multiselect-panel");
+    await act(async () => {
+      panel()?.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+    });
+    expect(panel()).not.toBeNull();
+    await act(async () => {
+      document.body.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+    });
+    expect(panel()).toBeNull();
+  });
+
+  it("painel de status fecha quando o foco sai do campo", async () => {
+    respond = () => ({
+      status: 200,
+      body: { data: [summary], meta: { total: 1, skip: 0, limit: 25 } },
+    });
+    const box = await mount("/pedidos");
+    await waitFor(() => expect(box.textContent).toContain("PED-0001"));
+    await click(box.querySelector(".adm-multiselect-toggle") as HTMLButtonElement);
+    await act(async () => (box.querySelector("input[value=PAID]") as HTMLInputElement).focus());
+    expect(box.querySelector(".adm-multiselect-panel")).not.toBeNull();
+    await act(async () => (box.querySelector("#flt-from") as HTMLInputElement).focus());
+    expect(box.querySelector(".adm-multiselect-panel")).toBeNull();
   });
 });
 
@@ -203,8 +264,15 @@ describe("detalhe do pedido", () => {
     await waitFor(() => expect(buttons(box)).toContain("Cancelar pedido"));
     await click(findButton(box, "Cancelar pedido"));
     expect(calls.some((c) => c.method === "POST")).toBe(false);
-    expect(document.body.textContent).toContain("Cancelar este pedido?");
-    await click(findButton(document.body, "Confirmar"));
+    expect(dialog().textContent).toContain("Cancelar este pedido?");
+    // Rótulos claros: "Voltar" fecha, "Cancelar pedido" (destrutivo) confirma.
+    expect(buttons(dialog())).toEqual(["Voltar", "Cancelar pedido"]);
+    expect(findButton(dialog(), "Cancelar pedido")?.className).toContain("adm-btn-danger");
+    await click(findButton(dialog(), "Voltar"));
+    expect(dialog()).toBeNull();
+    expect(calls.some((c) => c.method === "POST")).toBe(false);
+    await click(findButton(box, "Cancelar pedido"));
+    await click(findButton(dialog(), "Cancelar pedido"));
     await waitFor(() => expect(buttons(box)).not.toContain("Cancelar pedido"));
     expect(calls.find((c) => c.method === "POST")?.url).toContain("/sales/orders/o-1/cancel");
     expect(box.textContent).toContain("Cancelado");
@@ -219,7 +287,7 @@ describe("detalhe do pedido", () => {
     const box = await mount("/pedidos/o-1");
     await waitFor(() => expect(buttons(box)).toContain("Cancelar pedido"));
     await click(findButton(box, "Cancelar pedido"));
-    await click(findButton(document.body, "Confirmar"));
+    await click(findButton(dialog(), "Cancelar pedido"));
     await waitFor(() =>
       expect(box.querySelector("[role=alert].adm-alert")?.textContent).toBe("Pedido já foi pago."),
     );
@@ -254,9 +322,69 @@ describe("fila de conciliação", () => {
     const box = await mount("/pedidos?aba=fila");
     await waitFor(() => expect(box.textContent).toContain("Falha ao baixar o estoque"));
     await click(findButton(box, "Reconciliar pagamento"));
-    await click(findButton(document.body, "Reconciliar"));
+    await click(findButton(dialog(), "Reconciliar pagamento"));
     await waitFor(() =>
       expect(calls.find((c) => c.method === "POST")?.url).toContain("/sales/orders/o-9/reconcile"),
     );
+  });
+  const queueItem = {
+    id: "r-1",
+    order_id: "o-9",
+    status: "PENDING",
+    reason: "STOCK_COMMIT_FAILED",
+    outcome: null,
+    next_poll_after_seconds: null,
+    refund_status: null,
+    refund_attempts: null,
+    refund_last_attempt_at: null,
+    refund_next_retry_at: null,
+    refund_last_error_code: null,
+  };
+
+  it("sem código e cliente na resposta mostra Ver pedido e não cria a coluna Cliente", async () => {
+    respond = () => ({ status: 200, body: { data: [queueItem] } });
+    const box = await mount("/pedidos?aba=fila");
+    await waitFor(() => expect(box.textContent).toContain("Ver pedido"));
+    expect([...box.querySelectorAll("th")].map((th) => th.textContent)).not.toContain("Cliente");
+  });
+
+  it("com código e cliente na resposta mostra os dois", async () => {
+    respond = () => ({
+      status: 200,
+      body: {
+        data: [
+          {
+            ...queueItem,
+            order_code: "PED-0042",
+            customer: { full_name: "Maria Lima", email: "m@x.com" },
+          },
+        ],
+      },
+    });
+    const box = await mount("/pedidos?aba=fila");
+    await waitFor(() => expect(box.textContent).toContain("PED-0042"));
+    expect(box.querySelector('a[href="/pedidos/o-9"]')?.textContent).toBe("PED-0042");
+    expect(box.textContent).toContain("Maria Lima");
+  });
+
+  it("erro 5xx tem texto diferente do erro de rede, e os dois oferecem nova tentativa", async () => {
+    respond = () => ({ status: 500, body: { detail: "boom" } });
+    const server = await mount("/pedidos?aba=fila");
+    await waitFor(() => expect(server.textContent).toContain("Erro no servidor"));
+    expect(findButton(server, "Tentar novamente")).toBeDefined();
+    document.body.innerHTML = "";
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new TypeError("Failed to fetch");
+      }),
+    );
+    const offline = await mount("/pedidos?aba=fila");
+    await waitFor(() =>
+      expect(offline.textContent).toContain("Não foi possível falar com o servidor"),
+    );
+    expect(offline.textContent).not.toContain("Erro no servidor");
+    expect(findButton(offline, "Tentar novamente")).toBeDefined();
   });
 });

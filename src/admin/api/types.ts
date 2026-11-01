@@ -181,6 +181,9 @@ export type AdminOrderReconciliation = {
 export type ReconciliationQueueItem = {
   id: string;
   order_id: string;
+  /** Opcionais até o back mandar (pedido no #76): sem eles a fila mostra "Ver pedido". */
+  order_code?: string;
+  customer?: { full_name: string | null; email: string };
   status: string;
   reason: string;
   outcome: string | null;
