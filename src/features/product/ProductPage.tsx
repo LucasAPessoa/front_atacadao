@@ -197,6 +197,10 @@ function TierTable({ rows, active }: { rows: VariantTier[]; active?: string }) {
       </button>
       <div id="pdp-tiers-table" hidden={!open}>
         <table>
+          <colgroup>
+            <col className="pdp-tiers-qty" />
+            <col />
+          </colgroup>
           <thead>
             <tr>
               <th scope="col">Quantidade</th>
@@ -216,7 +220,7 @@ function TierTable({ rows, active }: { rows: VariantTier[]; active?: string }) {
                       : `${item.min_quantity} ou mais`}
                   </td>
                   <td>
-                    {money(item.unit_price)}
+                    <span className="pdp-tier-price">{money(item.unit_price)}</span>
                     {on && <span> · seu preço</span>}
                   </td>
                 </tr>

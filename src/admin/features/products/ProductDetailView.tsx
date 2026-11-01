@@ -1,4 +1,5 @@
 import { formatVariationName } from "../../../shared/variation";
+import { type Column, DataTable } from "../../ui/DataTable";
 import { Tabs } from "../../ui/Tabs";
 import { useState } from "react";
 import { Link } from "react-router";
@@ -18,23 +19,49 @@ const FromBling = () => (
   </span>
 );
 
-function VariantRow({ v }: { v: AdminVariant }) {
-  return (
-    <tr>
-      <td>
+const variantColumns: Column<AdminVariant>[] = [
+  {
+    key: "variation",
+    header: "Variação",
+    width: 240,
+    render: (v) => (
+      <>
         {formatVariationName(v.variation_name)}
         <div className="adm-muted">
           SKU {v.bling_sku}
           {v.gtin ? ` · GTIN ${v.gtin}` : ""}
         </div>
-      </td>
-      <td className="adm-num">{formatBRL(v.base_price)}</td>
-      <td className="adm-num">{v.stock_quantity}</td>
-      <td className="adm-num">{num(v.weight_kg, "kg")}</td>
-      <td>
-        {num(v.length_cm, "cm")} × {num(v.width_cm, "cm")} × {num(v.height_cm, "cm")}
-      </td>
-      <td>
+      </>
+    ),
+  },
+  {
+    key: "price",
+    header: "Preço",
+    width: 120,
+    align: "right",
+    render: (v) => formatBRL(v.base_price),
+  },
+  { key: "stock", header: "Estoque", width: 100, align: "right", render: (v) => v.stock_quantity },
+  {
+    key: "weight",
+    header: "Peso",
+    width: 100,
+    align: "right",
+    render: (v) => num(v.weight_kg, "kg"),
+  },
+  {
+    key: "size",
+    header: "Medidas (C × L × A)",
+    width: 200,
+    render: (v) =>
+      `${num(v.length_cm, "cm")} × ${num(v.width_cm, "cm")} × ${num(v.height_cm, "cm")}`,
+  },
+  {
+    key: "status",
+    header: "Situação",
+    width: 180,
+    render: (v) => (
+      <>
         {v.is_active ? (
           <span className="adm-badge" data-tone="success">
             À venda
@@ -49,13 +76,16 @@ function VariantRow({ v }: { v: AdminVariant }) {
             Motivo: {pendingLabels[v.pending_reason] ?? v.pending_reason}
           </div>
         )}
-      </td>
-      <td>
-        <StoreLinkStatus variant={v} />
-      </td>
-    </tr>
-  );
-}
+      </>
+    ),
+  },
+  {
+    key: "store",
+    header: "Loja do site",
+    width: 200,
+    render: (v) => <StoreLinkStatus variant={v} />,
+  },
+];
 
 export function BlingTab({ product }: { product: AdminProductDetail }) {
   const images = product.images.length
@@ -104,33 +134,13 @@ export function BlingTab({ product }: { product: AdminProductDetail }) {
         <h2 id="bling-variants">
           Variações <FromBling />
         </h2>
-        <div className="adm-table-wrap">
-          <table className="adm-table">
-            <caption className="adm-sr-only">Variações</caption>
-            <thead>
-              <tr>
-                <th scope="col">Variação</th>
-                <th scope="col" className="adm-num">
-                  Preço
-                </th>
-                <th scope="col" className="adm-num">
-                  Estoque
-                </th>
-                <th scope="col" className="adm-num">
-                  Peso
-                </th>
-                <th scope="col">Medidas (C × L × A)</th>
-                <th scope="col">Situação</th>
-                <th scope="col">Loja do site</th>
-              </tr>
-            </thead>
-            <tbody>
-              {product.variants.map((v) => (
-                <VariantRow key={v.id} v={v} />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          caption="Variações"
+          storageKey="produto-variacoes"
+          columns={variantColumns}
+          rows={product.variants}
+          rowKey={(v) => v.id}
+        />
       </section>
 
       <section className="adm-card" aria-labelledby="bling-images">

@@ -25,13 +25,15 @@ const columns: Column<AdminOrderSummary>[] = [
   {
     key: "code",
     header: "Código",
+    width: 120,
     card: "title",
     render: (o) => <Link to={`/pedidos/${o.id}`}>{o.order_code}</Link>,
   },
-  { key: "date", header: "Data", render: (o) => formatDateTime(o.created_at) },
+  { key: "date", header: "Data", width: 160, render: (o) => formatDateTime(o.created_at) },
   {
     key: "customer",
     header: "Cliente",
+    width: 240,
     render: (o) => (
       <>
         {o.customer.full_name}
@@ -42,6 +44,7 @@ const columns: Column<AdminOrderSummary>[] = [
   {
     key: "status",
     header: "Status",
+    width: 160,
     card: "field",
     render: (o) => (
       <span className="adm-badge" data-tone={statusTone(o.status)}>
@@ -49,10 +52,11 @@ const columns: Column<AdminOrderSummary>[] = [
       </span>
     ),
   },
-  { key: "items", header: "Itens", align: "right", render: (o) => o.items_count },
+  { key: "items", header: "Itens", width: 88, align: "right", render: (o) => o.items_count },
   {
     key: "total",
     header: "Total",
+    width: 128,
     align: "right",
     card: "field",
     render: (o) => formatBRL(o.total_amount),

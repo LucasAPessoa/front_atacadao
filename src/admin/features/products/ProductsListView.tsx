@@ -61,6 +61,7 @@ const columns: Column<AdminProductSummary>[] = [
   {
     key: "image",
     header: "Imagem",
+    width: 72,
     render: (p) =>
       p.main_image_url ? (
         <img className="adm-thumb" src={p.main_image_url} alt="" loading="lazy" />
@@ -71,6 +72,7 @@ const columns: Column<AdminProductSummary>[] = [
   {
     key: "name",
     header: "Produto",
+    width: 240,
     card: "title",
     sortKey: "name",
     render: (p) => (
@@ -83,6 +85,7 @@ const columns: Column<AdminProductSummary>[] = [
   {
     key: "price",
     header: "Preço",
+    width: 112,
     card: "field",
     sortKey: "price",
     align: "right",
@@ -91,6 +94,7 @@ const columns: Column<AdminProductSummary>[] = [
   {
     key: "stock",
     header: "Estoque",
+    width: 96,
     card: "field",
     sortKey: "stock",
     align: "right",
@@ -105,12 +109,13 @@ const columns: Column<AdminProductSummary>[] = [
       </>
     ),
   },
-  { key: "active", header: "À venda", render: (p) => yesNo(p.is_active) },
-  { key: "visible", header: "Visível", render: (p) => yesNo(p.visible) },
-  { key: "featured", header: "Destaque", render: (p) => yesNo(p.featured) },
+  { key: "active", header: "À venda", width: 88, render: (p) => yesNo(p.is_active) },
+  { key: "visible", header: "Visível", width: 88, render: (p) => yesNo(p.visible) },
+  { key: "featured", header: "Destaque", width: 96, render: (p) => yesNo(p.featured) },
   {
     key: "pending",
     header: "Pendência",
+    width: 112,
     align: "right",
     render: (p) =>
       p.pending_count > 0 ? (
@@ -124,6 +129,8 @@ const columns: Column<AdminProductSummary>[] = [
   {
     key: "pricing",
     header: "Preços",
+    width: 240,
+    wrap: true,
     card: "field",
     render: (p) => {
       const state = productState(p);
@@ -146,6 +153,7 @@ const columns: Column<AdminProductSummary>[] = [
   {
     key: "updated",
     header: "Atualizado",
+    width: 128,
     sortKey: "updated_at",
     render: (p) => new Date(p.updated_at).toLocaleDateString("pt-BR"),
   },
