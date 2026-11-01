@@ -266,3 +266,30 @@ describe("falha ao abrir o catálogo (#6)", () => {
     expect(unavailableText(new TypeError("Failed to fetch"))).toContain("Sem conexão");
   });
 });
+
+describe("catálogo sem busca própria (#67)", () => {
+  it("lê ?busca= da URL, mostra o termo e oferece limpar; sem filtro lateral", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    root = createRoot(host);
+    await act(async () => {
+      root?.render(
+        <CatalogPage
+          token=""
+          onLogin={() => {}}
+          onCart={() => {}}
+          onError={() => {}}
+          mode="catalog"
+          query="?busca=arroz"
+        />,
+      );
+    });
+    expect(host.querySelector('input[type="search"]')).toBeNull();
+    const count = host.querySelector(".catalog-count") as HTMLElement;
+    expect(count.textContent).toContain("1 resultado para “arroz”");
+    expect(count.querySelector("a")?.getAttribute("href")).toBe("/produtos");
+    // Um filtro só: os departamentos ficam nos chips do cabeçalho.
+    expect(host.querySelector(".filter-side, .filter-row")).toBeNull();
+    expect(host.querySelector("nav.breadcrumbs a")?.getAttribute("href")).toBe("/");
+  });
+});

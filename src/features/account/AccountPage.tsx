@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { navigate } from "../../components/Layout";
+import { AppLink } from "../../components/AppLink";
 import { money } from "../../lib/format";
 import { orderPresentation } from "../../lib/orderStatus";
-import { api } from "../../services/client";
+import { ApiError, api } from "../../services/client";
 import { AddressManager } from "./AddressManager";
 import type { Address, Order, User } from "../../shared/types/domain";
 
@@ -32,29 +32,72 @@ const operationalStatuses = new Set<Order["fulfillment_status"]>([
   "PROCESSING",
   "SHIPPED",
 ]);
+/** Texto do erro do histórico: sem conexão e falha do servidor não parecem "nenhum pedido". */
+export function ordersErrorText(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.status === 429)
+      return "Muitas consultas seguidas. Aguarde um instante e tente de novo.";
+    if (error.status >= 500) return "A loja não respondeu agora. Seus pedidos continuam salvos.";
+    return "Não conseguimos consultar seus pedidos. Tente de novo em instantes.";
+  }
+  return "Sem conexão com a loja agora. Verifique a internet e tente de novo.";
+}
+
+/** Contador sem dado (falha na consulta): "—" na tela, "indisponível" para o leitor de tela. */
+function Unavailable() {
+  return (
+    <>
+      <span aria-hidden="true">—</span>
+      <span className="sr-only">indisponível</span>
+    </>
+  );
+}
+
 export function AccountPage({ token, user, addresses, onAddresses, onError, onLogout }: Props) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<unknown>(null);
+  const [attempt, setAttempt] = useState(0);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `attempt` é o gatilho de "Tentar novamente".
   useEffect(() => {
     if (!token) {
       setLoading(false);
       return;
     }
+    let alive = true;
+    setLoading(true);
+    // O erro some só quando a nova consulta dá certo: o painel (e o foco no botão) fica.
     api
       .orders(token)
-      .then(setOrders)
-      .catch(onError)
-      .finally(() => setLoading(false));
-  }, [token, onError]);
+      .then((list) => {
+        if (!alive) return;
+        setOrders(list);
+        setError(null);
+      })
+      .catch((reason) => {
+        // Mantém os pedidos já carregados; o erro aparece no próprio painel, não como vazio.
+        if (!alive) return;
+        setError(reason);
+        if (reason instanceof ApiError && reason.status === 401) onError(reason);
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [token, onError, attempt]);
+  const failed = error !== null;
+  const unknownCount = failed && orders.length === 0;
   if (!user)
     return (
       <section className="account-page gate-page">
         <p className="eyebrow">SUA CONTA</p>
         <h1>Entre para acessar sua área.</h1>
         <p>Seus pedidos e dados ficam disponíveis após a autenticação.</p>
-        <button type="button" className="primary" onClick={() => navigate("/entrar")}>
+        <AppLink href="/entrar?returnTo=%2Fconta" className="primary">
           Entrar na conta
-        </button>
+        </AppLink>
       </section>
     );
   const firstName = (user.full_name || user.email).split(" ")[0];
@@ -79,12 +122,12 @@ export function AccountPage({ token, user, addresses, onAddresses, onError, onLo
       <div className="account-overview">
         <article>
           <h2>Pedidos em andamento</h2>
-          <strong>{activeOrders.length}</strong>
+          <strong>{unknownCount ? <Unavailable /> : activeOrders.length}</strong>
           <span className="sub">acompanhe o status por aqui</span>
         </article>
         <article>
           <h2>Pedidos realizados</h2>
-          <strong>{orders.length}</strong>
+          <strong>{unknownCount ? <Unavailable /> : orders.length}</strong>
           <span className="sub">histórico da sua conta</span>
         </article>
         <article>
@@ -100,12 +143,33 @@ export function AccountPage({ token, user, addresses, onAddresses, onError, onLo
               <p className="eyebrow">HISTÓRICO</p>
               <h2>Seus pedidos</h2>
             </div>
-            <button type="button" className="link-button" onClick={() => navigate("/produtos")}>
+            <AppLink href="/produtos" className="link-button">
               Continuar comprando →
-            </button>
+            </AppLink>
           </div>
-          {loading ? (
-            <div className="inline-loading">Consultando pedidos…</div>
+          {failed && (
+            <div className="inline-error" role="alert">
+              <strong>
+                <span aria-hidden="true">⚠ </span>
+                {orders.length
+                  ? "Não foi possível atualizar seus pedidos."
+                  : "Não foi possível carregar seus pedidos."}
+              </strong>
+              <p>{ordersErrorText(error)}</p>
+              <button
+                type="button"
+                className="secondary"
+                disabled={loading}
+                onClick={() => setAttempt((n) => n + 1)}
+              >
+                {loading ? "Tentando…" : "Tentar novamente"}
+              </button>
+            </div>
+          )}
+          {loading && !orders.length ? (
+            <div className="inline-loading" role="status">
+              Consultando pedidos…
+            </div>
           ) : orders.length ? (
             <div>
               {orders.map((order) => (
@@ -124,13 +188,13 @@ export function AccountPage({ token, user, addresses, onAddresses, onError, onLo
                 </article>
               ))}
             </div>
-          ) : (
+          ) : failed ? null : (
             <div className="empty-inline">
               <strong>Ainda não há pedidos por aqui.</strong>
               <p>Quando você finalizar uma compra, ela aparecerá nesta área.</p>
-              <button type="button" className="secondary" onClick={() => navigate("/produtos")}>
+              <AppLink href="/produtos" className="secondary">
                 Explorar produtos
-              </button>
+              </AppLink>
             </div>
           )}
         </section>

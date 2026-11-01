@@ -164,6 +164,18 @@ h4,
 .secondary:hover:not(:disabled) {
   background: var(--divider);
 }
+/* Links com cara de botão (navegação é <a href>). */
+a.primary,
+a.secondary,
+a.link-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+a.primary,
+a.secondary {
+  text-decoration: none;
+}
 .link-button {
   min-height: 44px;
   border: 0;
@@ -255,13 +267,6 @@ h4,
   font: 800 var(--fs-lg) var(--font-display);
   text-decoration: none;
 }
-.brand-button {
-  border-top: 0;
-  border-bottom: 0;
-  border-left: 0;
-  background: none;
-  text-align: left;
-}
 .brand-mark {
   flex: none;
   width: 24px;
@@ -313,7 +318,13 @@ h4,
   display: flex;
   align-items: stretch;
 }
+.header-search-landmark {
+  display: contents;
+}
 .header-cell {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
   min-height: 64px;
   padding: 0 20px;
   border: 0;
@@ -329,6 +340,7 @@ h4,
   display: flex;
   align-items: center;
   gap: 10px;
+  text-decoration: none;
   min-height: 64px;
   padding: 0 20px;
   border: 0;
@@ -364,8 +376,9 @@ h4,
   margin: 0 auto;
   padding: 0 24px;
 }
-.main-nav button,
-.main-nav .admin-link {
+.main-nav a {
+  display: inline-flex;
+  align-items: center;
   min-height: 44px;
   padding: 0 20px 0 0;
   margin-right: 20px;
@@ -374,19 +387,61 @@ h4,
   background: none;
   color: var(--ink);
   font: 500 var(--fs-floor) var(--font-body);
-}
-.main-nav .admin-link {
-  display: inline-flex;
-  align-items: center;
   text-decoration: none;
 }
-.main-nav .admin-link:hover,
-.main-nav button:hover {
+.main-nav a:hover {
   color: var(--brand-text);
 }
-.main-nav .active {
+.main-nav a[aria-current="page"] {
   border-bottom-color: var(--brand-text);
   margin-bottom: -1px;
+}
+/* Chips de departamento (canvas Gôndola): rolam na horizontal no celular. */
+.dept-chips {
+  border-bottom: 1px solid var(--divider);
+  background: var(--card);
+}
+.dept-chips > div {
+  display: flex;
+  gap: 8px;
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: 10px 24px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.dept-chips > div::-webkit-scrollbar {
+  display: none;
+}
+/* Foco programático ao trocar de página: sem anel visível no conteúdo inteiro. */
+#conteudo:focus {
+  outline: none;
+}
+.dept-chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--divider);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  font-size: var(--fs-support);
+  font-weight: 500;
+  text-decoration: none;
+}
+.dept-chip:hover {
+  border-color: var(--brand-text);
+}
+.dept-chip[aria-current="page"] {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: var(--on-brand);
+}
+/* Âncoras param abaixo do cabeçalho fixo (--header-h vem do Layout). */
+main [id] {
+  scroll-margin-top: var(--header-h, 0px);
 }
 
 /* Layout de páginas e blocos numerados */
@@ -413,6 +468,8 @@ h4,
   font-weight: 600;
 }
 .section-link {
+  display: inline-flex;
+  align-items: center;
   min-height: 44px;
   border: 0;
   padding: 0;
@@ -475,34 +532,6 @@ h4,
 }
 .hero-cta span {
   margin-left: 16px;
-}
-.department-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.department-list li {
-  border-bottom: 1px solid var(--divider);
-}
-.department-list button {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  min-height: 44px;
-  padding: 18px 12px 18px 0;
-  border: 0;
-  background: none;
-  color: var(--ink);
-  font-size: var(--fs-lg);
-  font-weight: 500;
-  text-align: left;
-}
-.department-list button:hover {
-  color: var(--brand-text);
 }
 .benefits {
   display: grid;
@@ -574,7 +603,7 @@ h4,
   padding: 20px 0 0;
   font: 400 var(--fs-floor) var(--font-body);
 }
-.breadcrumbs button {
+.breadcrumbs a {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
@@ -586,56 +615,15 @@ h4,
   text-transform: inherit;
   text-decoration: underline;
 }
-.catalog-layout {
-  display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
-}
-.filter-side {
-  padding: 20px 20px 24px 0;
-  border-right: 1px solid var(--divider);
-}
-.catalog-search {
-  display: grid;
-  gap: 6px;
-  margin-bottom: 16px;
-}
-.catalog-search span {
-  font: 500 var(--fs-floor) var(--font-body);
-}
-.catalog-search input {
-  width: 100%;
-  min-height: 48px;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--field-border);
-  border-radius: var(--radius-control);
-  background: var(--card);
-  color: var(--ink);
-}
 :where(.auth-card, .address-form, .order-summary)
   :is(input, select, textarea)[aria-invalid="true"] {
   border: 2px solid var(--danger);
 }
-.filter-row {
-  display: flex;
-  flex-direction: column;
-}
-.filter-row button {
+.clear-search {
+  display: inline-flex;
+  align-items: center;
   min-height: 44px;
-  padding: 10px 8px 10px 0;
-  border: 0;
-  border-bottom: 1px solid var(--divider);
-  background: none;
   color: var(--ink);
-  font-size: var(--fs-body);
-  text-align: left;
-}
-.filter-row button:hover {
-  color: var(--brand-text);
-}
-.filter-row .active {
-  font-weight: 700;
-  box-shadow: inset 4px 0 0 var(--brand);
-  padding-left: 12px;
 }
 .catalog-count {
   margin: 0;
@@ -817,6 +805,8 @@ h4,
   color: var(--on-ink-muted);
 }
 .footer-name {
+  display: inline-block;
+  text-decoration: none;
   max-width: 100%;
   min-height: 44px;
   border: 0;
@@ -1530,6 +1520,23 @@ h4,
 .empty-inline p {
   margin: 4px 0 16px;
 }
+/* Erro do histórico: distinto do vazio (borda e texto de alerta, ação de nova tentativa). */
+.inline-error {
+  margin: var(--space-3) 0;
+  padding: var(--space-3);
+  border: 1px solid var(--danger);
+  border-left-width: 4px;
+  border-radius: var(--radius-control);
+  background: var(--card);
+}
+.inline-error strong {
+  display: block;
+  color: var(--danger);
+}
+.inline-error p {
+  margin: var(--space-1) 0 var(--space-2);
+  color: var(--ink);
+}
 .settings-panel dl {
   margin: 0;
 }
@@ -1623,6 +1630,7 @@ h4,
   font-weight: 500;
 }
 .auth-brand {
+  text-decoration: none;
   position: absolute;
   top: 0;
   left: 24px;
@@ -1709,7 +1717,7 @@ h4,
   color: var(--muted);
   font-size: var(--fs-support);
 }
-.auth-link button {
+.auth-link a {
   min-height: 44px;
   border: 0;
   padding: 0;
@@ -1723,19 +1731,6 @@ h4,
 @media (max-width: 920px) {
   .support-action {
     display: none;
-  }
-  .catalog-layout {
-    grid-template-columns: 1fr;
-  }
-  .filter-side {
-    padding: 16px 0;
-    border-right: 0;
-    border-bottom: 1px solid var(--divider);
-  }
-  .filter-row {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 0 20px;
   }
   .account-columns {
     grid-template-columns: 1fr;
@@ -1824,31 +1819,29 @@ h4,
   .header-search button {
     min-height: 44px;
   }
-  .catalog-search {
-    display: none;
-  }
   .main-nav {
     display: none;
   }
   .main-nav.open {
     display: block;
+    max-height: calc(100dvh - var(--header-h, 0px));
+    overflow-y: auto;
   }
   .main-nav > div {
     flex-direction: column;
   }
-  .main-nav button {
+  .main-nav a {
     margin: 0;
     border-bottom: 1px solid var(--divider);
-    text-align: left;
+  }
+  .dept-chips > div {
+    padding: 8px 16px;
   }
   .meta-line {
     padding-top: 28px;
   }
   .block-head h2 {
     font-size: var(--fs-section);
-  }
-  .department-list button {
-    font-size: var(--fs-lg);
   }
   .product-grid {
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr));

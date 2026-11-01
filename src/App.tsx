@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { AppLink } from "./components/AppLink";
 import { Layout, navigate } from "./components/Layout";
 import { AccountPage } from "./features/account/AccountPage";
 import { LoginPage, RegisterPage } from "./features/auth/AuthPages";
@@ -37,9 +38,9 @@ function NotFoundPage() {
       <p className="eyebrow">404 · CAMINHO NÃO ENCONTRADO</p>
       <h1>Essa página saiu da rota.</h1>
       <p>Volte à vitrine para continuar sua compra.</p>
-      <button type="button" className="primary" onClick={() => navigate("/")}>
+      <AppLink href="/" className="primary">
         Ir para a loja
-      </button>
+      </AppLink>
     </section>
   );
 }
@@ -184,7 +185,13 @@ export default function App() {
     (pages[path] ?? <NotFoundPage />)
   );
   return (
-    <Layout user={user} cartCount={cart?.total_items ?? 0} onLogout={logout} path={path}>
+    <Layout
+      user={user}
+      cartCount={cart?.total_items ?? 0}
+      onLogout={logout}
+      path={path}
+      query={new URL(location, window.location.origin).search}
+    >
       {notice && (
         <div className="notice" role="status">
           {notice}
