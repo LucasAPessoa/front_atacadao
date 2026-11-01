@@ -6,6 +6,7 @@ import type { AdminProductDetail, AdminVariant } from "../../api/types";
 import { sanitizeHtml } from "../../../shared/sanitize-html";
 import { PresentationForm } from "./PresentationForm";
 import { PricingTab } from "./PricingEditor";
+import { StoreLinkStatus } from "./StoreLinkStatus";
 import { formatBRL, pendingLabels } from "./format";
 
 const num = (value: number | null, unit: string) => (value === null ? "—" : `${value} ${unit}`);
@@ -48,6 +49,9 @@ function VariantRow({ v }: { v: AdminVariant }) {
             Motivo: {pendingLabels[v.pending_reason] ?? v.pending_reason}
           </div>
         )}
+      </td>
+      <td>
+        <StoreLinkStatus variant={v} />
       </td>
     </tr>
   );
@@ -117,6 +121,7 @@ export function BlingTab({ product }: { product: AdminProductDetail }) {
                 </th>
                 <th scope="col">Medidas (C × L × A)</th>
                 <th scope="col">Situação</th>
+                <th scope="col">Loja do site</th>
               </tr>
             </thead>
             <tbody>

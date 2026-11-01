@@ -8,6 +8,7 @@ import { ConfirmDialog } from "../../ui/ConfirmDialog";
 import { errorMessage } from "../../ui/errors";
 import { useToast } from "../../ui/Toast";
 import { formatBRL } from "./format";
+import { StoreLinkStatus } from "./StoreLinkStatus";
 import {
   type TierDraft,
   currentUnitPrice,
@@ -15,6 +16,7 @@ import {
   noPriceSourceLabel,
   priceSourceLabels,
   pricingStatusLabels,
+  unpublishedHint,
   validatePricing,
   warningText,
 } from "./pricing";
@@ -56,7 +58,11 @@ export function VariantPricingEditor({
   const [counter, setCounter] = useState(0);
 
   // Depois de salvar/confirmar, o detalhe recarregado volta a refletir o servidor.
-  const signature = JSON.stringify([variant.pricing_tiers, variant.store_price]);
+  const signature = JSON.stringify([
+    variant.pricing_tiers,
+    variant.store_price,
+    variant.store_link,
+  ]);
   // biome-ignore lint/correctness/useExhaustiveDependencies: reinicia só quando o servidor muda a tabela.
   useEffect(() => {
     setUnit(toText(currentUnitPrice(variant)));
@@ -70,12 +76,22 @@ export function VariantPricingEditor({
 
   const submit = async (input: PricingTableInput) => {
     setServerError("");
+    let saved: AdminVariant;
     try {
-      await save.mutateAsync(input);
+      saved = await save.mutateAsync(input);
     } catch (error) {
       setServerError(serverMessage(error));
       return;
     }
+    // A resposta já traz o vínculo e a publicação: o detalhe muda na hora, antes do refetch.
+    queryClient.setQueryData<AdminProductDetail>(["admin", "product", productId], (current) =>
+      current
+        ? {
+            ...current,
+            variants: current.variants.map((v) => (v.id === saved.id ? { ...v, ...saved } : v)),
+          }
+        : current,
+    );
     toast.push(
       "success",
       `Tabela de preços de ${formatVariationName(variant.variation_name)} salva e confirmada.`,
@@ -120,8 +136,14 @@ export function VariantPricingEditor({
         <span className="adm-muted">
           {variant.price_source ? priceSourceLabels[variant.price_source] : noPriceSourceLabel}
         </span>
-        {!variant.published && <span className="adm-muted"> · Fora da loja do site</span>}
       </p>
+      <p>
+        <StoreLinkStatus variant={variant} />
+        {variant.store_link !== "none" && !variant.published && (
+          <span className="adm-muted"> · Fora da loja do site</span>
+        )}
+      </p>
+      {variant.store_link === "none" && <p className="adm-muted">{unpublishedHint}</p>}
       {variant.pricing_status === "pending" && currentUnitPrice(variant) === null && (
         <p className="adm-alert adm-alert-warning" role="status">
           {noPriceInstruction}

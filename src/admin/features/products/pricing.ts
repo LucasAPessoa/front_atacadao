@@ -1,4 +1,10 @@
-import type { AdminVariant, PriceSource, PricingTableInput, PricingWarning } from "../../api/types";
+import type {
+  AdminVariant,
+  PriceSource,
+  PricingTableInput,
+  PricingWarning,
+  StoreLink,
+} from "../../api/types";
 import { normalizePrice } from "./price";
 
 export const priceSourceLabels: Record<PriceSource, string> = {
@@ -6,6 +12,15 @@ export const priceSourceLabels: Record<PriceSource, string> = {
   parent_link: "Herdado do produto pai",
   general: "Preço geral do Bling (sem preço da loja)",
 };
+
+export const storeLinkLabels: Record<StoreLink, string> = {
+  own: "Publicada (vínculo próprio)",
+  inherited: "Publicada (herda do pai)",
+  none: "Não publicada",
+};
+
+export const unpublishedHint =
+  "Salvar o preço publica esta variação na loja e cria o vínculo no Bling.";
 
 export const noPriceSourceLabel = "Sem preço definido no Bling";
 export const noPriceInstruction = "Informe o preço de 1 unidade e salve para liberar na loja.";
@@ -27,10 +42,13 @@ export type TierDraft = { key: string; min: string; price: string };
 
 const cents = (value: string) => Math.round(Number(value) * 100);
 
-/** Preço atual da linha de 1 unidade, como veio do servidor. */
+/**
+ * Preço atual da linha de 1 unidade, como veio do servidor. Sem vínculo com a loja,
+ * `store_price` pode ser um resto antigo e não conta.
+ */
 export const currentUnitPrice = (variant: AdminVariant): string | null =>
   variant.pricing_tiers.find((tier) => tier.min_quantity === 1)?.unit_price ??
-  variant.store_price ??
+  (variant.store_link === "none" ? null : variant.store_price) ??
   null;
 
 export type PricingCheck = { errors: string[]; input: PricingTableInput | null };

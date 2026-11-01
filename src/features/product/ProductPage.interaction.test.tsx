@@ -34,7 +34,8 @@ const extras = {
   questions: [],
 };
 
-function Harness({ description }: { description?: string }) {
+type HarnessProps = { description?: string; quantityAfterAdd?: number };
+function Harness({ description, quantityAfterAdd }: HarnessProps) {
   const [quantity, setQuantity] = useState(1);
   return (
     <ProductView
@@ -48,7 +49,10 @@ function Harness({ description }: { description?: string }) {
       onVariant={() => {}}
       onQuantity={setQuantity}
       onImage={() => {}}
-      onAdd={() => {}}
+      onAdd={() => {
+        // Simula o 409 de estoque: a página leva a quantidade para o `available`.
+        if (quantityAfterAdd) setQuantity(quantityAfterAdd);
+      }}
     />
   );
 }
@@ -58,7 +62,7 @@ afterEach(() => {
   act(() => root?.unmount());
   document.body.innerHTML = "";
 });
-const mount = (props: { description?: string } = {}) => {
+const mount = (props: HarnessProps = {}) => {
   const host = document.createElement("div");
   document.body.append(host);
   root = createRoot(host);
@@ -118,5 +122,18 @@ describe("preço na página do produto", () => {
     click(toggle ?? null);
     expect(body?.hasAttribute("data-open")).toBe(true);
     expect(toggle?.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("campo de quantidade acompanha a quantidade ajustada pelo 409", () => {
+    mount({ quantityAfterAdd: 22 });
+    const input = document.querySelector<HTMLInputElement>("#pdp-qty-input");
+    for (let i = 0; i < 29; i++)
+      click(document.querySelector('[aria-label="Aumentar quantidade"]'));
+    expect(input?.value).toBe("30");
+    click(document.querySelector(".pdp-buy .primary"));
+    expect(input?.value).toBe("22");
+    expect(norm(document.querySelector(".pdp-buy .primary")?.textContent)).toContain(
+      "Adicionar 22",
+    );
   });
 });

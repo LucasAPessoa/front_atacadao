@@ -44,7 +44,8 @@ const detail: AdminProductDetail = {
       images: ["https://img/1.jpg"],
       published: true,
       price_source: "variant_link",
-      store_price: null,
+      store_link: "own",
+      store_price: "12.50",
       pricing_status: "confirmed",
       pricing_confirmed_at: null,
       pricing_tiers: [],
@@ -66,7 +67,8 @@ const detail: AdminProductDetail = {
       images: [],
       published: true,
       price_source: "variant_link",
-      store_price: null,
+      store_link: "inherited",
+      store_price: "13.00",
       pricing_status: "confirmed",
       pricing_confirmed_at: null,
       pricing_tiers: [],
@@ -86,9 +88,10 @@ const detail: AdminProductDetail = {
       length_cm: null,
       pending_reason: "INCOMPLETE_DIMENSIONS",
       images: [],
-      published: true,
+      published: false,
       price_source: "variant_link",
-      store_price: null,
+      store_link: "none",
+      store_price: "7.77",
       pricing_status: "confirmed",
       pricing_confirmed_at: null,
       pricing_tiers: [],
@@ -110,6 +113,7 @@ const detail: AdminProductDetail = {
       images: [],
       published: true,
       price_source: "variant_link",
+      store_link: "own",
       store_price: null,
       pricing_status: "confirmed",
       pricing_confirmed_at: null,
@@ -137,6 +141,17 @@ describe("ProductDetailView (aba Bling)", () => {
     expect(html).toContain("Nome Bling");
     expect(html).toContain("Marca X");
     expect(html).toContain('src="https://img/1.jpg"');
+  });
+
+  it("mostra o vínculo de cada variação com a loja do site e o preço do vínculo", () => {
+    expect(html).toContain("Loja do site");
+    expect(html).toContain("Publicada (vínculo próprio)");
+    expect(html).toContain("Publicada (herda do pai)");
+    expect(html).toContain("Não publicada");
+    expect(html).toContain("R$ 12,50 na loja");
+    expect(html).toContain("R$ 13,00 na loja");
+    // Sem vínculo, um store_price antigo não aparece.
+    expect(html).not.toContain("7,77");
   });
 
   it("exibe variação fora de venda com o motivo traduzido", () => {
@@ -199,11 +214,13 @@ describe("ProductDetail (container)", () => {
     await act(async () => {
       createRoot(box).render(
         <QueryClientProvider client={client}>
-          <MemoryRouter initialEntries={["/produtos/p1"]}>
-            <Routes>
-              <Route path="/produtos/:id" element={<ProductDetail />} />
-            </Routes>
-          </MemoryRouter>
+          <ToastProvider>
+            <MemoryRouter initialEntries={["/produtos/p1"]}>
+              <Routes>
+                <Route path="/produtos/:id" element={<ProductDetail />} />
+              </Routes>
+            </MemoryRouter>
+          </ToastProvider>
         </QueryClientProvider>,
       );
     });
@@ -230,5 +247,60 @@ describe("ProductDetail (container)", () => {
     const box = await mount();
     await waitFor(() => expect(box.textContent).toContain("Nome Bling"));
     expect(box.textContent).toContain("vem do Bling");
+  });
+
+  it("salvar o preço de variação não publicada mostra Publicada na hora, com a resposta do PUT", async () => {
+    const v3 = detail.variants[2];
+    let gets = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+        if (init?.method === "PUT") {
+          const saved = {
+            ...v3,
+            store_link: "own",
+            published: true,
+            store_price: "30.00",
+            pricing_tiers: [{ id: "t1", min_quantity: 1, unit_price: "30.00" }],
+          };
+          return new Response(JSON.stringify({ data: saved }), { status: 200 });
+        }
+        gets += 1;
+        // O refetch depois de salvar não volta: o estado novo tem que vir da resposta do PUT.
+        if (gets > 1) return new Promise<Response>(() => {});
+        return new Response(JSON.stringify({ data: detail }), { status: 200 });
+      }),
+    );
+    const box = await mount();
+    // Form desconectado do documento não dispara submit.
+    document.body.append(box);
+    await waitFor(() => expect(box.textContent).toContain("Nome Bling"));
+    const prices = [...box.querySelectorAll("[role=tab]")].find((t) => t.textContent === "Preços");
+    await act(async () => (prices as HTMLElement).click());
+    const form = () => box.querySelector<HTMLFormElement>('form[data-variant="v3"]');
+    expect(form()?.textContent).toContain("Não publicada");
+    expect(form()?.textContent).toContain("Salvar o preço publica esta variação na loja");
+    const unit = form()?.querySelector<HTMLInputElement>("input") as HTMLInputElement;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(
+        unit,
+        "30,00",
+      );
+      unit.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const submit = [...(form()?.querySelectorAll("button") ?? [])].find(
+      (b) => b.textContent === "Salvar e confirmar",
+    );
+    await act(async () => (submit as HTMLElement).click());
+    const confirm = [...document.querySelectorAll("[role=alertdialog] button")].find((b) =>
+      b.textContent?.endsWith("e salvar"),
+    );
+    await act(async () => (confirm as HTMLElement).click());
+    await waitFor(() => expect(form()?.textContent).toContain("Publicada (vínculo próprio)"));
+    expect(form()?.textContent).toContain("R$ 30,00 na loja");
+    expect(form()?.textContent).not.toContain("Salvar o preço publica");
+    expect(form()?.textContent).not.toContain("Fora da loja do site");
+    expect(gets).toBe(2);
+    box.remove();
   });
 });

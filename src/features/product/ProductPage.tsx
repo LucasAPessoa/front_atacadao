@@ -106,6 +106,16 @@ function QuantityField({
   onQuantity(value: number): void;
 }) {
   const [draft, setDraft] = useState(String(quantity));
+  // Quantidade mudada de fora (409 com `available`, troca de variação): o campo acompanha.
+  // Enquanto o rascunho digitado já resulta na mesma quantidade, ele fica como está.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: sincroniza só quando a quantidade muda.
+  useEffect(() => {
+    setDraft((current) =>
+      current !== "" && clampQuantity(Number(current), stock) === quantity
+        ? current
+        : String(quantity),
+    );
+  }, [quantity]);
   const set = (value: number) => {
     const next = clampQuantity(value, stock);
     setDraft(String(next));

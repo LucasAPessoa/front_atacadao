@@ -20,6 +20,7 @@ const variant = (extra: Partial<AdminVariant> = {}): AdminVariant =>
     published: true,
     price_source: "variant_link",
     store_price: "27.90",
+    store_link: "own",
     pricing_status: "confirmed",
     pricing_confirmed_at: null,
     pricing_tiers: [
@@ -147,6 +148,50 @@ describe("editor da tabela por variação", () => {
     expect(unitInput(box).value).toBe("27,90");
     expect(input(box, "Quantidade mínima da faixa 1").value).toBe("10");
     expect(input(box, "Preço da faixa 1").value).toBe("25,90");
+  });
+
+  it("cabeçalho mostra o vínculo com a loja e o preço do vínculo", async () => {
+    const box = await mount([
+      variant({ store_link: "inherited", store_price: "29.90" }),
+      variant({ id: "v2", store_link: "own", published: false }),
+    ]);
+    const [inherited, own] = [...box.querySelectorAll("form")].map((f) =>
+      f.textContent?.replace(/\s/g, " "),
+    );
+    expect(inherited).toContain("Publicada (herda do pai)");
+    expect(inherited).toContain("R$ 29,90 na loja");
+    expect(inherited).not.toContain("Salvar o preço publica");
+    expect(own).toContain("Publicada (vínculo próprio)");
+    expect(own).toContain("Fora da loja do site");
+  });
+
+  it("variação não publicada mostra a dica de publicar ao salvar, sem preço antigo", async () => {
+    const box = await mount([
+      variant({ store_link: "none", published: false, store_price: "9.90" }),
+    ]);
+    expect(box.textContent).toContain("Não publicada");
+    expect(box.textContent).toContain(
+      "Salvar o preço publica esta variação na loja e cria o vínculo no Bling.",
+    );
+    expect(box.textContent).not.toContain("R$ 9,90 na loja");
+  });
+
+  it("variação não publicada sem faixas ignora store_price antigo no campo de 1 unidade", async () => {
+    const box = await mount([
+      variant({
+        store_link: "none",
+        published: false,
+        store_price: "9.90",
+        pricing_status: "pending",
+        pricing_tiers: [],
+      }),
+    ]);
+    expect(unitInput(box).value).toBe("");
+    expect(box.textContent).toContain("Informe o preço de 1 unidade e salve para liberar na loja.");
+    await type(unitInput(box), "30,00");
+    await click(button(box, "Salvar e confirmar"));
+    const dialog = box.querySelector("[role=alertdialog]")?.textContent?.replace(/\s/g, " ");
+    expect(dialog).toContain("Definir preço no Bling?");
   });
 
   it("não envia com faixa inválida e mostra os erros", async () => {
