@@ -245,7 +245,6 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
               <p className="meta-line">
                 <span>Compra em quantidade</span>
                 <span>Entrega calculada antes de pagar</span>
-                <span>Valores confirmados pelo servidor</span>
               </p>
               <h1 className="hero-title">
                 O essencial
@@ -282,9 +281,7 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
             <section className="block" aria-labelledby="departamentos">
               <div className="wrap">
                 <div className="block-head">
-                  <h2 id="departamentos">
-                    <span className="num">01</span>Departamentos
-                  </h2>
+                  <h2 id="departamentos">Departamentos</h2>
                   <button
                     type="button"
                     className="section-link"
@@ -294,7 +291,7 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
                   </button>
                 </div>
                 <ol className="department-list">
-                  {categories.map((category, index) => (
+                  {categories.map((category) => (
                     <li key={category.id}>
                       <button
                         type="button"
@@ -302,10 +299,7 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
                           navigate(`/produtos?categoria=${encodeURIComponent(category.id)}`)
                         }
                       >
-                        <span>
-                          <span className="idx">{String(index + 1).padStart(2, "0")}</span>
-                          {category.name}
-                        </span>
+                        <span>{category.name}</span>
                         <span aria-hidden="true">↗</span>
                       </button>
                     </li>
@@ -328,15 +322,7 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
             </nav>
           )}
           <div className="block-head">
-            <h2 id="titulo-produtos">
-              {mode === "home" ? (
-                <>
-                  <span className="num">{hasCategories ? "02" : "01"}</span>Mais procurados
-                </>
-              ) : (
-                "Produtos"
-              )}
-            </h2>
+            <h2 id="titulo-produtos">{mode === "home" ? <>Mais procurados</> : "Produtos"}</h2>
             {mode === "home" ? (
               <button type="button" className="section-link" onClick={() => navigate("/produtos")}>
                 Catálogo completo →
@@ -406,46 +392,68 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
       {mode === "home" && (
         <>
           <section className="block" aria-label="Vantagens">
-            <div className="wrap benefits">
-              <article>
-                <span className="big-num">01</span>
-                <strong>Compra protegida</strong>
-                <p>Você revisa valores antes de seguir para o pagamento.</p>
-              </article>
-              <article>
-                <span className="big-num">02</span>
-                <strong>Frete recalculado</strong>
-                <p>O servidor confirma a entrega para o seu endereço.</p>
-              </article>
-              <article>
-                <span className="big-num">03</span>
-                <strong>Pedido acompanhável</strong>
-                <p>O status fica disponível na sua conta.</p>
-              </article>
-            </div>
+            <ul className="wrap benefits">
+              <li>
+                <span className="perk-n" aria-hidden="true">
+                  ✓
+                </span>
+                <div className="perk-text">
+                  <strong>Preço por faixa</strong>
+                  <p>O desconto aparece antes de você adicionar.</p>
+                </div>
+              </li>
+              <li>
+                <span className="perk-n" aria-hidden="true">
+                  ✓
+                </span>
+                <div className="perk-text">
+                  <strong>Frete no carrinho</strong>
+                  <p>Escolha o endereço e veja prazo e valor.</p>
+                </div>
+              </li>
+              <li>
+                <span className="perk-n" aria-hidden="true">
+                  ✓
+                </span>
+                <div className="perk-text">
+                  <strong>Pix ou cartão</strong>
+                  <p>Pagamento seguro pelo Mercado Pago.</p>
+                </div>
+              </li>
+            </ul>
           </section>
           <section className="block" id="como-funciona" aria-labelledby="como">
             <div className="wrap">
               <div className="block-head">
-                <h2 id="como">
-                  <span className="num">{hasCategories ? "03" : "02"}</span>Como funciona
-                </h2>
+                <h2 id="como">Como funciona</h2>
               </div>
               <ol className="steps">
                 <li>
-                  <span className="idx">01</span>
-                  <strong>Monte seu carrinho</strong>
-                  <p>Escolha itens e ajuste quantidades.</p>
+                  <span className="perk-n" aria-hidden="true">
+                    1
+                  </span>
+                  <div className="perk-text">
+                    <strong>Monte seu carrinho</strong>
+                    <p>Escolha itens e ajuste quantidades.</p>
+                  </div>
                 </li>
                 <li>
-                  <span className="idx">02</span>
-                  <strong>Escolha a entrega</strong>
-                  <p>O frete é recalculado pelo servidor.</p>
+                  <span className="perk-n" aria-hidden="true">
+                    2
+                  </span>
+                  <div className="perk-text">
+                    <strong>Escolha a entrega</strong>
+                    <p>Escolha o endereço de entrega e veja o prazo e o valor do frete.</p>
+                  </div>
                 </li>
                 <li>
-                  <span className="idx">03</span>
-                  <strong>Pague com segurança</strong>
-                  <p>O Mercado Pago cuida dos dados de pagamento.</p>
+                  <span className="perk-n" aria-hidden="true">
+                    3
+                  </span>
+                  <div className="perk-text">
+                    <strong>Pague com segurança</strong>
+                    <p>O Mercado Pago cuida dos dados de pagamento.</p>
+                  </div>
                 </li>
               </ol>
             </div>

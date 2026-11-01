@@ -165,3 +165,28 @@ describe("ProductGrid", () => {
     expect(panel?.textContent).toContain("R$");
   });
 });
+
+describe("home sem numeração decorativa (#64)", () => {
+  it("vantagens em lista sem número, passos numerados, sem 01/02 e sem texto técnico", async () => {
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const html = renderToStaticMarkup(
+      <CatalogPage
+        token=""
+        onLogin={() => {}}
+        onCart={() => {}}
+        onError={() => {}}
+        mode="home"
+        query=""
+      />,
+    );
+    expect(html).toMatch(
+      /<ul class="wrap benefits"><li><span class="perk-n" aria-hidden="true">✓<\/span>/,
+    );
+    expect(html).toContain("Preço por faixa");
+    expect(html).toMatch(/<ol class="steps"><li><span class="perk-n" aria-hidden="true">1<\/span>/);
+    expect(html).not.toContain("big-num");
+    expect(html).not.toMatch(/class="(num|idx)"/);
+    expect(html).not.toMatch(/>0\d</);
+    expect(html).not.toContain("servidor");
+  });
+});

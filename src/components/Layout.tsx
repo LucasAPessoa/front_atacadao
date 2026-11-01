@@ -48,7 +48,6 @@ export function Layout({ children, user, cartCount, onLogout, path }: LayoutProp
     go(`/produtos${params.size ? `?${params}` : ""}`);
   };
   const authRoute = path === "/entrar" || path === "/cadastro";
-  const count = String(cartCount).padStart(2, "0");
   const hasLegal = Boolean(store.legalName || store.cnpj || store.address);
 
   if (authRoute)
@@ -186,9 +185,11 @@ export function Layout({ children, user, cartCount, onLogout, path }: LayoutProp
                 />
               </svg>
               <span className="hc-label">Carrinho</span>{" "}
-              <span className="cart-count" aria-hidden="true">
-                [{count}]
-              </span>
+              {cartCount > 0 && (
+                <span className="cart-count" aria-hidden="true">
+                  · {cartCount}
+                </span>
+              )}
             </button>
           </div>
         </div>
