@@ -62,17 +62,19 @@ describe("catálogo do Bling", () => {
     const html = view({ current: null, items });
     for (const t of ["Concluída", "Parcial", "Falhou", "Ignorada", "Automática", "Manual"])
       expect(html).toContain(t);
-    expect(html).toContain("conexao_inativa");
+    expect(html).toContain("Motivo: motivo não identificado");
     expect(html).toContain("<details>");
-    expect(html).toContain("123 · incompleto_peso · sem peso");
-    expect(html).toContain("Geral · filtro_alteracao_ignorado · aviso geral");
+    expect(html).toContain("Produto 123 no Bling · Fora de venda: sem peso no Bling");
+    expect(html).toContain("Geral · O Bling não filtrou só as alterações");
+    for (const raw of ["conexao_inativa", "incompleto_peso", "filtro_alteracao_ignorado"])
+      expect(html).not.toContain(raw);
   });
 
   it("mostra a execução corrente e desabilita o botão em RUNNING", () => {
     const current = mk("RUNNING", { phase: "SCAN" });
     const html = view({ current, items: [current] });
     expect(html).toContain("Em andamento");
-    expect(html).toContain("Fase: SCAN");
+    expect(html).toContain("Fase: Lendo a lista de produtos");
     expect(html).toContain("Desativados: 3");
     expect(html).toMatch(
       /<button type="button" class="adm-btn adm-btn-primary" disabled="">Importar agora/,
@@ -84,6 +86,38 @@ describe("catálogo do Bling", () => {
     expect(html).not.toMatch(/disabled="">Importar agora/);
     expect(html).toContain("Atualizar");
     expect(html).toContain("Nenhuma importação registrada.");
+  });
+
+  it("sem conexão, Importar agora fica desabilitado, secundário e com o motivo", () => {
+    for (const [connection, text] of [
+      ["NOT_CONNECTED", "Conecte o Bling acima"],
+      ["RECONNECT_REQUIRED", "Reconecte o Bling acima"],
+    ] as const) {
+      const html = view({ current: null, items: [] }, { connection });
+      expect(html).toMatch(
+        /<button type="button" class="adm-btn" disabled="" aria-describedby="catalog-sync-blocked">Importar agora/,
+      );
+      expect(html).toContain(text);
+    }
+    const ok = view({ current: null, items: [] }, { connection: "CONNECTED" });
+    expect(ok).toMatch(/class="adm-btn adm-btn-primary">Importar agora/);
+    expect(ok).not.toContain("catalog-sync-blocked");
+  });
+
+  it("motivos de importação ignorada e erros de leitura em português", () => {
+    const html = view({
+      current: null,
+      items: [
+        mk("SKIPPED", { reason: "bling_reconnect_required" }),
+        mk("PARTIAL", {
+          id: "p2",
+          errors: [{ bling_id: null, code: "leitura_saldos", message: "ReadTimeout" }],
+        }),
+      ],
+    });
+    expect(html).toContain("Motivo: o Bling precisava ser reconectado");
+    expect(html).toContain("Geral · Falha ao ler o estoque do Bling");
+    expect(html).not.toContain("ReadTimeout");
   });
 
   it("diferencia os dois 409 pelo detail", () => {
