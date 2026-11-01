@@ -1,4 +1,4 @@
-import { ApiError } from "../../shared/http";
+import { ApiError, RequestTimeoutError } from "../../shared/http";
 
 /** Mensagem em português para um erro de API, cobrindo os estados do portal. */
 export function errorMessage(error: unknown): string {
@@ -20,6 +20,8 @@ export function errorMessage(error: unknown): string {
     if (error.status >= 500) return "Erro no servidor. Tente novamente em instantes.";
     return error.message;
   }
+  if (error instanceof RequestTimeoutError)
+    return "O servidor demorou para responder. Tente novamente.";
   return "Não foi possível falar com o servidor agora. Tente novamente.";
 }
 

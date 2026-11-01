@@ -29,6 +29,39 @@ export class ApiError extends Error {
 
 const genericMessage = "Não foi possível concluir a solicitação.";
 
+/** Prazo sem resposta: leitura (GET) e escrita (checkout, pagamento e afins podem demorar mais). */
+export const READ_TIMEOUT_MS = 20_000;
+export const WRITE_TIMEOUT_MS = 45_000;
+
+/** A API não respondeu no prazo: o fetch foi abortado. Diferente de "sem conexão". */
+export class RequestTimeoutError extends Error {
+  constructor() {
+    super("A loja demorou para responder. Tente novamente.");
+    this.name = "RequestTimeoutError";
+  }
+}
+
+/** Junta o cancelamento de quem chamou (`init.signal`) com o prazo da requisição. */
+function deadline(outer: AbortSignal | null | undefined, ms: number) {
+  const controller = new AbortController();
+  let expired = false;
+  const timer = setTimeout(() => {
+    expired = true;
+    controller.abort();
+  }, ms);
+  const forward = () => controller.abort(outer?.reason);
+  if (outer?.aborted) forward();
+  else outer?.addEventListener("abort", forward, { once: true });
+  return {
+    signal: controller.signal,
+    expired: () => expired,
+    clear: () => {
+      clearTimeout(timer);
+      outer?.removeEventListener("abort", forward);
+    },
+  };
+}
+
 function fieldErrors(body: { errors?: unknown; detail?: unknown } | null): FieldError[] {
   const list = Array.isArray(body?.errors)
     ? body.errors
@@ -46,22 +79,38 @@ function parseRetryAfter(value: string | null): number | undefined {
   return Number.isFinite(seconds) && seconds >= 0 ? seconds : undefined;
 }
 
-/** Faz a chamada e devolve o corpo completo (envelope). `init.signal` cancela a requisição. */
+/**
+ * Faz a chamada e devolve o corpo completo (envelope). `init.signal` cancela a requisição;
+ * sem resposta no prazo (leitura ou escrita), falha com `RequestTimeoutError`.
+ */
 async function sendEnvelope<T>(
   path: string,
   init: RequestInit,
   bearer?: string,
 ): Promise<Envelope<T> | null> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers: {
-      Accept: "application/json",
-      ...(init.body ? { "Content-Type": "application/json" } : {}),
-      ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
-      ...init.headers,
-    },
-  });
-  const body = await response.json().catch(() => null);
+  const method = (init.method ?? "GET").toUpperCase();
+  const limit = deadline(init.signal, method === "GET" ? READ_TIMEOUT_MS : WRITE_TIMEOUT_MS);
+  let response: Response;
+  let body: (Envelope<T> & { detail?: unknown; available?: unknown }) | null;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...init,
+      signal: limit.signal,
+      headers: {
+        Accept: "application/json",
+        ...(init.body ? { "Content-Type": "application/json" } : {}),
+        ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
+        ...init.headers,
+      },
+    });
+    body = await response.json().catch(() => null);
+    // O prazo pode estourar no meio da leitura do corpo: não devolve um corpo vazio como sucesso.
+    if (limit.expired()) throw new RequestTimeoutError();
+  } catch (error) {
+    throw limit.expired() ? new RequestTimeoutError() : error;
+  } finally {
+    limit.clear();
+  }
 
   if (!response.ok) {
     const detail = typeof body?.detail === "string" ? body.detail : undefined;

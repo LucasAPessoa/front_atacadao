@@ -1,5 +1,14 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError, createRequester, createTokenStore, send, sendPage } from "./http";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  ApiError,
+  READ_TIMEOUT_MS,
+  RequestTimeoutError,
+  WRITE_TIMEOUT_MS,
+  createRequester,
+  createTokenStore,
+  send,
+  sendPage,
+} from "./http";
 
 const memory = new Map<string, string>();
 vi.stubGlobal("localStorage", {
@@ -68,7 +77,70 @@ describe("send", () => {
     const controller = new AbortController();
     const error = await failure(send("/x", { signal: controller.signal }));
     expect(error.retryAfter).toBe(12);
-    expect((fetchMock.mock.calls[0][1] as RequestInit).signal).toBe(controller.signal);
+    // O fetch recebe um sinal combinado: cancelar quem chamou cancela a requisição.
+    const passed = (fetchMock.mock.calls[0][1] as RequestInit).signal as AbortSignal;
+    expect(passed.aborted).toBe(false);
+  });
+
+  it("cancelar quem chamou aborta o fetch e repassa o AbortError (não é timeout)", async () => {
+    const controller = new AbortController();
+    fetchMock.mockImplementationOnce(
+      (_url: string, init: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          init.signal?.addEventListener("abort", () =>
+            reject(new DOMException("aborted", "AbortError")),
+          );
+        }),
+    );
+    const call = send("/x", { signal: controller.signal });
+    controller.abort();
+    const error = await failure(call);
+    expect(error).not.toBeInstanceOf(RequestTimeoutError);
+    expect((error as unknown as DOMException).name).toBe("AbortError");
+  });
+});
+
+describe("prazo das requisições", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  const hang = () =>
+    fetchMock.mockImplementationOnce(
+      (_url: string, init: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          init.signal?.addEventListener("abort", () =>
+            reject(new DOMException("aborted", "AbortError")),
+          );
+        }),
+    );
+
+  it("GET sem resposta em 20 s falha com RequestTimeoutError e aborta o fetch", async () => {
+    hang();
+    const call = failure(send("/lento", {}));
+    await vi.advanceTimersByTimeAsync(READ_TIMEOUT_MS - 1);
+    expect((fetchMock.mock.calls[0][1] as RequestInit).signal?.aborted).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    const error = await call;
+    expect(error).toBeInstanceOf(RequestTimeoutError);
+    expect((fetchMock.mock.calls[0][1] as RequestInit).signal?.aborted).toBe(true);
+  });
+
+  it("escrita (POST) tem prazo maior", async () => {
+    hang();
+    let settled = false;
+    const call = failure(send("/checkout", { method: "POST", body: "{}" })).finally(() => {
+      settled = true;
+    });
+    await vi.advanceTimersByTimeAsync(READ_TIMEOUT_MS + 1);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(WRITE_TIMEOUT_MS);
+    expect(await call).toBeInstanceOf(RequestTimeoutError);
+  });
+
+  it("resposta no prazo limpa o timer (sem abort tardio)", async () => {
+    fetchMock.mockResolvedValueOnce(reply(200, { data: 1 }));
+    expect(await send("/rapido", {})).toBe(1);
+    expect(vi.getTimerCount()).toBe(0);
   });
 });
 

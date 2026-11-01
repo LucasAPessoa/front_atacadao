@@ -13,7 +13,7 @@ import {
   tierRows,
   variantUnitPrice,
 } from "../../lib/product";
-import { api } from "../../services/client";
+import { ApiError, RequestTimeoutError, api } from "../../services/client";
 import type { Cart, Category, Product } from "../../shared/types/domain";
 
 type Props = {
@@ -24,9 +24,23 @@ type Props = {
   mode: "home" | "catalog";
   query: string;
 };
+/** Texto do painel de falha: prazo estourado, servidor ou sem conexão. */
+export function unavailableText(failure: unknown): string {
+  if (failure instanceof RequestTimeoutError) return "A loja demorou para responder.";
+  if (failure instanceof ApiError && failure.status >= 500)
+    return "A loja está com instabilidade no momento.";
+  if (failure instanceof ApiError)
+    return "Não conseguimos carregar os produtos. Tente novamente ou fale com o atendimento.";
+  return "Sem conexão com a loja. Verifique a internet.";
+}
+
 type ProductGridProps = {
   loading: boolean;
   unavailable: boolean;
+  /** Motivo da falha ao abrir o catálogo (texto do painel). */
+  failure?: unknown;
+  /** Refaz a busca sem recarregar a página. */
+  onRetry?(): void;
   visible: Product[];
   adding: string;
   onAdd(product: Product): void;
@@ -36,6 +50,8 @@ type ProductGridProps = {
 export function ProductGrid({
   loading,
   unavailable,
+  failure,
+  onRetry,
   visible,
   adding,
   onAdd,
@@ -50,13 +66,20 @@ export function ProductGrid({
     });
   return (
     <>
-      {loading ? (
+      {unavailable ? (
+        // Durante a nova tentativa o painel fica (o foco continua no botão), em "Tentando…".
+        <div className="state-panel" role="alert">
+          <h2>Não foi possível abrir o catálogo agora.</h2>
+          <p>{unavailableText(failure)}</p>
+          {onRetry && (
+            <button type="button" className="secondary" onClick={onRetry} disabled={loading}>
+              {loading ? "Tentando…" : "Tentar novamente"}
+            </button>
+          )}
+        </div>
+      ) : loading ? (
         <div className="state-panel" role="status">
           Carregando produtos e condições comerciais…
-        </div>
-      ) : unavailable ? (
-        <div className="state-panel" role="alert">
-          Não foi possível abrir o catálogo agora. Atualize a página para tentar novamente.
         </div>
       ) : (
         <>
@@ -176,21 +199,33 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
   const [selectedCategoryId, setCategoryId] = useState("");
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
+  const [failure, setFailure] = useState<unknown>(null);
+  const [attempt, setAttempt] = useState(0);
   const [adding, setAdding] = useState("");
+  const retry = () => setAttempt((n) => n + 1);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `attempt` é o gatilho de "Tentar novamente".
   useEffect(() => {
+    // Sair da página cancela a busca; a resposta atrasada não mexe no estado.
+    const controller = new AbortController();
     setLoading(true);
-    Promise.all([api.products(), api.categories()])
+    Promise.all([api.products(controller.signal), api.categories(controller.signal)])
       .then(([list, categoryList]) => {
         setProducts(list.filter(isDisplayable));
         setCategories(categoryList);
         setUnavailable(false);
+        setFailure(null);
       })
       .catch((error) => {
+        if (controller.signal.aborted) return;
+        // O painel do catálogo mostra o erro e a nova tentativa; sem aviso global duplicado.
         setUnavailable(true);
-        onError(error);
+        setFailure(error);
       })
-      .finally(() => setLoading(false));
-  }, [onError]);
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [attempt]);
   useEffect(() => {
     if (mode === "catalog") {
       const params = new URLSearchParams(query);
@@ -369,6 +404,8 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
                 <ProductGrid
                   loading={loading}
                   unavailable={unavailable}
+                  failure={failure}
+                  onRetry={retry}
                   visible={visible}
                   adding={adding}
                   onAdd={add}
@@ -381,6 +418,8 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
             <ProductGrid
               loading={loading}
               unavailable={unavailable}
+              failure={failure}
+              onRetry={retry}
               visible={visible}
               adding={adding}
               onAdd={add}
