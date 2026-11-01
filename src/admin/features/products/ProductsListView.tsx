@@ -321,6 +321,7 @@ export function ProductsListView(p: ProductsListViewProps) {
             columns={columns}
             rows={p.items}
             rowKey={(row) => row.id}
+            rowLabel={(row) => row.name}
             selectable
             selected={p.selected}
             onSelectedChange={p.onSelectedChange}

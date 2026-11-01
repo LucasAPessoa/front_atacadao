@@ -244,3 +244,26 @@ describe("DataTable com largura fixa", () => {
     expect(colWidths(host)).toEqual(["240px", "300px", ""]);
   });
 });
+
+describe("seleção de linhas", () => {
+  it("rótulo do checkbox leva o nome da linha e o rótulo envolve o input (alvo de 44px)", () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    act(() =>
+      createRoot(host).render(
+        <DataTable
+          caption="Sel"
+          columns={[{ key: "n", header: "Nome", render: (r: Row) => r.name }]}
+          rows={[{ id: "1", name: "Arroz 5kg" }]}
+          rowKey={(r) => r.id}
+          rowLabel={(r) => r.name}
+          selectable
+        />,
+      ),
+    );
+    const boxes = host.querySelectorAll('input[type="checkbox"]');
+    expect(boxes[0].getAttribute("aria-label")).toBe("Selecionar todos");
+    expect(boxes[1].getAttribute("aria-label")).toBe("Selecionar Arroz 5kg");
+    for (const box of boxes) expect(box.parentElement?.className).toBe("adm-check-hit");
+  });
+});

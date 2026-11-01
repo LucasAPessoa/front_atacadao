@@ -31,6 +31,16 @@ h3 {
 p {
   margin: 0 0 var(--adm-space-3);
 }
+/* Piso de legibilidade: o `small` do navegador cairia para ~11,7px. */
+small {
+  font-size: var(--adm-font-size-small);
+}
+input[type="checkbox"],
+input[type="radio"] {
+  width: var(--adm-control);
+  height: var(--adm-control);
+  margin: 0;
+}
 a {
   color: var(--adm-accent-text);
 }
