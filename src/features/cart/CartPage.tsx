@@ -199,21 +199,26 @@ export function CartPage({
   const amounts = summaryAmounts(preview?.subtotal_amount ?? total, selectedShipping);
   const step = preview ? 2 : 1;
   const stepClass = (n: number) => (n === step ? "current" : "");
-  const count = String(cart?.total_items ?? 0).padStart(2, "0");
+  const count = cart?.total_items ?? 0;
   return (
     <section className="cart-page">
       <div className="cart-title">
         <ol className="steps-bar" aria-label="Etapas da compra">
           <li className={stepClass(1)} aria-current={step === 1 ? "step" : undefined}>
-            {step === 1 ? "[01 Carrinho]" : "01 Carrinho"}
+            Carrinho
           </li>
           <li className={stepClass(2)} aria-current={step === 2 ? "step" : undefined}>
-            {step === 2 ? "[02 Entrega]" : "02 Entrega"}
+            Entrega
           </li>
-          <li>03 Pagamento</li>
+          <li>Pagamento</li>
         </ol>
         <h1>
-          Carrinho<span className="title-count">[{count}]</span>
+          Seu carrinho{" "}
+          {count > 0 && (
+            <span className="title-count">
+              {count} {count === 1 ? "item" : "itens"}
+            </span>
+          )}
         </h1>
       </div>
       <div className="undo-region" role="status">
