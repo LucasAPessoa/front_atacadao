@@ -125,7 +125,9 @@ export function VariantPricingEditor({
       noValidate
       data-variant={variant.id}
     >
-      <h3 id={`${uid}-title`}>{formatVariationName(variant.variation_name)}</h3>
+      <h3 id={`${uid}-title`} className="adm-item-title">
+        {formatVariationName(variant.variation_name)}
+      </h3>
       <p>
         <span
           className="adm-badge"

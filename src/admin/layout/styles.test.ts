@@ -91,3 +91,27 @@ describe("piso de legibilidade e alvos de toque (#75)", () => {
     expect(css).not.toMatch(/min-height:\s*2\.75rem/);
   });
 });
+
+describe("Sistema Gôndola no admin (#74)", () => {
+  const tokens: string = readFileSync(new URL("../styles/tokens.css", import.meta.url), "utf8");
+  const token = (name: string) =>
+    new RegExp(`--${name}:\\s*([^;]+);`).exec(tokens)?.[1].trim().toLowerCase();
+
+  it("cores, raios e fontes seguem as artboards", () => {
+    expect(token("adm-bg")).toBe("#f4f6f5");
+    expect(token("adm-text")).toBe("#15201c");
+    expect(token("adm-nav-bg")).toBe("#15201c");
+    expect(token("adm-border")).toBe("#e1e6e3");
+    expect(token("adm-radius")).toBe("10px");
+    expect(token("adm-radius-lg")).toBe("16px");
+    expect(token("adm-font")).toContain("Atkinson Hyperlegible Next".toLowerCase());
+    expect(token("adm-font-display")).toContain("gabarito");
+    expect(token("adm-font-size")).toBe("0.9375rem");
+    expect(token("adm-row")).toBe("3rem");
+  });
+
+  it("acento é neutro escuro, não a cor da marca", () => {
+    expect(token("adm-accent")).toBe("#15201c");
+    expect(token("adm-on-accent")).toBe("#ffffff");
+  });
+});
