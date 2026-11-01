@@ -324,8 +324,12 @@
   border: 1px solid var(--adm-border);
   border-radius: var(--adm-radius);
 }
+/* Largura fixa: as colunas seguem o <colgroup>, nunca o conteúdo. Abaixo da soma
+   das larguras (--adm-table-min), a tabela rola dentro de .adm-table-wrap. */
 .adm-table {
   width: 100%;
+  min-width: var(--adm-table-min, 0);
+  table-layout: fixed;
   border-collapse: collapse;
 }
 .adm-table th,
@@ -335,10 +339,66 @@
   border-bottom: 1px solid var(--adm-border);
   vertical-align: middle;
 }
+.adm-table td,
+.adm-table td > *,
+.adm-th-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.adm-table td > * {
+  max-width: 100%;
+}
+/* Coluna `wrap`: quebra em linhas, sem cortar (avisos, motivos, variação). */
+.adm-table td.adm-wrap,
+.adm-table td.adm-wrap > * {
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
 .adm-table th {
+  position: relative;
   background: var(--adm-surface-muted);
   font-size: var(--adm-font-size-small);
   white-space: nowrap;
+}
+.adm-th-label {
+  display: block;
+  min-width: 0;
+}
+/* Alça na borda direita do cabeçalho: arrastar, setas do teclado ou duplo clique (padrão). */
+.adm-col-resize {
+  position: absolute;
+  top: 0;
+  right: -0.5rem;
+  bottom: 0;
+  z-index: 1;
+  width: 1rem;
+  cursor: col-resize;
+  touch-action: none;
+}
+.adm-col-resize::after {
+  content: "";
+  position: absolute;
+  top: 25%;
+  bottom: 25%;
+  left: 50%;
+  border-left: 1px solid var(--adm-text-muted);
+}
+.adm-col-resize:hover::after,
+.adm-col-resize:focus-visible::after {
+  top: 0;
+  bottom: 0;
+  border-left: 3px solid var(--adm-focus);
+  transform: translateX(-1px);
+}
+.adm-col-resize:focus-visible {
+  outline: none;
+}
+.adm-table-tools {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--adm-space-1);
 }
 .adm-table tr[aria-selected="true"] td {
   background: var(--adm-info-bg);
@@ -357,6 +417,16 @@
   padding: 0;
   font-weight: 700;
   cursor: pointer;
+}
+/* A seta da ordenação fica fora do trecho cortado. */
+.adm-table .adm-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 100%;
+}
+.adm-sort-dir {
+  flex: none;
 }
 
 /* Filtros e paginação */
@@ -787,6 +857,16 @@
   .adm-table-cards .adm-table,
   .adm-table-cards .adm-table tbody {
     display: block;
+    min-width: 0;
+  }
+  /* Cartões não truncam: overflow visível mantém o anel de foco de links e botões. */
+  .adm-table-cards .adm-table td,
+  .adm-table-cards .adm-table td > * {
+    overflow: visible;
+    white-space: normal;
+  }
+  .adm-table-tools[data-cards] {
+    display: none;
   }
   .adm-table-cards .adm-table thead {
     display: none;
