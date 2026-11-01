@@ -2022,11 +2022,19 @@ h4,
 .pdp-tiers-toggle[aria-expanded="true"] svg {
   transform: rotate(180deg);
 }
+/* Largura fixa: as colunas não mudam com o texto das faixas. Preço nunca é truncado. */
 .pdp-tiers table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font: 400 var(--fs-support) var(--font-body);
   font-variant-numeric: tabular-nums;
+}
+.pdp-tiers-qty {
+  width: 40%;
+}
+.pdp-tier-price {
+  white-space: nowrap;
 }
 .pdp-tiers th,
 .pdp-tiers td {

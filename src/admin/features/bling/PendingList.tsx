@@ -20,13 +20,15 @@ const columns: Column<BlingPendingItem>[] = [
   {
     key: "product",
     header: "Produto",
+    width: 280,
     card: "title",
     render: (i) => <Link to={`/produtos/${i.product_id}`}>{i.product_name}</Link>,
   },
-  { key: "sku", header: "SKU", card: "field", render: (i) => i.bling_sku ?? "—" },
+  { key: "sku", header: "SKU", width: 140, card: "field", render: (i) => i.bling_sku ?? "—" },
   {
     key: "reason",
     header: "Motivo",
+    width: 280,
     card: "field",
     render: (i) => (
       <span className="adm-badge" data-tone="warning">

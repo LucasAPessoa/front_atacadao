@@ -6,6 +6,7 @@ import { ApiError } from "../../../shared/http";
 import { adminApi } from "../../api";
 import type { AdminOrderDetail } from "../../api/types";
 import { ConfirmDialog } from "../../ui/ConfirmDialog";
+import { type Column, DataTable } from "../../ui/DataTable";
 import { EmptyState } from "../../ui/EmptyState";
 import { ErrorState } from "../../ui/ErrorState";
 import { SkeletonRows } from "../../ui/Skeleton";
@@ -25,6 +26,37 @@ import {
   statusTone,
   transactionStatusLabels,
 } from "./labels";
+
+const itemColumns: Column<AdminOrderDetail["items"][number]>[] = [
+  {
+    key: "product",
+    header: "Produto",
+    width: 300,
+    wrap: true,
+    render: (item) => (
+      <>
+        {item.product_name_snapshot}
+        <div className="adm-muted">{formatVariationName(item.variation_name_snapshot)}</div>
+      </>
+    ),
+  },
+  { key: "sku", header: "SKU", width: 140, render: (item) => item.sku_snapshot },
+  { key: "quantity", header: "Qtd.", width: 88, align: "right", render: (item) => item.quantity },
+  {
+    key: "unit",
+    header: "Preço unit.",
+    width: 128,
+    align: "right",
+    render: (item) => formatBRL(item.unit_price_snapshot),
+  },
+  {
+    key: "subtotal",
+    header: "Subtotal",
+    width: 128,
+    align: "right",
+    render: (item) => formatBRL(item.subtotal),
+  },
+];
 
 const ADDRESS_LABELS: [string, string][] = [
   ["recipient_name", "Destinatário"],
@@ -115,42 +147,13 @@ export function OrderDetailView({
 
       <div className="adm-card">
         <h2>Itens</h2>
-        <div className="adm-table-wrap">
-          <table className="adm-table">
-            <caption className="adm-sr-only">Itens do pedido</caption>
-            <thead>
-              <tr>
-                <th scope="col">Produto</th>
-                <th scope="col">SKU</th>
-                <th scope="col" className="adm-num">
-                  Qtd.
-                </th>
-                <th scope="col" className="adm-num">
-                  Preço unit.
-                </th>
-                <th scope="col" className="adm-num">
-                  Subtotal
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {order.items.map((item) => (
-                <tr key={item.id}>
-                  <td>
-                    {item.product_name_snapshot}
-                    <div className="adm-muted">
-                      {formatVariationName(item.variation_name_snapshot)}
-                    </div>
-                  </td>
-                  <td>{item.sku_snapshot}</td>
-                  <td className="adm-num">{item.quantity}</td>
-                  <td className="adm-num">{formatBRL(item.unit_price_snapshot)}</td>
-                  <td className="adm-num">{formatBRL(item.subtotal)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          caption="Itens do pedido"
+          storageKey="pedido-itens"
+          columns={itemColumns}
+          rows={order.items}
+          rowKey={(item) => item.id}
+        />
         <dl className="adm-dl adm-dl-money">
           <dt>Subtotal</dt>
           <dd>{formatBRL(order.subtotal_amount)}</dd>
