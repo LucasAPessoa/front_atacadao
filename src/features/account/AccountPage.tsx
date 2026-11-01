@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { navigate } from "../../components/Layout";
+import { AppLink } from "../../components/AppLink";
 import { money } from "../../lib/format";
 import { orderPresentation } from "../../lib/orderStatus";
 import { api } from "../../services/client";
@@ -52,9 +52,9 @@ export function AccountPage({ token, user, addresses, onAddresses, onError, onLo
         <p className="eyebrow">SUA CONTA</p>
         <h1>Entre para acessar sua área.</h1>
         <p>Seus pedidos e dados ficam disponíveis após a autenticação.</p>
-        <button type="button" className="primary" onClick={() => navigate("/entrar")}>
+        <AppLink href="/entrar?returnTo=%2Fconta" className="primary">
           Entrar na conta
-        </button>
+        </AppLink>
       </section>
     );
   const firstName = (user.full_name || user.email).split(" ")[0];
@@ -100,9 +100,9 @@ export function AccountPage({ token, user, addresses, onAddresses, onError, onLo
               <p className="eyebrow">HISTÓRICO</p>
               <h2>Seus pedidos</h2>
             </div>
-            <button type="button" className="link-button" onClick={() => navigate("/produtos")}>
+            <AppLink href="/produtos" className="link-button">
               Continuar comprando →
-            </button>
+            </AppLink>
           </div>
           {loading ? (
             <div className="inline-loading">Consultando pedidos…</div>
@@ -128,9 +128,9 @@ export function AccountPage({ token, user, addresses, onAddresses, onError, onLo
             <div className="empty-inline">
               <strong>Ainda não há pedidos por aqui.</strong>
               <p>Quando você finalizar uma compra, ela aparecerá nesta área.</p>
-              <button type="button" className="secondary" onClick={() => navigate("/produtos")}>
+              <AppLink href="/produtos" className="secondary">
                 Explorar produtos
-              </button>
+              </AppLink>
             </div>
           )}
         </section>
