@@ -117,18 +117,20 @@ export function OrdersListView(p: OrdersListViewProps) {
         </div>
         <fieldset className="adm-field">
           <legend>Status</legend>
-          {ORDER_STATUSES.map((status) => (
-            <label key={status} style={{ marginRight: "0.75rem" }}>
-              <input
-                type="checkbox"
-                name="status"
-                value={status}
-                checked={selected.includes(status)}
-                onChange={() => toggle(status)}
-              />{" "}
-              {statusLabel(status)}
-            </label>
-          ))}
+          <div className="adm-check-group">
+            {ORDER_STATUSES.map((status) => (
+              <label key={status} className="adm-check-label">
+                <input
+                  type="checkbox"
+                  name="status"
+                  value={status}
+                  checked={selected.includes(status)}
+                  onChange={() => toggle(status)}
+                />
+                {statusLabel(status)}
+              </label>
+            ))}
+          </div>
         </fieldset>
       </FilterBar>
       {p.error && p.items.length === 0 ? (

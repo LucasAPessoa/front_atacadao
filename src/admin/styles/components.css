@@ -21,7 +21,10 @@
   gap: var(--adm-space-1);
 }
 .adm-nav a {
-  padding: var(--adm-space-2) var(--adm-space-3);
+  display: flex;
+  align-items: center;
+  min-height: var(--adm-touch);
+  padding: var(--adm-space-1) var(--adm-space-3);
   border-radius: var(--adm-radius);
   color: var(--adm-nav-text);
   text-decoration: none;
@@ -38,7 +41,7 @@
 .adm-nav-group-label {
   margin-top: var(--adm-space-3);
   padding: var(--adm-space-2) var(--adm-space-3) 0;
-  font-size: 0.75rem;
+  font-size: var(--adm-font-size-small);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   opacity: 0.7;
@@ -52,7 +55,7 @@
   list-style: none;
 }
 .adm-nav-group a {
-  display: block;
+  display: flex;
 }
 .adm-main-col {
   display: flex;
@@ -155,7 +158,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--adm-space-1);
-  min-height: 2.75rem;
+  min-height: var(--adm-touch);
   padding: 0 var(--adm-space-3);
   border: 1px solid var(--adm-border-strong);
   border-radius: var(--adm-radius);
@@ -213,7 +216,7 @@
 .adm-field input,
 .adm-field select,
 .adm-field textarea {
-  min-height: 2.75rem;
+  min-height: var(--adm-touch);
   padding: var(--adm-space-1) var(--adm-space-2);
   border: 1px solid var(--adm-border-strong);
   border-radius: var(--adm-radius);
@@ -358,6 +361,8 @@
 }
 .adm-table th {
   position: relative;
+  height: var(--adm-touch);
+  padding-block: 0;
   background: var(--adm-surface-muted);
   font-size: var(--adm-font-size-small);
   white-space: nowrap;
@@ -409,9 +414,49 @@
   font-variant-numeric: tabular-nums;
 }
 .adm-col-check {
-  width: 2.25rem;
+  width: var(--adm-touch);
+}
+/* O rótulo ocupa a célula: o checkbox de 20px ganha alvo de 44px. A margem negativa
+   desfaz o padding do td; no th o padding vertical é 0 (altura fixa), então lá a
+   margem vertical também é 0. */
+.adm-check-hit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--adm-touch);
+  min-height: var(--adm-touch);
+  margin: calc(-1 * var(--adm-space-2)) calc(-1 * var(--adm-space-3));
+  cursor: pointer;
+}
+.adm-table td > .adm-check-hit {
+  max-width: none;
+  width: calc(100% + 2 * var(--adm-space-3));
+}
+.adm-table th > .adm-check-hit {
+  width: calc(100% + 2 * var(--adm-space-3));
+  margin-block: 0;
+}
+/* Dentro de .adm-field o input ganharia 44px de altura: o alvo é o rótulo. */
+.adm-check-label input {
+  min-height: 0;
+  padding: 0;
+}
+.adm-check-group {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--adm-space-3);
+}
+/* Checkbox com texto (filtros): o rótulo inteiro é o alvo. */
+.adm-check-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--adm-space-2);
+  min-height: var(--adm-touch);
+  cursor: pointer;
 }
 .adm-sort {
+  min-width: var(--adm-touch);
+  min-height: var(--adm-touch);
   border: 0;
   background: transparent;
   padding: 0;
@@ -597,7 +642,8 @@
   margin-bottom: var(--adm-space-3);
 }
 .adm-tab {
-  padding: var(--adm-space-2) var(--adm-space-4);
+  min-height: var(--adm-touch);
+  padding: var(--adm-space-1) var(--adm-space-4);
   border: 0;
   border-bottom: 3px solid transparent;
   background: transparent;
@@ -660,6 +706,7 @@
 .adm-switch {
   display: flex;
   align-items: center;
+  min-height: var(--adm-touch);
   gap: var(--adm-space-2);
   margin-bottom: var(--adm-space-2);
 }
@@ -794,8 +841,8 @@
   outline-offset: -2px;
 }
 .adm-toast button {
-  min-width: 2rem;
-  min-height: 2rem;
+  min-width: var(--adm-touch);
+  min-height: var(--adm-touch);
 }
 
 /* Aparência */
@@ -834,14 +881,14 @@
   align-items: center;
 }
 .adm-color-row input[type="color"] {
-  width: 2.75rem;
-  height: 2.75rem;
+  width: var(--adm-touch);
+  height: var(--adm-touch);
   padding: 0;
 }
 .adm-theme-preview {
   display: inline-flex;
   align-items: center;
-  min-height: 2.75rem;
+  min-height: var(--adm-touch);
   padding: 0 var(--adm-space-4);
   border-radius: var(--adm-radius);
   font-weight: 600;
@@ -891,6 +938,10 @@
     padding: 0;
     border: 0;
   }
+  .adm-table-cards .adm-table td > .adm-check-hit {
+    width: auto;
+    margin: 0;
+  }
   .adm-table-cards .adm-table td.adm-col-check,
   .adm-table-cards .adm-table td[data-card] {
     display: block;
@@ -906,4 +957,17 @@
     color: var(--adm-text-muted);
     font-size: var(--adm-font-size-small);
   }
+}
+
+/* Bling: estado e ação principal na mesma linha, no topo do card. */
+.adm-bling-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--adm-space-2) var(--adm-space-4);
+  margin-bottom: var(--adm-space-3);
+}
+.adm-bling-state {
+  margin: 0;
 }

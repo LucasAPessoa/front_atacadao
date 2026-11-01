@@ -44,3 +44,50 @@ describe("grids que estouravam a largura em 360px", () => {
     expect(rule(css, ".adm-dl-money dd")).toMatch(/white-space:\s*nowrap/);
   });
 });
+
+/** Todas as declarações do seletor (pode haver mais de uma regra). */
+const allRules = (text: string, selector: string) =>
+  [
+    ...text.matchAll(
+      new RegExp(`(?:^|\\n)\\s*${selector.replace(/\./g, "\\.")}\\s*\\{([^}]*)\\}`, "g"),
+    ),
+  ]
+    .map((m) => m[1])
+    .join("\n");
+
+describe("piso de legibilidade e alvos de toque (#75)", () => {
+  const tokens: string = readFileSync(new URL("../styles/tokens.css", import.meta.url), "utf8");
+  const baseCss: string = readFileSync(new URL("../styles/base.css", import.meta.url), "utf8");
+  const all = [tokens, baseCss, css].join("\n");
+
+  it("--adm-touch é 2.75rem (44px) e o texto pequeno não fica abaixo de 14px", () => {
+    expect(tokens).toMatch(/--adm-touch:\s*2\.75rem/);
+    expect(tokens).toMatch(/--adm-font-size-small:\s*0\.875rem/);
+    expect(rule(baseCss, "small")).toMatch(/font-size:\s*var\(--adm-font-size-small\)/);
+  });
+
+  it("nenhum font-size literal abaixo de 14px no admin", () => {
+    const sizes = [...all.matchAll(/font-size:\s*([0-9.]+)(rem|px)/g)].map(([, n, unit]) =>
+      unit === "px" ? Number(n) : Number(n) * 16,
+    );
+    expect(sizes.length).toBeGreaterThan(0);
+    for (const px of sizes) expect(px).toBeGreaterThanOrEqual(14);
+    // Relativos e palavras-chave escapariam da conta acima: o admin não usa nenhum.
+    expect(all).not.toMatch(/font-size:\s*(?:[0-9.]+(?:em|%)|x+-small|small|smaller)\s*;/);
+  });
+
+  it("nav, abas, ordenação, checkbox e botões usam --adm-touch", () => {
+    for (const selector of [
+      ".adm-nav a",
+      ".adm-tab",
+      ".adm-sort",
+      ".adm-btn",
+      ".adm-check-hit",
+      ".adm-check-label",
+      ".adm-switch",
+      ".adm-toast button",
+    ])
+      expect(allRules(css, selector), selector).toMatch(/min-height:\s*var\(--adm-touch\)/);
+    expect(css).not.toMatch(/min-height:\s*2\.75rem/);
+  });
+});

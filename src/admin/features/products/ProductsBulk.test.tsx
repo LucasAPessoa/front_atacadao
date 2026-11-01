@@ -151,7 +151,7 @@ describe("ações em lote", () => {
 
   it("cancelar não envia nada", async () => {
     const box = await mount();
-    await click(box.querySelectorAll("input[aria-label='Selecionar linha']")[0] as HTMLElement);
+    await click(box.querySelectorAll("input[aria-label='Selecionar Produto 1']")[0] as HTMLElement);
     await click(button(box, "Destacar"));
     expect(box.querySelector("[role=alertdialog]")?.textContent).toContain("Destacar 1 produto?");
     await click(button(box, "Cancelar"));
