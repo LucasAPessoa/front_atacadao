@@ -41,7 +41,7 @@ export function RequireAdmin() {
           <h2>Não foi possível restaurar a sessão</h2>
           <p>Falha de conexão com o servidor. Sua sessão foi mantida.</p>
           <button type="button" className="adm-btn" onClick={retryRestore}>
-            Tentar de novo
+            Tentar novamente
           </button>
         </div>
       </div>
