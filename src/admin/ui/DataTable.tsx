@@ -46,6 +46,8 @@ export type DataTableProps<T> = {
   selectable?: boolean;
   selected?: ReadonlySet<string>;
   onSelectedChange?(selected: Set<string>): void;
+  /** Nome da linha para o rótulo da seleção ("Selecionar <nome>"). */
+  rowLabel?(row: T): string;
   /** Chave das larguras salvas no navegador; sem ela, usa `caption`. */
   storageKey?: string;
 };
@@ -69,6 +71,7 @@ export function DataTable<T>({
   selected = new Set<string>(),
   onSelectedChange,
   storageKey,
+  rowLabel,
 }: DataTableProps<T>) {
   const { widths, setWidth, persist, reset } = useColumnWidths(storageKey ?? caption);
   if (loading && rows.length === 0) return <SkeletonRows />;
@@ -166,12 +169,14 @@ export function DataTable<T>({
           <tr>
             {selectable && (
               <th scope="col" className="adm-col-check">
-                <input
-                  type="checkbox"
-                  aria-label="Selecionar todos"
-                  checked={allSelected}
-                  onChange={toggleAll}
-                />
+                <label className="adm-check-hit">
+                  <input
+                    type="checkbox"
+                    aria-label="Selecionar todos"
+                    checked={allSelected}
+                    onChange={toggleAll}
+                  />
+                </label>
               </th>
             )}
             {columns.map((column) => {
@@ -225,12 +230,14 @@ export function DataTable<T>({
               <tr key={key} aria-selected={selectable ? selected.has(key) : undefined}>
                 {selectable && (
                   <td className="adm-col-check">
-                    <input
-                      type="checkbox"
-                      aria-label="Selecionar linha"
-                      checked={selected.has(key)}
-                      onChange={() => toggle(key)}
-                    />
+                    <label className="adm-check-hit">
+                      <input
+                        type="checkbox"
+                        aria-label={rowLabel ? `Selecionar ${rowLabel(row)}` : "Selecionar linha"}
+                        checked={selected.has(key)}
+                        onChange={() => toggle(key)}
+                      />
+                    </label>
                   </td>
                 )}
                 {columns.map((column) => (
