@@ -2,7 +2,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { ApiError } from "../../../shared/http";
 import { adminApi } from "../../api";
-import type { CatalogSyncRun, CatalogSyncRuns } from "../../api/types";
+import type { BlingStatus, CatalogSyncRun, CatalogSyncRuns } from "../../api/types";
+import { blingStatusKey } from "./BlingConnection";
+import {
+  formatBlingDate as fmt,
+  phaseText,
+  runReasonText,
+  syncErrorTarget,
+  syncErrorText,
+} from "./labels";
 
 export const statusLabels: Record<CatalogSyncRun["status"], string> = {
   RUNNING: "Em andamento",
@@ -23,7 +31,6 @@ const countLabels: [keyof CatalogSyncRun["counts"], string][] = [
   ["unchanged", "Sem alteração"],
   ["failed", "Com falha"],
 ];
-const fmt = (value: string | null) => (value ? new Date(value).toLocaleString("pt-BR") : "—");
 
 export function catalogSyncErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
@@ -79,11 +86,22 @@ type ViewProps = {
   warning?: string;
   onImport(): void;
   onRefresh(): void;
+  /** Estado da conexão; `null` = ainda não se sabe (o servidor decide). */
+  connection?: BlingStatus["status"] | null;
 };
+
+/** Por que "Importar agora" está desabilitado, ou "" quando pode importar. */
+export function importBlockReason(connection: BlingStatus["status"] | null | undefined): string {
+  if (connection === "NOT_CONNECTED") return "Conecte o Bling acima para importar o catálogo.";
+  if (connection === "RECONNECT_REQUIRED")
+    return "Reconecte o Bling acima para importar o catálogo.";
+  return "";
+}
 
 export function CatalogSyncView(p: ViewProps) {
   const running = isRunning(p.data);
   const current = p.data?.current ?? null;
+  const blocked = importBlockReason(p.connection);
   return (
     <section className="adm-card" aria-labelledby="catalog-sync-title">
       <h2 id="catalog-sync-title">Catálogo do Bling</h2>
@@ -100,8 +118,9 @@ export function CatalogSyncView(p: ViewProps) {
       <div className="adm-actions">
         <button
           type="button"
-          className="adm-btn adm-btn-primary"
-          disabled={p.busy || running}
+          className={blocked ? "adm-btn" : "adm-btn adm-btn-primary"}
+          disabled={p.busy || running || blocked !== ""}
+          aria-describedby={blocked ? "catalog-sync-blocked" : undefined}
           onClick={p.onImport}
         >
           Importar agora
@@ -115,6 +134,11 @@ export function CatalogSyncView(p: ViewProps) {
           Atualizar
         </button>
       </div>
+      {blocked && (
+        <p id="catalog-sync-blocked" className="adm-muted">
+          {blocked}
+        </p>
+      )}
       {p.loading && <p role="status">Carregando importações…</p>}
       <h3>Execução corrente</h3>
       {current ? (
@@ -122,7 +146,7 @@ export function CatalogSyncView(p: ViewProps) {
           <p>
             Status: <strong>{statusLabels[current.status]}</strong>
           </p>
-          <p>Fase: {current.phase ?? "—"}</p>
+          <p>Fase: {phaseText(current.phase)}</p>
           <p>Início: {fmt(current.started_at)}</p>
           <Counts run={current} />
         </div>
@@ -139,15 +163,15 @@ export function CatalogSyncView(p: ViewProps) {
               <li key={run.id} data-status={run.status}>
                 <strong>{statusLabels[run.status]}</strong> · {triggerLabels[run.trigger]} · Início:{" "}
                 {fmt(run.started_at)} · Fim: {fmt(run.finished_at)}
-                {run.reason ? ` · ${run.reason}` : ""}
+                {run.reason ? ` · Motivo: ${runReasonText(run.reason)}` : ""}
                 <Counts run={run} />
                 {run.errors.length > 0 && (
                   <details>
-                    <summary>Erros por produto ({run.errors.length})</summary>
+                    <summary>Avisos e erros por produto ({run.errors.length})</summary>
                     <ul>
                       {run.errors.map((e) => (
                         <li key={`${e.bling_id}-${e.code}-${e.message}`}>
-                          {e.bling_id ?? "Geral"} · {e.code} · {e.message}
+                          {syncErrorTarget(e.bling_id)} · {syncErrorText(e.code)}
                         </li>
                       ))}
                     </ul>
@@ -170,6 +194,11 @@ export function CatalogSync() {
     queryKey: runsKey,
     queryFn: ({ signal }) => adminApi.blingCatalogRuns(20, signal),
     refetchInterval: (q) => pollInterval(q.state.data),
+  });
+  // Mesmo cache da tela de conexão: sem pedido extra.
+  const status = useQuery({
+    queryKey: blingStatusKey,
+    queryFn: ({ signal }) => adminApi.blingStatus(signal),
   });
   const start = useMutation({ mutationFn: () => adminApi.blingCatalogSync() });
   const refresh = () => queryClient.invalidateQueries({ queryKey: runsKey });
@@ -198,6 +227,7 @@ export function CatalogSync() {
       warning={warning}
       onImport={() => void importNow()}
       onRefresh={() => void refresh()}
+      connection={status.data?.status ?? null}
     />
   );
 }

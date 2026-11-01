@@ -907,3 +907,16 @@
     font-size: var(--adm-font-size-small);
   }
 }
+
+/* Bling: estado e ação principal na mesma linha, no topo do card. */
+.adm-bling-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--adm-space-2) var(--adm-space-4);
+  margin-bottom: var(--adm-space-3);
+}
+.adm-bling-state {
+  margin: 0;
+}

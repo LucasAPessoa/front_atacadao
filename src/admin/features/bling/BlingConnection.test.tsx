@@ -46,30 +46,55 @@ describe("tela Bling", () => {
     expect(html).toContain(">Conectar<");
     expect(html).not.toContain("Desconectar");
   });
-  it("CONNECTED mostra empresa, erro, eventos e Conectar desabilitado", () => {
+  it("CONNECTED: sem primário, com empresa, erro e eventos em português e datas de SP", () => {
     const html = view({
       ...base,
       status: "CONNECTED",
       company: { id: "99", name: "Loja X" },
       connected_at: "2026-01-01T10:00:00Z",
-      last_error: { code: "rate", at: "2026-01-02T10:00:00Z" },
-      recent_events: [{ event: "connected", reason: null, at: "2026-01-01T10:00:00Z" }],
+      last_error: { code: "ReadTimeout", at: "2026-01-02T10:00:00Z" },
+      recent_events: [
+        { event: "CONNECTED", reason: null, at: "2026-01-01T10:00:00Z" },
+        { event: "REFRESH_FAILED", reason: "rejected_500", at: "2026-01-02T10:00:00Z" },
+        { event: "CONNECT_REJECTED", reason: "empresa_diferente", at: "2026-01-03T10:00:00Z" },
+      ],
     });
     expect(html).toContain("Loja X (ID 99)");
-    expect(html).toContain("Último erro: rate");
-    expect(html).toContain("connected");
-    expect(html).toContain('disabled=""');
+    expect(html).toContain("Motivo não identificado, em 02/01/2026, 07:00");
+    expect(html).toContain("01/01/2026, 07:00 · Conectado");
+    expect(html).toContain("Falha ao renovar a autorização: o Bling recusou a renovação");
+    expect(html).toContain("Conexão recusada: a conta autorizada é de outra empresa");
+    expect(
+      view({
+        ...base,
+        status: "CONNECTED",
+        recent_events: [
+          { event: "DISCONNECTED", reason: "desconectado_pelo_admin", at: "x" },
+          { event: "CONNECT_REJECTED", reason: "invalid_grant", at: "2026-01-01T10:00:00Z" },
+        ],
+      }),
+    ).toMatch(/— · Desconectado por um administrador.*Conexão recusada: a autorização expirou/);
+    for (const raw of ["ReadTimeout", "REFRESH_FAILED", "rejected_500", "empresa_diferente"])
+      expect(html).not.toContain(raw);
+    expect(html).not.toContain("adm-btn-primary");
+    expect(html).not.toContain('disabled=""');
     expect(html).toContain(">Desconectar<");
+  });
+  it("estado e ação principal vêm antes dos eventos", () => {
+    const html = view({ ...base, status: "NOT_CONNECTED" });
+    expect(html.indexOf(">Conectar<")).toBeLessThan(html.indexOf("Eventos recentes"));
   });
   it("RECONNECT_REQUIRED oferece Reconectar e alerta", () => {
     const html = view({ ...base, status: "RECONNECT_REQUIRED" });
     expect(html).toContain("Reconectar");
     expect(html).toContain('role="alert"');
   });
-  it("desconectar pede confirmação explícita", () => {
+  it("desconectar pede confirmação no diálogo padrão, com ação destrutiva e Voltar", () => {
+    expect(view({ ...base, status: "CONNECTED" })).not.toContain('role="alertdialog"');
     const html = view({ ...base, status: "CONNECTED" }, { confirming: true });
-    expect(html).toContain("Confirmar desconexão");
-    expect(html).toContain("Cancelar");
+    expect(html).toContain("Desconectar o Bling?");
+    expect(html).toContain("adm-btn-danger");
+    expect(html).toContain(">Voltar<");
   });
   it("conectar chama /connect e redireciona", async () => {
     vi.spyOn(adminApi, "blingConnect").mockResolvedValue({ authorize_url: "https://bling/x" });
