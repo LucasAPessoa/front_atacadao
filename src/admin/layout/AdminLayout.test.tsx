@@ -96,3 +96,26 @@ describe("menu mobile e resize", () => {
     expect(toggle().getAttribute("aria-expanded")).toBe("false");
   });
 });
+
+describe("sidebar no Sistema Gôndola (#74)", () => {
+  it("cada item tem ícone de 20px; marca com subtítulo; grupo Em breve sem dois-pontos", () => {
+    mount();
+    const items = [...host.querySelectorAll("#adm-menu > a")];
+    expect(items.length).toBeGreaterThan(0);
+    for (const item of items) {
+      const icon = item.querySelector("svg.adm-nav-icon");
+      expect(icon?.getAttribute("width")).toBe("20");
+      expect(icon?.getAttribute("aria-hidden")).toBe("true");
+    }
+    expect(host.querySelector(".adm-brand-sub")?.textContent).toBe("Painel da loja");
+    expect(host.querySelector("#adm-nav-soon")?.textContent).toBe("Em breve");
+  });
+
+  it("Sair fica no rodapé da sidebar, e não na topbar", () => {
+    mount();
+    const logout = host.querySelector(".adm-sidebar-foot button");
+    expect(logout?.textContent).toBe("Sair");
+    expect(host.querySelector(".adm-topbar")?.textContent).not.toContain("Sair");
+    expect(host.querySelector('#adm-menu a[href="/"]')?.textContent).toBe("Painel");
+  });
+});

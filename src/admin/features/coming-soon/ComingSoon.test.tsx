@@ -49,7 +49,7 @@ describe("seções em breve", () => {
       </MemoryRouter>,
     );
     expect(html.indexOf("Bling")).toBeLessThan(html.indexOf("Em breve"));
-    const label = /<span[^>]*id="([^"]+)"[^>]*>Em breve:<\/span>/.exec(html);
+    const label = /<span[^>]*id="([^"]+)"[^>]*>Em breve<\/span>/.exec(html);
     expect(label).not.toBeNull();
     const list = new RegExp(`<ul[^>]*aria-labelledby="${label?.[1]}"[^>]*>(.*?)</ul>`).exec(html);
     expect(list).not.toBeNull();

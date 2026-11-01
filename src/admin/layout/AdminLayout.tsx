@@ -3,15 +3,16 @@ import { NavLink, Outlet, useNavigate } from "react-router";
 import { store } from "../../shared/store-config";
 import { useAuth } from "../auth/AuthProvider";
 import { comingSoonSections } from "../features/coming-soon/sections";
+import { NavIcon } from "./NavIcon";
 
 const links = [
-  { to: "/", label: "Dashboard", end: true },
-  { to: "/produtos", label: "Produtos" },
-  { to: "/pedidos", label: "Pedidos" },
-  { to: "/moderacao", label: "Moderação" },
-  { to: "/bling", label: "Bling" },
-  { to: "/configuracoes", label: "Configurações", end: true },
-  { to: "/configuracoes/precos", label: "Preços" },
+  { to: "/", label: "Painel", icon: "dashboard", end: true },
+  { to: "/produtos", label: "Produtos", icon: "produtos" },
+  { to: "/pedidos", label: "Pedidos", icon: "pedidos" },
+  { to: "/moderacao", label: "Moderação", icon: "moderacao" },
+  { to: "/bling", label: "Bling", icon: "bling" },
+  { to: "/configuracoes", label: "Configurações", icon: "configuracoes", end: true },
+  { to: "/configuracoes/precos", label: "Preços", icon: "precos" },
 ];
 
 export function AdminLayout() {
@@ -47,7 +48,7 @@ export function AdminLayout() {
     if (!menuOpen) return;
     const toggle = toggleRef.current;
     const focusables = () => [
-      ...(sidebarRef.current?.querySelectorAll<HTMLElement>("a[href]") ?? []),
+      ...(sidebarRef.current?.querySelectorAll<HTMLElement>("a[href], button") ?? []),
       ...(toggle ? [toggle] : []),
     ];
     focusables()[0]?.focus();
@@ -91,26 +92,42 @@ export function AdminLayout() {
         Pular para o conteúdo
       </a>
       <aside className="adm-sidebar" data-open={menuOpen} ref={sidebarRef}>
-        <span className="adm-brand">{store.name}</span>
+        <span className="adm-brand">
+          <span className="adm-brand-name">{store.name}</span>
+          <span className="adm-brand-sub">Painel da loja</span>
+        </span>
         <nav className="adm-nav" id="adm-menu" aria-label="Painel">
           {links.map((link) => (
             <NavLink key={link.to} to={link.to} end={link.end} onClick={() => setMenuOpen(false)}>
-              {link.label}
+              <NavIcon name={link.icon} />
+              <span>{link.label}</span>
             </NavLink>
           ))}
           <span className="adm-nav-group-label" id="adm-nav-soon">
-            Em breve:
+            Em breve
           </span>
           <ul className="adm-nav-group" aria-labelledby="adm-nav-soon">
             {comingSoonSections.map((link) => (
               <li key={link.to}>
                 <NavLink to={link.to} onClick={() => setMenuOpen(false)}>
-                  {link.label}
+                  <NavIcon name={link.path} size={18} />
+                  <span>{link.label}</span>
                 </NavLink>
               </li>
             ))}
           </ul>
         </nav>
+        {/* Usuário e Sair no rodapé da sidebar (a artboard não tem topbar no desktop). */}
+        <div className="adm-sidebar-foot">
+          <span className="adm-sidebar-user">{user?.full_name || user?.email}</span>
+          <button
+            type="button"
+            className="adm-btn adm-sidebar-logout"
+            onClick={() => void logout()}
+          >
+            Sair
+          </button>
+        </div>
       </aside>
       {menuOpen && (
         <button
@@ -134,10 +151,6 @@ export function AdminLayout() {
             {menuOpen ? "Fechar menu" : "Menu"}
           </button>
           <span className="adm-topbar-title">{store.name}</span>
-          <span className="adm-topbar-user">{user?.full_name || user?.email}</span>
-          <button type="button" className="adm-btn" onClick={() => void logout()}>
-            Sair
-          </button>
         </header>
         <main id="adm-conteudo" className="adm-content">
           <Outlet />

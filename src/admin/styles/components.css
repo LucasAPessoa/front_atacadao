@@ -4,46 +4,98 @@
   grid-template-columns: var(--adm-sidebar-width) minmax(0, 1fr);
   min-height: 100vh;
 }
+/* Sidebar fixa na rolagem (artboard); o conteúdo longo rola dentro dela. */
 .adm-sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 100vh;
+  overflow-y: auto;
   background: var(--adm-nav-bg);
   color: var(--adm-nav-text);
-  padding: var(--adm-space-4) var(--adm-space-2);
+  padding: 1.25rem var(--adm-space-3) var(--adm-space-5);
+}
+.adm-sidebar-foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adm-space-2);
+  margin-top: auto;
+  padding: var(--adm-space-4) var(--adm-space-3) 0;
+}
+.adm-sidebar-user {
+  font-size: var(--adm-font-size-small);
+  color: var(--adm-nav-muted);
+  overflow-wrap: anywhere;
+}
+.adm-btn.adm-sidebar-logout {
+  border-color: var(--adm-nav-muted);
+  background: transparent;
+  color: var(--adm-nav-strong);
+  font-weight: 600;
+}
+.adm-btn.adm-sidebar-logout:hover:not(:disabled) {
+  background: var(--adm-nav-active-bg);
 }
 .adm-brand {
-  display: block;
-  padding: 0 var(--adm-space-3) var(--adm-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--adm-space-1) var(--adm-space-3) var(--adm-space-5);
+}
+.adm-brand-name {
   font: 800 var(--adm-font-size-h2) / 1.2 var(--adm-font-display);
   color: var(--adm-nav-strong);
+}
+.adm-brand-sub {
+  font-size: var(--adm-font-size-small);
+  color: var(--adm-nav-muted);
 }
 .adm-nav {
   display: flex;
   flex-direction: column;
   gap: var(--adm-space-1);
 }
+/* Item da sidebar: ícone de 20px + rótulo; o ativo tem fundo, texto branco 700 e filete. */
 .adm-nav a {
+  position: relative;
   display: flex;
   align-items: center;
+  gap: var(--adm-space-3);
   min-height: var(--adm-touch);
-  padding: var(--adm-space-1) var(--adm-space-3);
+  padding: 0 var(--adm-space-3);
   border-radius: var(--adm-radius);
   color: var(--adm-nav-text);
+  font-weight: 500;
   text-decoration: none;
-  border-left: 3px solid transparent;
+}
+.adm-nav-icon {
+  flex: none;
 }
 .adm-nav a:hover {
   background: var(--adm-nav-active-bg);
 }
 .adm-nav a[aria-current="page"] {
   background: var(--adm-nav-active-bg);
-  border-left-color: var(--adm-nav-strong);
-  font-weight: 600;
+  color: var(--adm-nav-strong);
+  font-weight: 700;
 }
+.adm-nav a[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 0;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--adm-nav-strong);
+}
+/* "Em breve": separado por linha, sem caixa alta (artboard). */
 .adm-nav-group-label {
   margin-top: var(--adm-space-3);
-  padding: var(--adm-space-2) var(--adm-space-3) 0;
+  padding: var(--adm-space-3) var(--adm-space-3) var(--adm-space-1);
+  border-top: 1px solid var(--adm-nav-border);
   font-size: var(--adm-font-size-small);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   color: var(--adm-nav-muted);
 }
 .adm-nav-group {
@@ -55,15 +107,16 @@
   list-style: none;
 }
 .adm-nav-group a {
-  display: flex;
+  color: var(--adm-nav-muted);
 }
 .adm-main-col {
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
+/* Topbar só no celular (botão Menu); no desktop a sidebar tem marca, usuário e Sair. */
 .adm-topbar {
-  display: flex;
+  display: none;
   align-items: center;
   gap: var(--adm-space-3);
   padding: var(--adm-space-2) var(--adm-space-4);
@@ -75,15 +128,13 @@
   margin-right: auto;
   overflow-wrap: anywhere;
 }
-.adm-topbar-user {
-  color: var(--adm-text-muted);
-  overflow-wrap: anywhere;
-}
 .adm-btn.adm-menu-toggle {
   display: none;
 }
 .adm-content {
-  padding: var(--adm-space-4);
+  width: 100%;
+  max-width: 90rem;
+  padding: var(--adm-space-5) 2rem 3rem;
   min-width: 0;
 }
 .adm-page-header {
@@ -112,7 +163,8 @@
     padding: var(--adm-space-2);
   }
   .adm-sidebar[data-open="true"] {
-    display: block;
+    display: flex;
+    max-height: none;
     position: fixed;
     top: var(--adm-topbar-height, 3.5rem);
     bottom: 0;
@@ -133,6 +185,7 @@
     cursor: default;
   }
   .adm-topbar {
+    display: flex;
     position: sticky;
     top: 0;
     z-index: 30;
@@ -621,9 +674,97 @@
   place-items: center;
   padding: var(--adm-space-3);
 }
-.adm-login-card {
-  width: min(24rem, 100%);
+/* Login (artboard Admin-Entrar): coluna de 440px, cabeçalho fora do cartão. */
+.adm-login-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adm-space-5);
+  width: min(27.5rem, 100%);
+}
+.adm-login-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adm-space-1);
+}
+.adm-login-head h1 {
   margin: 0;
+}
+.adm-login-head p,
+.adm-login-help {
+  margin: 0;
+  color: var(--adm-text-muted);
+}
+.adm-login-store {
+  font: 800 1.25rem / 1.2 var(--adm-font-display);
+  color: var(--adm-text);
+}
+.adm-login-help {
+  font-size: var(--adm-font-size-small);
+}
+/* Campos do login como na artboard: 48px e borda de 2px (os filtros densos ficam com 44/1). */
+.adm-login-card .adm-field input {
+  min-height: 3rem;
+  border-width: 2px;
+}
+.adm-login-error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--adm-space-2);
+  border: 0;
+}
+.adm-login-error svg {
+  flex: none;
+}
+.adm-login-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--adm-space-2);
+  margin: 0;
+  padding: 1.75rem;
+  border-radius: 20px;
+}
+.adm-login-card .adm-btn-primary {
+  min-height: 3rem;
+  font-size: var(--adm-field-size);
+  font-weight: 700;
+}
+/* Senha com "Mostrar": o botão fica dentro da borda do campo. */
+.adm-password {
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  border: 2px solid var(--adm-border-strong);
+  border-radius: var(--adm-radius);
+  background: var(--adm-surface);
+}
+/* Anel no wrapper só quando o foco está no campo (o botão tem o próprio foco). */
+.adm-password:has(input:focus-visible) {
+  outline: 3px solid var(--adm-focus);
+  outline-offset: 2px;
+}
+.adm-password:has(input[aria-invalid="true"]) {
+  border-color: var(--adm-danger);
+}
+/* Mesma altura do e-mail: os 4px da borda do wrapper saem da altura do input. */
+.adm-field .adm-password input {
+  min-height: calc(3rem - 4px);
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+}
+.adm-field .adm-password input:focus-visible {
+  outline: none;
+}
+.adm-password-toggle {
+  min-width: var(--adm-touch);
+  padding: 0 var(--adm-space-4);
+  border: 0;
+  border-left: 1px solid var(--adm-border);
+  background: var(--adm-bg);
+  color: var(--adm-text);
+  font-weight: 600;
+  cursor: pointer;
 }
 
 /* Listas descritivas e Bling */
