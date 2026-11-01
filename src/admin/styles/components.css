@@ -441,10 +441,44 @@
   min-height: 0;
   padding: 0;
 }
-.adm-check-group {
+/* Seleção múltipla da barra de filtros: botão do tamanho de um campo + painel. */
+.adm-multiselect {
+  position: relative;
+}
+.adm-multiselect-toggle {
   display: flex;
-  flex-wrap: wrap;
-  column-gap: var(--adm-space-3);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--adm-space-2);
+  min-width: 12rem;
+  max-width: 100%;
+  min-height: var(--adm-touch);
+  padding: var(--adm-space-1) var(--adm-space-2);
+  border: 1px solid var(--adm-border-strong);
+  border-radius: var(--adm-radius);
+  background: var(--adm-surface);
+  text-align: left;
+  cursor: pointer;
+}
+.adm-multiselect-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.adm-multiselect-panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  display: grid;
+  min-width: 100%;
+  max-width: calc(100vw - 2 * var(--adm-space-3));
+  margin: var(--adm-space-1) 0 0;
+  padding: var(--adm-space-1) var(--adm-space-3);
+  border: 1px solid var(--adm-border-strong);
+  border-radius: var(--adm-radius);
+  background: var(--adm-surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.12);
 }
 /* Checkbox com texto (filtros): o rótulo inteiro é o alvo. */
 .adm-check-label {
@@ -453,6 +487,9 @@
   gap: var(--adm-space-2);
   min-height: var(--adm-touch);
   cursor: pointer;
+}
+.adm-multiselect-panel .adm-check-label {
+  white-space: nowrap;
 }
 .adm-sort {
   min-width: var(--adm-touch);
