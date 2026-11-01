@@ -16,6 +16,9 @@ export function BlingPage() {
   const tab = state.aba === "pendencias" ? "pendencias" : "integracao";
   return (
     <>
+      <div className="adm-page-header">
+        <h1 id="adm-page-title">Integração Bling</h1>
+      </div>
       <Tabs
         label="Seções do Bling"
         tabs={BLING_TABS}

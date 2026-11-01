@@ -4,6 +4,8 @@ import { useSearchParams } from "react-router";
 import { ApiError } from "../../../shared/http";
 import { adminApi } from "../../api";
 import type { BlingStatus } from "../../api/types";
+import { ConfirmDialog } from "../../ui/ConfirmDialog";
+import { connectionReason, eventText, formatBlingDate } from "./labels";
 
 export const resultMessages: Record<string, { tone: "ok" | "error"; text: string }> = {
   conectado: { tone: "ok", text: "Bling conectado com sucesso." },
@@ -60,7 +62,11 @@ const labels: Record<BlingStatus["status"], string> = {
   RECONNECT_REQUIRED: "Reconexão necessária",
   NOT_CONNECTED: "Não conectado",
 };
-const fmt = (value: string | null) => (value ? new Date(value).toLocaleString("pt-BR") : "—");
+const tones: Record<BlingStatus["status"], "success" | "danger" | "neutral"> = {
+  CONNECTED: "success",
+  RECONNECT_REQUIRED: "danger",
+  NOT_CONNECTED: "neutral",
+};
 
 type ViewProps = {
   status: BlingStatus | null;
@@ -80,7 +86,7 @@ export function BlingConnectionView(p: ViewProps) {
   const connected = status?.status === "CONNECTED";
   return (
     <section className="adm-card" aria-labelledby="bling-title">
-      <h1 id="bling-title">Integração Bling</h1>
+      <h2 id="bling-title">Conexão com o Bling</h2>
       {p.result && (
         <p
           className={
@@ -99,67 +105,20 @@ export function BlingConnectionView(p: ViewProps) {
       {p.loading && <p role="status">Carregando estado da integração…</p>}
       {status && (
         <>
-          <p>
-            Estado: <strong data-status={status.status}>{labels[status.status]}</strong>
-          </p>
-          {status.status === "RECONNECT_REQUIRED" && (
-            <p className="adm-alert adm-alert-danger" role="alert">
-              A autorização do Bling expirou ou foi revogada. Reconecte para retomar a
-              sincronização.
-            </p>
-          )}
-          {status.company && (
-            <p>
-              Empresa: {status.company.name} (ID {status.company.id})
-            </p>
-          )}
-          <p>Conectado em: {fmt(status.connected_at)}</p>
-          <p>Última renovação: {fmt(status.last_refreshed_at)}</p>
-          {status.last_error && (
-            <p>
-              Último erro: {status.last_error.code} em {fmt(status.last_error.at)}
-            </p>
-          )}
-          <h2>Eventos recentes</h2>
-          {status.recent_events.length === 0 ? (
-            <p>Nenhum evento registrado.</p>
-          ) : (
-            <ul className="adm-list">
-              {status.recent_events.map((event) => (
-                <li key={`${event.at}-${event.event}`}>
-                  {fmt(event.at)} · {event.event}
-                  {event.reason ? ` · ${event.reason}` : ""}
-                </li>
-              ))}
-            </ul>
-          )}
-          {p.confirming ? (
-            <div
-              role="alertdialog"
-              aria-label="Confirmar desconexão"
-              className="adm-alert adm-alert-warning"
-            >
-              <p>Desconectar o Bling? A sincronização será interrompida até nova conexão.</p>
-              <button
-                type="button"
-                className="adm-btn adm-btn-danger"
-                disabled={p.busy}
-                onClick={p.onDisconnect}
+          {/* Estado e ação principal no topo: um primário por estado. */}
+          <div className="adm-bling-head">
+            <p className="adm-bling-state">
+              Estado:{" "}
+              <strong
+                className="adm-badge"
+                data-tone={tones[status.status]}
+                data-status={status.status}
               >
-                Confirmar desconexão
-              </button>
-              <button
-                type="button"
-                className="adm-btn"
-                disabled={p.busy}
-                onClick={p.onCancelDisconnect}
-              >
-                Cancelar
-              </button>
-            </div>
-          ) : (
+                {labels[status.status]}
+              </strong>
+            </p>
             <div className="adm-actions">
-              {status.status !== "CONNECTED" && (
+              {!connected && (
                 <button
                   type="button"
                   className="adm-btn adm-btn-primary"
@@ -167,11 +126,6 @@ export function BlingConnectionView(p: ViewProps) {
                   onClick={p.onConnect}
                 >
                   {status.status === "RECONNECT_REQUIRED" ? "Reconectar" : "Conectar"}
-                </button>
-              )}
-              {status.status === "CONNECTED" && (
-                <button type="button" className="adm-btn adm-btn-primary" disabled>
-                  Conectar
                 </button>
               )}
               {status.status !== "NOT_CONNECTED" && (
@@ -185,13 +139,73 @@ export function BlingConnectionView(p: ViewProps) {
                 </button>
               )}
             </div>
+          </div>
+          {status.status === "RECONNECT_REQUIRED" && (
+            <p className="adm-alert adm-alert-danger" role="alert">
+              A autorização do Bling expirou ou foi revogada. Reconecte para retomar a importação.
+            </p>
           )}
-          {connected && <p>Para trocar de conta, desconecte antes.</p>}
+          {status.status === "NOT_CONNECTED" && (
+            <p className="adm-muted">
+              Conecte a conta do Bling da loja para importar o catálogo e os preços.
+            </p>
+          )}
+          {status.status !== "NOT_CONNECTED" && (
+            <dl className="adm-dl">
+              {status.company && (
+                <>
+                  <dt>Empresa</dt>
+                  <dd>
+                    {status.company.name} (ID {status.company.id})
+                  </dd>
+                </>
+              )}
+              <dt>Conectado em</dt>
+              <dd>{formatBlingDate(status.connected_at)}</dd>
+              <dt>Última renovação</dt>
+              <dd>{formatBlingDate(status.last_refreshed_at)}</dd>
+              {status.last_error && (
+                <>
+                  <dt>Último erro</dt>
+                  <dd>
+                    {capitalize(connectionReason(status.last_error.code))}, em{" "}
+                    {formatBlingDate(status.last_error.at)}
+                  </dd>
+                </>
+              )}
+            </dl>
+          )}
+          {connected && <p className="adm-muted">Para trocar de conta, desconecte antes.</p>}
+          <h3>Eventos recentes</h3>
+          {status.recent_events.length === 0 ? (
+            <p>Nenhum evento registrado.</p>
+          ) : (
+            <ul className="adm-list">
+              {status.recent_events.map((event) => (
+                <li key={`${event.at}-${event.event}`}>
+                  {formatBlingDate(event.at)} · {eventText(event.event, event.reason)}
+                </li>
+              ))}
+            </ul>
+          )}
         </>
       )}
+      <ConfirmDialog
+        open={p.confirming}
+        title="Desconectar o Bling?"
+        message="A importação do catálogo e dos preços fica parada até você conectar de novo."
+        confirmLabel="Desconectar"
+        cancelLabel="Voltar"
+        tone="danger"
+        busy={p.busy}
+        onConfirm={p.onDisconnect}
+        onCancel={p.onCancelDisconnect}
+      />
     </section>
   );
 }
+
+const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 export function BlingConnection() {
   const queryClient = useQueryClient();
@@ -241,7 +255,10 @@ export function BlingConnection() {
       onConnect={() => void run(() => connect.mutateAsync())}
       onAskDisconnect={() => setConfirming(true)}
       onCancelDisconnect={() => setConfirming(false)}
-      onDisconnect={() => void run(() => disconnect.mutateAsync())}
+      onDisconnect={() =>
+        // Fecha o diálogo também na falha: o erro aparece no card, não atrás do overlay.
+        void run(() => disconnect.mutateAsync()).finally(() => setConfirming(false))
+      }
     />
   );
 }
