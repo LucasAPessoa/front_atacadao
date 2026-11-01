@@ -1,4 +1,5 @@
 import { type FormEvent, type ReactNode, useState } from "react";
+import { AppLink } from "../../components/AppLink";
 import { navigate } from "../../components/Layout";
 import { store } from "../../shared/store-config";
 import { ApiError, api, type Registration } from "../../services/client";
@@ -81,10 +82,7 @@ export function LoginPage({ notice, onLogin }: LoginPageProps) {
         </p>
       )}
       <p className="auth-link">
-        Ainda não tem conta?{" "}
-        <button type="button" onClick={() => navigate("/cadastro")}>
-          Cadastre-se
-        </button>
+        Ainda não tem conta? <AppLink href="/cadastro">Cadastre-se</AppLink>
       </p>
     </AuthShell>
   );
@@ -203,10 +201,7 @@ export function RegisterPage() {
         </p>
       )}
       <p className="auth-link">
-        Já tem conta?{" "}
-        <button type="button" onClick={() => navigate("/entrar")}>
-          Entrar
-        </button>
+        Já tem conta? <AppLink href="/entrar">Entrar</AppLink>
       </p>
     </AuthShell>
   );
@@ -221,15 +216,10 @@ type AuthShellProps = {
 function AuthShell({ title, description, children }: AuthShellProps) {
   return (
     <section className="auth-page" aria-labelledby="auth-title">
-      <button
-        type="button"
-        className="auth-brand"
-        onClick={() => navigate("/")}
-        aria-label={`Ir para ${store.name}`}
-      >
+      <AppLink href="/" className="auth-brand" aria-label={`Ir para ${store.name}`}>
         <span className="auth-brand-mark" aria-hidden="true" />
         <strong>{store.name}</strong>
-      </button>
+      </AppLink>
       <div className="auth-card">
         <p className="eyebrow">Sua conta</p>
         <h1 id="auth-title">{title}</h1>

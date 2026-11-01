@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { AppLink } from "./components/AppLink";
 import { Layout, navigate } from "./components/Layout";
 import { AccountPage } from "./features/account/AccountPage";
 import { LoginPage, RegisterPage } from "./features/auth/AuthPages";
@@ -9,6 +10,7 @@ import { PaymentReturn } from "./features/payment/PaymentReturn";
 import { productIdFromPath } from "./lib/product";
 import {
   ApiError,
+  RequestTimeoutError,
   api,
   clearSession,
   getAccessToken,
@@ -26,7 +28,7 @@ export const messageFor = (error: unknown) =>
     : // 409 de estoque (com `available`): a mensagem do servidor diz quanto ainda cabe.
       error instanceof ApiError && error.status === 409 && error.available === undefined
       ? "O carrinho foi alterado. Revise os valores antes de continuar."
-      : error instanceof ApiError
+      : error instanceof ApiError || error instanceof RequestTimeoutError
         ? error.message
         : "Não foi possível conectar à loja agora. Tente novamente.";
 
@@ -36,9 +38,9 @@ function NotFoundPage() {
       <p className="eyebrow">404 · CAMINHO NÃO ENCONTRADO</p>
       <h1>Essa página saiu da rota.</h1>
       <p>Volte à vitrine para continuar sua compra.</p>
-      <button type="button" className="primary" onClick={() => navigate("/")}>
+      <AppLink href="/" className="primary">
         Ir para a loja
-      </button>
+      </AppLink>
     </section>
   );
 }
@@ -183,7 +185,13 @@ export default function App() {
     (pages[path] ?? <NotFoundPage />)
   );
   return (
-    <Layout user={user} cartCount={cart?.total_items ?? 0} onLogout={logout} path={path}>
+    <Layout
+      user={user}
+      cartCount={cart?.total_items ?? 0}
+      onLogout={logout}
+      path={path}
+      query={new URL(location, window.location.origin).search}
+    >
       {notice && (
         <div className="notice" role="status">
           {notice}

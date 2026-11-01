@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { navigate } from "../../components/Layout";
+import { AppLink } from "../../components/AppLink";
 import { money } from "../../lib/format";
 import { orderPresentation } from "../../lib/orderStatus";
 import { api } from "../../services/client";
@@ -76,13 +76,9 @@ export function PaymentReturn({ token, onError }: PaymentReturnProps) {
         <p className="eyebrow">PAGAMENTO</p>
         <h1>Entre para acompanhar seu pedido.</h1>
         <p>Use a mesma conta da compra para consultar a confirmação do pagamento.</p>
-        <button
-          type="button"
-          className="primary"
-          onClick={() => navigate(`/entrar?returnTo=${encodeURIComponent(returnTo)}`)}
-        >
+        <AppLink href={`/entrar?returnTo=${encodeURIComponent(returnTo)}`} className="primary">
           Entrar na minha conta
-        </button>
+        </AppLink>
       </section>
     );
   }
@@ -93,9 +89,9 @@ export function PaymentReturn({ token, onError }: PaymentReturnProps) {
         <p className="eyebrow">PAGAMENTO</p>
         <h1>Não encontramos o pedido.</h1>
         <p>Abra seus pedidos para consultar o pagamento com segurança.</p>
-        <button type="button" className="primary" onClick={() => navigate("/conta")}>
+        <AppLink href="/conta" className="primary">
           Ver meus pedidos
-        </button>
+        </AppLink>
       </section>
     );
   }
@@ -137,13 +133,12 @@ export function PaymentReturn({ token, onError }: PaymentReturnProps) {
           >
             {loading || refreshing ? "Consultando…" : "Atualizar status"}
           </button>
-          <button
-            type="button"
+          <AppLink
+            href={presentation?.canRetryPayment ? "/carrinho" : "/conta"}
             className="primary"
-            onClick={() => navigate(presentation?.canRetryPayment ? "/carrinho" : "/conta")}
           >
             {presentation?.canRetryPayment ? "Revisar pedido" : "Ver meus pedidos"}
-          </button>
+          </AppLink>
         </div>
       </div>
     </section>

@@ -1,6 +1,7 @@
 import { formatVariationName } from "../../shared/variation";
 import { useEffect, useMemo, useState } from "react";
 import { ProductThumb } from "../../components/ProductThumb";
+import { AppLink } from "../../components/AppLink";
 import { navigate } from "../../components/Layout";
 import { money } from "../../lib/format";
 import {
@@ -13,7 +14,7 @@ import {
   tierRows,
   variantUnitPrice,
 } from "../../lib/product";
-import { api } from "../../services/client";
+import { ApiError, RequestTimeoutError, api } from "../../services/client";
 import type { Cart, Category, Product } from "../../shared/types/domain";
 
 type Props = {
@@ -24,9 +25,23 @@ type Props = {
   mode: "home" | "catalog";
   query: string;
 };
+/** Texto do painel de falha: prazo estourado, servidor ou sem conexão. */
+export function unavailableText(failure: unknown): string {
+  if (failure instanceof RequestTimeoutError) return "A loja demorou para responder.";
+  if (failure instanceof ApiError && failure.status >= 500)
+    return "A loja está com instabilidade no momento.";
+  if (failure instanceof ApiError)
+    return "Não conseguimos carregar os produtos. Tente novamente ou fale com o atendimento.";
+  return "Sem conexão com a loja. Verifique a internet.";
+}
+
 type ProductGridProps = {
   loading: boolean;
   unavailable: boolean;
+  /** Motivo da falha ao abrir o catálogo (texto do painel). */
+  failure?: unknown;
+  /** Refaz a busca sem recarregar a página. */
+  onRetry?(): void;
   visible: Product[];
   adding: string;
   onAdd(product: Product): void;
@@ -36,6 +51,8 @@ type ProductGridProps = {
 export function ProductGrid({
   loading,
   unavailable,
+  failure,
+  onRetry,
   visible,
   adding,
   onAdd,
@@ -50,13 +67,20 @@ export function ProductGrid({
     });
   return (
     <>
-      {loading ? (
+      {unavailable ? (
+        // Durante a nova tentativa o painel fica (o foco continua no botão), em "Tentando…".
+        <div className="state-panel" role="alert">
+          <h2>Não foi possível abrir o catálogo agora.</h2>
+          <p>{unavailableText(failure)}</p>
+          {onRetry && (
+            <button type="button" className="secondary" onClick={onRetry} disabled={loading}>
+              {loading ? "Tentando…" : "Tentar novamente"}
+            </button>
+          )}
+        </div>
+      ) : loading ? (
         <div className="state-panel" role="status">
           Carregando produtos e condições comerciais…
-        </div>
-      ) : unavailable ? (
-        <div className="state-panel" role="alert">
-          Não foi possível abrir o catálogo agora. Atualize a página para tentar novamente.
         </div>
       ) : (
         <>
@@ -176,21 +200,33 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
   const [selectedCategoryId, setCategoryId] = useState("");
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
+  const [failure, setFailure] = useState<unknown>(null);
+  const [attempt, setAttempt] = useState(0);
   const [adding, setAdding] = useState("");
+  const retry = () => setAttempt((n) => n + 1);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `attempt` é o gatilho de "Tentar novamente".
   useEffect(() => {
+    // Sair da página cancela a busca; a resposta atrasada não mexe no estado.
+    const controller = new AbortController();
     setLoading(true);
-    Promise.all([api.products(), api.categories()])
+    Promise.all([api.products(controller.signal), api.categories(controller.signal)])
       .then(([list, categoryList]) => {
         setProducts(list.filter(isDisplayable));
         setCategories(categoryList);
         setUnavailable(false);
+        setFailure(null);
       })
       .catch((error) => {
+        if (controller.signal.aborted) return;
+        // O painel do catálogo mostra o erro e a nova tentativa; sem aviso global duplicado.
         setUnavailable(true);
-        onError(error);
+        setFailure(error);
       })
-      .finally(() => setLoading(false));
-  }, [onError]);
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [attempt]);
   useEffect(() => {
     if (mode === "catalog") {
       const params = new URLSearchParams(query);
@@ -198,11 +234,12 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
       setSearch(params.get("busca") ?? "");
     }
   }, [mode, query]);
-  const selectCategory = (id: string) => {
+  // Trocar de departamento mantém a busca da URL.
+  const categoryHref = (id: string, term = search) => {
     const params = new URLSearchParams();
     if (id) params.set("categoria", id);
-    if (search.trim()) params.set("busca", search.trim());
-    navigate(`/produtos${params.size ? `?${params.toString()}` : ""}`);
+    if (term.trim()) params.set("busca", term.trim());
+    return `/produtos${params.size ? `?${params.toString()}` : ""}`;
   };
   const categories = useMemo(
     () => departmentsWithProducts(allCategories, products),
@@ -235,88 +272,44 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
   };
   const openProduct = (event: React.MouseEvent<HTMLAnchorElement>, id: string) =>
     handleLinkClick(event, productPath(id), navigate);
-  const hasCategories = categories.length > 0;
   return (
     <>
       {mode === "home" && (
-        <>
-          <section className="home-hero" aria-label="Destaque">
-            <div className="wrap">
-              <p className="meta-line">
-                <span>Compra em quantidade</span>
-                <span>Entrega calculada antes de pagar</span>
+        <section className="home-hero" aria-label="Destaque">
+          <div className="wrap">
+            <p className="meta-line">
+              <span>Compra em quantidade</span>
+              <span>Entrega calculada antes de pagar</span>
+            </p>
+            <h1 className="hero-title">
+              O essencial
+              <br />
+              para a sua
+              <br />
+              rotina<span className="dot">.</span>
+            </h1>
+            <div className="hero-foot">
+              <p>
+                Escolha produtos, monte seu pedido e veja a entrega antes de seguir para o
+                pagamento.
               </p>
-              <h1 className="hero-title">
-                O essencial
-                <br />
-                para a sua
-                <br />
-                rotina<span className="dot">.</span>
-              </h1>
-              <div className="hero-foot">
-                <p>
-                  Escolha produtos, monte seu pedido e veja a entrega antes de seguir para o
-                  pagamento.
-                </p>
-                <div className="hero-actions">
-                  <button
-                    type="button"
-                    className="primary hero-cta"
-                    onClick={() => document.getElementById("destaques")?.scrollIntoView()}
-                  >
-                    Ver produtos <span aria-hidden="true">→</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="link-button"
-                    onClick={() => navigate("/produtos")}
-                  >
-                    Ver catálogo completo
-                  </button>
-                </div>
+              <div className="hero-actions">
+                <AppLink href="/#destaques" className="primary hero-cta">
+                  Ver produtos <span aria-hidden="true">→</span>
+                </AppLink>
+                <AppLink href="/#como-funciona" className="link-button">
+                  Como funciona
+                </AppLink>
               </div>
             </div>
-          </section>
-          {hasCategories && (
-            <section className="block" aria-labelledby="departamentos">
-              <div className="wrap">
-                <div className="block-head">
-                  <h2 id="departamentos">Departamentos</h2>
-                  <button
-                    type="button"
-                    className="section-link"
-                    onClick={() => navigate("/produtos")}
-                  >
-                    Todos os produtos →
-                  </button>
-                </div>
-                <ol className="department-list">
-                  {categories.map((category) => (
-                    <li key={category.id}>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          navigate(`/produtos?categoria=${encodeURIComponent(category.id)}`)
-                        }
-                      >
-                        <span>{category.name}</span>
-                        <span aria-hidden="true">↗</span>
-                      </button>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            </section>
-          )}
-        </>
+          </div>
+        </section>
       )}
       <section className="block catalog" id="destaques" aria-labelledby="titulo-produtos">
         <div className="wrap">
           {mode === "catalog" && (
             <nav className="breadcrumbs" aria-label="Você está em">
-              <button type="button" onClick={() => navigate("/")}>
-                Início
-              </button>
+              <AppLink href="/">Início</AppLink>
               <span aria-hidden="true">/</span>
               <span aria-current="page">Catálogo</span>
             </nav>
@@ -324,69 +317,35 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
           <div className="block-head">
             <h2 id="titulo-produtos">{mode === "home" ? <>Mais procurados</> : "Produtos"}</h2>
             {mode === "home" ? (
-              <button type="button" className="section-link" onClick={() => navigate("/produtos")}>
+              <AppLink href="/produtos" className="section-link">
                 Catálogo completo →
-              </button>
+              </AppLink>
             ) : (
-              <p className="catalog-count">{visible.length} produtos encontrados</p>
+              <p className="catalog-count">
+                {search ? (
+                  <>
+                    {`${visible.length} ${visible.length === 1 ? "resultado" : "resultados"} para “${search}” · `}
+                    <AppLink href={categoryHref(categoryId, "")} className="clear-search">
+                      Limpar busca
+                    </AppLink>
+                  </>
+                ) : (
+                  `${visible.length} produtos encontrados`
+                )}
+              </p>
             )}
           </div>
-          {mode === "catalog" && (
-            <div className="catalog-layout">
-              <aside className="filter-side">
-                <label className="catalog-search">
-                  <span>Busca</span>
-                  <input
-                    type="search"
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="O que você procura?"
-                  />
-                </label>
-                <section className="filter-row" aria-label="Filtros de categoria">
-                  <button
-                    type="button"
-                    className={!categoryId ? "active" : ""}
-                    aria-pressed={!categoryId}
-                    onClick={() => selectCategory("")}
-                  >
-                    Todos os departamentos
-                  </button>
-                  {categories.map((item) => (
-                    <button
-                      type="button"
-                      className={categoryId === item.id ? "active" : ""}
-                      aria-pressed={categoryId === item.id}
-                      onClick={() => selectCategory(item.id)}
-                      key={item.id}
-                    >
-                      {item.name}
-                    </button>
-                  ))}
-                </section>
-              </aside>
-              <div>
-                <ProductGrid
-                  loading={loading}
-                  unavailable={unavailable}
-                  visible={visible}
-                  adding={adding}
-                  onAdd={add}
-                  onOpen={openProduct}
-                />
-              </div>
-            </div>
-          )}
-          {mode === "home" && (
-            <ProductGrid
-              loading={loading}
-              unavailable={unavailable}
-              visible={visible}
-              adding={adding}
-              onAdd={add}
-              onOpen={openProduct}
-            />
-          )}
+          {/* Departamentos ficam nos chips do cabeçalho (um filtro só). */}
+          <ProductGrid
+            loading={loading}
+            unavailable={unavailable}
+            failure={failure}
+            onRetry={retry}
+            visible={visible}
+            adding={adding}
+            onAdd={add}
+            onOpen={openProduct}
+          />
         </div>
       </section>
       {mode === "home" && (
