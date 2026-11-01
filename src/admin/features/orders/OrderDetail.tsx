@@ -132,6 +132,8 @@ export function OrderDetailView({
         title={pending ? actionTexts[pending].title : ""}
         message={pending ? actionTexts[pending].message : ""}
         tone={pending ? actionTexts[pending].tone : "default"}
+        confirmLabel={pending ? actionTexts[pending].button : undefined}
+        cancelLabel="Voltar"
         busy={busy}
         onConfirm={onConfirm}
         onCancel={onCancel}

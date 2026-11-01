@@ -55,8 +55,23 @@ export function ReconciliationQueue() {
       header: "Pedido",
       width: 128,
       card: "field",
-      render: (item) => <Link to={`/pedidos/${item.order_id}`}>Ver pedido</Link>,
+      render: (item) => (
+        <Link to={`/pedidos/${item.order_id}`}>{item.order_code ?? "Ver pedido"}</Link>
+      ),
     },
+    // Só aparece quando a API manda o cliente (evita uma coluna inteira de "—").
+    ...((query.data ?? []).some((item) => item.customer)
+      ? [
+          {
+            key: "customer",
+            header: "Cliente",
+            width: 200,
+            card: "field" as const,
+            render: (item: ReconciliationQueueItem) =>
+              item.customer ? (item.customer.full_name ?? item.customer.email) : "—",
+          },
+        ]
+      : []),
     {
       key: "reason",
       header: "Motivo",
@@ -140,8 +155,13 @@ export function ReconciliationQueue() {
       <ConfirmDialog
         open={target !== null}
         title={actionTexts.reconcile.title}
-        message={actionTexts.reconcile.message}
-        confirmLabel="Reconciliar"
+        message={
+          target?.order_code
+            ? `Pedido ${target.order_code}. ${actionTexts.reconcile.message}`
+            : actionTexts.reconcile.message
+        }
+        confirmLabel={actionTexts.reconcile.button}
+        cancelLabel="Voltar"
         busy={reconcile.isPending}
         onConfirm={() => void confirm()}
         onCancel={() => setTarget(null)}
