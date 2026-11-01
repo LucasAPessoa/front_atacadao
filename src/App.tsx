@@ -10,6 +10,7 @@ import { PaymentReturn } from "./features/payment/PaymentReturn";
 import { productIdFromPath } from "./lib/product";
 import {
   ApiError,
+  RequestTimeoutError,
   api,
   clearSession,
   getAccessToken,
@@ -27,7 +28,7 @@ export const messageFor = (error: unknown) =>
     : // 409 de estoque (com `available`): a mensagem do servidor diz quanto ainda cabe.
       error instanceof ApiError && error.status === 409 && error.available === undefined
       ? "O carrinho foi alterado. Revise os valores antes de continuar."
-      : error instanceof ApiError
+      : error instanceof ApiError || error instanceof RequestTimeoutError
         ? error.message
         : "Não foi possível conectar à loja agora. Tente novamente.";
 

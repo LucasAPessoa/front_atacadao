@@ -1,20 +1,32 @@
 // @vitest-environment jsdom
 import { act, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiError, RequestTimeoutError } from "../../services/client";
 import type { Product } from "../../shared/types/domain";
 import { CatalogPage, ProductGrid } from "./CatalogPage";
 
-const { addCartItem } = vi.hoisted(() => ({ addCartItem: vi.fn() }));
-vi.mock("../../services/client", () => ({
-  api: {
-    products: async () => [product],
-    categories: async () => [],
-    addCartItem,
-  },
+const { addCartItem, products } = vi.hoisted(() => ({
+  addCartItem: vi.fn(),
+  products: vi.fn(),
 }));
+vi.mock("../../services/client", async (importOriginal) => {
+  const real = await importOriginal<typeof import("../../services/client")>();
+  return {
+    ...real,
+    api: {
+      products: (signal?: AbortSignal) => products(signal),
+      categories: async () => [],
+      addCartItem,
+    },
+  };
+});
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
+beforeEach(() => {
+  products.mockImplementation(async () => [product]);
+});
 
 const product = {
   id: "p-1",
@@ -188,6 +200,70 @@ describe("home sem numeração decorativa (#64)", () => {
     expect(html).not.toMatch(/class="(num|idx)"/);
     expect(html).not.toMatch(/>0\d</);
     expect(html).not.toContain("servidor");
+  });
+});
+
+describe("falha ao abrir o catálogo (#6)", () => {
+  const mount = async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    root = createRoot(host);
+    const onError = vi.fn();
+    await act(async () => {
+      root?.render(
+        <CatalogPage
+          token=""
+          onLogin={() => {}}
+          onCart={() => {}}
+          onError={onError}
+          mode="catalog"
+          query=""
+        />,
+      );
+    });
+    return { host, onError };
+  };
+
+  it("mostra o motivo e Tentar novamente refaz a busca sem recarregar", async () => {
+    products.mockRejectedValueOnce(new RequestTimeoutError());
+    const { host, onError } = await mount();
+    const alert = host.querySelector('[role="alert"]') as HTMLElement;
+    expect(alert.textContent).toContain("A loja demorou para responder.");
+    expect(alert.textContent).not.toContain("Atualize a página");
+    expect(onError).not.toHaveBeenCalled();
+    const retry = [...alert.querySelectorAll("button")].find(
+      (b) => b.textContent === "Tentar novamente",
+    ) as HTMLButtonElement;
+    let finish: (list: unknown[]) => void = () => {};
+    products.mockReturnValueOnce(new Promise((r) => (finish = r)));
+    await act(async () => retry.click());
+    // Painel continua durante a nova tentativa, com o botão em "Tentando…".
+    const busy = host.querySelector('[role="alert"] button') as HTMLButtonElement;
+    expect(busy.textContent).toBe("Tentando…");
+    expect(busy.disabled).toBe(true);
+    await act(async () => finish([product]));
+    expect(host.querySelector('[role="alert"]')).toBeNull();
+    expect(host.textContent).toContain("Arroz 5kg");
+    expect(products).toHaveBeenCalledTimes(2);
+  });
+
+  it("passa um AbortSignal e cancela a busca ao sair da página", async () => {
+    let signal: AbortSignal | undefined;
+    products.mockImplementationOnce((s?: AbortSignal) => {
+      signal = s;
+      return new Promise(() => {});
+    });
+    await mount();
+    expect(signal?.aborted).toBe(false);
+    act(() => root?.unmount());
+    root = undefined;
+    expect(signal?.aborted).toBe(true);
+  });
+
+  it("textos por tipo de falha", async () => {
+    const { unavailableText } = await import("./CatalogPage");
+    expect(unavailableText(new ApiError(503, "x"))).toContain("instabilidade");
+    expect(unavailableText(new TypeError("Failed to fetch"))).toContain("Sem conexão");
   });
 });
 

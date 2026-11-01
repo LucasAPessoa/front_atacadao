@@ -14,6 +14,7 @@ import type {
 import {
   API_BASE_URL,
   ApiError,
+  RequestTimeoutError,
   type Session,
   createRequester,
   createTokenStore,
@@ -54,7 +55,7 @@ export type MercadoPagoCheckout = {
   payment_status: string;
 };
 
-export { API_BASE_URL, ApiError };
+export { API_BASE_URL, ApiError, RequestTimeoutError };
 export type { Session };
 
 const tokens = createTokenStore("ecommerce-atacadao.refresh-token", [
@@ -86,7 +87,8 @@ export const api = {
   register: (payload: Registration) =>
     request<User>("/auth/register", { method: "POST", body: JSON.stringify(payload) }),
   me: (token: string) => request<User>("/users/me", {}, token),
-  products: () => request<Product[]>("/catalog/products/?limit=100"),
+  products: (signal?: AbortSignal) =>
+    request<Product[]>("/catalog/products/?limit=100", { signal }),
   product: (id: string) => request<Product>(`/catalog/products/${encodeURIComponent(id)}`),
   productImages: (productId: string) =>
     request<ProductImage[]>(`/catalog/product-images/?product_id=${encodeURIComponent(productId)}`),
@@ -98,7 +100,8 @@ export const api = {
     request<ProductQuestion[]>(
       `/catalog/product-questions/?product_id=${encodeURIComponent(productId)}`,
     ),
-  categories: () => request<Category[]>("/catalog/categories/?limit=50"),
+  categories: (signal?: AbortSignal) =>
+    request<Category[]>("/catalog/categories/?limit=50", { signal }),
   cart: (token: string) => request<Cart>("/sales/cart/", {}, token),
   addCartItem: (token: string, variant_id: string, quantity = 1) =>
     request<Cart>(
