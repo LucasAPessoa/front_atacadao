@@ -1,8 +1,13 @@
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { navigate } from "../lib/navigation";
 import { store } from "../shared/store-config";
 import { brandTokens } from "../shared/theme";
 import type { User } from "../shared/types/domain";
+import { AppLink } from "./AppLink";
 import { useStoreTheme } from "./StoreTheme";
+import { useDepartments } from "./useDepartments";
+
+export { navigate };
 
 export function themeStyleFor(brand: string) {
   const tokens = brandTokens(brand);
@@ -13,46 +18,94 @@ export function themeStyleFor(brand: string) {
   } as React.CSSProperties;
 }
 
-export function navigate(path: string) {
-  window.history.pushState({}, "", path);
-  window.dispatchEvent(new PopStateEvent("popstate"));
-  // Nova página abre no topo; voltar/avançar do histórico deixa o navegador restaurar a rolagem.
-  window.scrollTo?.(0, 0);
-}
-
 type LayoutProps = {
   children: ReactNode;
   user: User | null;
   cartCount: number;
   onLogout(destination?: string): void;
   path: string;
+  /** `location.search` atual: a busca do cabeçalho acompanha `?busca=`. */
+  query?: string;
 };
 
-export function Layout({ children, user, cartCount, onLogout, path }: LayoutProps) {
+/** Destino da busca: no catálogo mantém o departamento escolhido. */
+export function searchTarget(term: string, path: string, query: string) {
+  const current = new URLSearchParams(query);
+  const params = new URLSearchParams();
+  const categoria = path === "/produtos" ? current.get("categoria") : null;
+  if (categoria) params.set("categoria", categoria);
+  if (term.trim()) params.set("busca", term.trim());
+  return `/produtos${params.size ? `?${params}` : ""}`;
+}
+
+export function Layout({ children, user, cartCount, onLogout, path, query = "" }: LayoutProps) {
   const { brand } = useStoreTheme();
   const themeStyle = useMemo(() => themeStyleFor(brand), [brand]);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [headerSearch, setHeaderSearch] = useState(() =>
-    typeof window === "undefined"
-      ? ""
-      : (new URLSearchParams(window.location.search).get("busca") ?? ""),
-  );
-  const isAdmin = user?.role.name === "admin";
-  const go = (target: string) => {
-    setMenuOpen(false);
-    navigate(target);
-  };
-  const submitSearch = () => {
-    const params = new URLSearchParams();
-    if (headerSearch.trim()) params.set("busca", headerSearch.trim());
-    go(`/produtos${params.size ? `?${params}` : ""}`);
-  };
   const authRoute = path === "/entrar" || path === "/cadastro";
+  const urlTerm = new URLSearchParams(query).get("busca") ?? "";
+  const [headerSearch, setHeaderSearch] = useState(urlTerm);
+  // URL → campo: voltar/avançar, departamento ou "limpar busca" atualizam o texto.
+  useEffect(() => setHeaderSearch(urlTerm), [urlTerm]);
+  const departments = useDepartments();
+  const activeCategory = path === "/produtos" ? new URLSearchParams(query).get("categoria") : null;
+  // No catálogo, trocar de departamento mantém a busca.
+  const chipHref = (id: string) => {
+    const params = new URLSearchParams();
+    if (id) params.set("categoria", id);
+    const term = path === "/produtos" ? urlTerm : "";
+    if (term) params.set("busca", term);
+    return `/produtos${params.size ? `?${params}` : ""}`;
+  };
+  // Qualquer navegação fecha o menu.
+  const location = `${path}${query}`;
+  useEffect(() => {
+    if (location) setMenuOpen(false);
+  }, [location]);
+  // Troca de página (não de busca nem de chip): foco no conteúdo, para o leitor de tela
+  // não ficar perdido no menu que fechou. A primeira renderização não rouba o foco.
+  const previousPath = useRef(path);
+  useEffect(() => {
+    if (previousPath.current === path) return;
+    previousPath.current = path;
+    if (!window.location.hash) document.getElementById("conteudo")?.focus({ preventScroll: true });
+  }, [path]);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setMenuOpen(false);
+      menuButton.current?.focus();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+  const header = useRef<HTMLElement>(null);
+  // Âncoras param abaixo do cabeçalho fixo: --header-h acompanha a altura real dele.
+  useEffect(() => {
+    // O cabeçalho some em /entrar e /cadastro: ao voltar, mede e observa o novo.
+    if (authRoute) return;
+    const element = header.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const sync = () =>
+      document.documentElement.style.setProperty("--header-h", `${element.offsetHeight}px`);
+    sync();
+    const observer = new ResizeObserver(sync);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [authRoute]);
+  const isAdmin = user?.role.name === "admin";
+  const closeMenu = () => setMenuOpen(false);
+  const submitSearch = () => {
+    closeMenu();
+    navigate(searchTarget(headerSearch, path, query));
+  };
   const hasLegal = Boolean(store.legalName || store.cnpj || store.address);
 
   if (authRoute)
     return (
-      <main id="conteudo" className="auth-layout" style={themeStyle}>
+      <main id="conteudo" className="auth-layout" style={themeStyle} tabIndex={-1}>
         {children}
       </main>
     );
@@ -63,56 +116,42 @@ export function Layout({ children, user, cartCount, onLogout, path }: LayoutProp
         Pular para o conteúdo
       </a>
       <div className="announcement">{store.announcement}</div>
-      <header className="site-header">
+      <header className="site-header" ref={header}>
         <div className="header-inner">
-          <button
-            type="button"
-            className="brand brand-button"
-            onClick={() => go("/")}
-            aria-label={`Ir para ${store.name}`}
-          >
+          <AppLink href="/" className="brand" aria-label={`Ir para ${store.name}`}>
             <span className="brand-mark" aria-hidden="true" />
             <span>{store.name}</span>
-          </button>
-          <button
-            type="button"
-            className="mobile-menu"
-            onClick={() => setMenuOpen((value) => !value)}
-            aria-expanded={menuOpen}
-            aria-controls="menu-principal"
-            aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
-          >
-            {menuOpen ? "×" : "☰"}
-          </button>
-          <div className="header-search">
-            <label htmlFor="busca-header">Busca</label>
-            <input
-              id="busca-header"
-              type="search"
-              value={headerSearch}
-              onChange={(event) => setHeaderSearch(event.target.value)}
-              placeholder="O que a sua rotina precisa?"
-              onKeyDown={(event) => {
-                if (event.key === "Enter") submitSearch();
+          </AppLink>
+          <search className="header-search-landmark">
+            <form
+              className="header-search"
+              onSubmit={(event) => {
+                event.preventDefault();
+                submitSearch();
               }}
-            />
-            <button type="button" onClick={submitSearch} aria-label="Buscar">
-              Buscar
-            </button>
-          </div>
-          <div className="header-actions">
-            <button
-              type="button"
-              className="header-cell support-action"
-              onClick={() => (window.location.href = `mailto:${store.supportEmail}`)}
             >
+              <label htmlFor="busca-header">Busca</label>
+              <input
+                id="busca-header"
+                type="search"
+                name="busca"
+                enterKeyHint="search"
+                value={headerSearch}
+                onChange={(event) => setHeaderSearch(event.target.value)}
+                placeholder="Buscar produtos"
+              />
+              <button type="submit">Buscar</button>
+            </form>
+          </search>
+          <div className="header-actions">
+            <a className="header-cell support-action" href={`mailto:${store.supportEmail}`}>
               Ajuda
-            </button>
+            </a>
             {user ? (
-              <button
-                type="button"
+              <AppLink
+                href="/conta"
                 className="header-cell"
-                onClick={() => go("/conta")}
+                current={path === "/conta"}
                 aria-label="Minha conta"
               >
                 <svg
@@ -133,14 +172,9 @@ export function Layout({ children, user, cartCount, onLogout, path }: LayoutProp
                   />
                 </svg>
                 <span className="hc-label">Conta</span>
-              </button>
+              </AppLink>
             ) : (
-              <button
-                type="button"
-                className="header-cell"
-                onClick={() => go("/entrar")}
-                aria-label="Entrar"
-              >
+              <AppLink href="/entrar" className="header-cell" aria-label="Entrar">
                 <svg
                   className="hc-icon"
                   viewBox="0 0 24 24"
@@ -159,12 +193,12 @@ export function Layout({ children, user, cartCount, onLogout, path }: LayoutProp
                   />
                 </svg>
                 <span className="hc-label">Entrar</span>
-              </button>
+              </AppLink>
             )}
-            <button
-              type="button"
+            <AppLink
+              href="/carrinho"
               className="cart-button"
-              onClick={() => go("/carrinho")}
+              current={path === "/carrinho"}
               aria-label={`Carrinho, ${cartCount} ${cartCount === 1 ? "item" : "itens"}`}
             >
               <svg
@@ -190,8 +224,19 @@ export function Layout({ children, user, cartCount, onLogout, path }: LayoutProp
                   · {cartCount}
                 </span>
               )}
-            </button>
+            </AppLink>
           </div>
+          <button
+            type="button"
+            ref={menuButton}
+            className="mobile-menu"
+            onClick={() => setMenuOpen((value) => !value)}
+            aria-expanded={menuOpen}
+            aria-controls="menu-principal"
+            aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
+          >
+            {menuOpen ? "×" : "☰"}
+          </button>
         </div>
         <nav
           id="menu-principal"
@@ -199,25 +244,19 @@ export function Layout({ children, user, cartCount, onLogout, path }: LayoutProp
           aria-label="Navegação principal"
         >
           <div>
-            <button type="button" className={path === "/" ? "active" : ""} onClick={() => go("/")}>
+            <AppLink href="/" current={path === "/"} onNavigate={closeMenu}>
               Início
-            </button>
-            <button
-              type="button"
-              className={path === "/produtos" ? "active" : ""}
-              onClick={() => go("/produtos")}
+            </AppLink>
+            <AppLink
+              href="/produtos"
+              current={path === "/produtos" && !activeCategory}
+              onNavigate={closeMenu}
             >
               Catálogo
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMenuOpen(false);
-                document.getElementById("como-funciona")?.scrollIntoView();
-              }}
-            >
+            </AppLink>
+            <AppLink href="/#como-funciona" onNavigate={closeMenu}>
               Como funciona
-            </button>
+            </AppLink>
             {isAdmin && (
               <a className="admin-link" href="/admin/" target="_blank" rel="noopener">
                 Painel admin
@@ -226,13 +265,36 @@ export function Layout({ children, user, cartCount, onLogout, path }: LayoutProp
           </div>
         </nav>
       </header>
-      <main id="conteudo">{children}</main>
+      {departments.length > 0 && (
+        <nav className="dept-chips" aria-label="Departamentos">
+          <div>
+            {path === "/produtos" && (
+              <AppLink href={chipHref("")} current={!activeCategory} className="dept-chip">
+                Todos
+              </AppLink>
+            )}
+            {departments.map((department) => (
+              <AppLink
+                key={department.id}
+                href={chipHref(department.id)}
+                current={activeCategory === department.id}
+                className="dept-chip"
+              >
+                {department.name}
+              </AppLink>
+            ))}
+          </div>
+        </nav>
+      )}
+      <main id="conteudo" tabIndex={-1}>
+        {children}
+      </main>
       <footer className="site-footer">
         <div className="footer-inner">
           <div className="footer-brand">
-            <button type="button" className="footer-name" onClick={() => go("/")}>
+            <AppLink href="/" className="footer-name">
               {store.name}
-            </button>
+            </AppLink>
             <p>{store.description}</p>
           </div>
           {hasLegal && (
@@ -244,15 +306,15 @@ export function Layout({ children, user, cartCount, onLogout, path }: LayoutProp
           )}
           <nav className="footer-col" aria-label="Rodapé">
             <h2>Navegue</h2>
-            <button type="button" onClick={() => go("/")}>
+            <AppLink href="/" current={path === "/"}>
               Início
-            </button>
-            <button type="button" onClick={() => go("/produtos")}>
+            </AppLink>
+            <AppLink href="/produtos" current={path === "/produtos"}>
               Produtos
-            </button>
-            <button type="button" onClick={() => go("/carrinho")}>
+            </AppLink>
+            <AppLink href="/carrinho" current={path === "/carrinho"}>
               Carrinho
-            </button>
+            </AppLink>
           </nav>
           <div className="footer-col">
             <h2>Atendimento</h2>

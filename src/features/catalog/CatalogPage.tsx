@@ -1,6 +1,7 @@
 import { formatVariationName } from "../../shared/variation";
 import { useEffect, useMemo, useState } from "react";
 import { ProductThumb } from "../../components/ProductThumb";
+import { AppLink } from "../../components/AppLink";
 import { navigate } from "../../components/Layout";
 import { money } from "../../lib/format";
 import {
@@ -198,11 +199,12 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
       setSearch(params.get("busca") ?? "");
     }
   }, [mode, query]);
-  const selectCategory = (id: string) => {
+  // Trocar de departamento mantém a busca da URL.
+  const categoryHref = (id: string, term = search) => {
     const params = new URLSearchParams();
     if (id) params.set("categoria", id);
-    if (search.trim()) params.set("busca", search.trim());
-    navigate(`/produtos${params.size ? `?${params.toString()}` : ""}`);
+    if (term.trim()) params.set("busca", term.trim());
+    return `/produtos${params.size ? `?${params.toString()}` : ""}`;
   };
   const categories = useMemo(
     () => departmentsWithProducts(allCategories, products),
@@ -235,88 +237,44 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
   };
   const openProduct = (event: React.MouseEvent<HTMLAnchorElement>, id: string) =>
     handleLinkClick(event, productPath(id), navigate);
-  const hasCategories = categories.length > 0;
   return (
     <>
       {mode === "home" && (
-        <>
-          <section className="home-hero" aria-label="Destaque">
-            <div className="wrap">
-              <p className="meta-line">
-                <span>Compra em quantidade</span>
-                <span>Entrega calculada antes de pagar</span>
+        <section className="home-hero" aria-label="Destaque">
+          <div className="wrap">
+            <p className="meta-line">
+              <span>Compra em quantidade</span>
+              <span>Entrega calculada antes de pagar</span>
+            </p>
+            <h1 className="hero-title">
+              O essencial
+              <br />
+              para a sua
+              <br />
+              rotina<span className="dot">.</span>
+            </h1>
+            <div className="hero-foot">
+              <p>
+                Escolha produtos, monte seu pedido e veja a entrega antes de seguir para o
+                pagamento.
               </p>
-              <h1 className="hero-title">
-                O essencial
-                <br />
-                para a sua
-                <br />
-                rotina<span className="dot">.</span>
-              </h1>
-              <div className="hero-foot">
-                <p>
-                  Escolha produtos, monte seu pedido e veja a entrega antes de seguir para o
-                  pagamento.
-                </p>
-                <div className="hero-actions">
-                  <button
-                    type="button"
-                    className="primary hero-cta"
-                    onClick={() => document.getElementById("destaques")?.scrollIntoView()}
-                  >
-                    Ver produtos <span aria-hidden="true">→</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="link-button"
-                    onClick={() => navigate("/produtos")}
-                  >
-                    Ver catálogo completo
-                  </button>
-                </div>
+              <div className="hero-actions">
+                <AppLink href="/#destaques" className="primary hero-cta">
+                  Ver produtos <span aria-hidden="true">→</span>
+                </AppLink>
+                <AppLink href="/#como-funciona" className="link-button">
+                  Como funciona
+                </AppLink>
               </div>
             </div>
-          </section>
-          {hasCategories && (
-            <section className="block" aria-labelledby="departamentos">
-              <div className="wrap">
-                <div className="block-head">
-                  <h2 id="departamentos">Departamentos</h2>
-                  <button
-                    type="button"
-                    className="section-link"
-                    onClick={() => navigate("/produtos")}
-                  >
-                    Todos os produtos →
-                  </button>
-                </div>
-                <ol className="department-list">
-                  {categories.map((category) => (
-                    <li key={category.id}>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          navigate(`/produtos?categoria=${encodeURIComponent(category.id)}`)
-                        }
-                      >
-                        <span>{category.name}</span>
-                        <span aria-hidden="true">↗</span>
-                      </button>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            </section>
-          )}
-        </>
+          </div>
+        </section>
       )}
       <section className="block catalog" id="destaques" aria-labelledby="titulo-produtos">
         <div className="wrap">
           {mode === "catalog" && (
             <nav className="breadcrumbs" aria-label="Você está em">
-              <button type="button" onClick={() => navigate("/")}>
-                Início
-              </button>
+              <AppLink href="/">Início</AppLink>
               <span aria-hidden="true">/</span>
               <span aria-current="page">Catálogo</span>
             </nav>
@@ -324,69 +282,33 @@ export function CatalogPage({ token, onLogin, onCart, onError, mode, query }: Pr
           <div className="block-head">
             <h2 id="titulo-produtos">{mode === "home" ? <>Mais procurados</> : "Produtos"}</h2>
             {mode === "home" ? (
-              <button type="button" className="section-link" onClick={() => navigate("/produtos")}>
+              <AppLink href="/produtos" className="section-link">
                 Catálogo completo →
-              </button>
+              </AppLink>
             ) : (
-              <p className="catalog-count">{visible.length} produtos encontrados</p>
+              <p className="catalog-count">
+                {search ? (
+                  <>
+                    {`${visible.length} ${visible.length === 1 ? "resultado" : "resultados"} para “${search}” · `}
+                    <AppLink href={categoryHref(categoryId, "")} className="clear-search">
+                      Limpar busca
+                    </AppLink>
+                  </>
+                ) : (
+                  `${visible.length} produtos encontrados`
+                )}
+              </p>
             )}
           </div>
-          {mode === "catalog" && (
-            <div className="catalog-layout">
-              <aside className="filter-side">
-                <label className="catalog-search">
-                  <span>Busca</span>
-                  <input
-                    type="search"
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="O que você procura?"
-                  />
-                </label>
-                <section className="filter-row" aria-label="Filtros de categoria">
-                  <button
-                    type="button"
-                    className={!categoryId ? "active" : ""}
-                    aria-pressed={!categoryId}
-                    onClick={() => selectCategory("")}
-                  >
-                    Todos os departamentos
-                  </button>
-                  {categories.map((item) => (
-                    <button
-                      type="button"
-                      className={categoryId === item.id ? "active" : ""}
-                      aria-pressed={categoryId === item.id}
-                      onClick={() => selectCategory(item.id)}
-                      key={item.id}
-                    >
-                      {item.name}
-                    </button>
-                  ))}
-                </section>
-              </aside>
-              <div>
-                <ProductGrid
-                  loading={loading}
-                  unavailable={unavailable}
-                  visible={visible}
-                  adding={adding}
-                  onAdd={add}
-                  onOpen={openProduct}
-                />
-              </div>
-            </div>
-          )}
-          {mode === "home" && (
-            <ProductGrid
-              loading={loading}
-              unavailable={unavailable}
-              visible={visible}
-              adding={adding}
-              onAdd={add}
-              onOpen={openProduct}
-            />
-          )}
+          {/* Departamentos ficam nos chips do cabeçalho (um filtro só). */}
+          <ProductGrid
+            loading={loading}
+            unavailable={unavailable}
+            visible={visible}
+            adding={adding}
+            onAdd={add}
+            onOpen={openProduct}
+          />
         </div>
       </section>
       {mode === "home" && (
