@@ -53,7 +53,7 @@ export function DashboardView(p: DashboardViewProps) {
   return (
     <section aria-labelledby="adm-page-title">
       <div className="adm-page-header">
-        <h1 id="adm-page-title">Dashboard</h1>
+        <h1 id="adm-page-title">Painel</h1>
       </div>
       <search className="adm-filterbar">
         <div className="adm-field">
