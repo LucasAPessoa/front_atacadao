@@ -669,6 +669,7 @@
 
 /* Login */
 .adm-login {
+  grid-template-columns: minmax(0, 1fr);
   min-height: 100vh;
   display: grid;
   place-items: center;
@@ -1146,6 +1147,9 @@
     min-width: 0;
     overflow-wrap: anywhere;
     font-weight: 600;
+  }
+  .adm-table-cards .adm-table td[data-card="title"] .adm-muted {
+    font-weight: 400;
   }
   .adm-table-cards .adm-table td[data-label]:not([data-card="title"])::before {
     content: attr(data-label) ": ";

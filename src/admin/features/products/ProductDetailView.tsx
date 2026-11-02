@@ -22,6 +22,7 @@ const FromBling = () => (
 const variantColumns: Column<AdminVariant>[] = [
   {
     key: "variation",
+    card: "title",
     header: "Variação",
     width: 240,
     render: (v) => (
@@ -36,14 +37,23 @@ const variantColumns: Column<AdminVariant>[] = [
   },
   {
     key: "price",
+    card: "field",
     header: "Preço",
     width: 120,
     align: "right",
     render: (v) => formatBRL(v.base_price),
   },
-  { key: "stock", header: "Estoque", width: 100, align: "right", render: (v) => v.stock_quantity },
+  {
+    key: "stock",
+    header: "Estoque",
+    width: 100,
+    card: "field",
+    align: "right",
+    render: (v) => v.stock_quantity,
+  },
   {
     key: "weight",
+    card: "field",
     header: "Peso",
     width: 100,
     align: "right",
@@ -51,6 +61,7 @@ const variantColumns: Column<AdminVariant>[] = [
   },
   {
     key: "size",
+    card: "field",
     header: "Medidas (C × L × A)",
     width: 200,
     render: (v) =>
@@ -58,6 +69,7 @@ const variantColumns: Column<AdminVariant>[] = [
   },
   {
     key: "status",
+    card: "field",
     header: "Situação",
     width: 180,
     render: (v) => (
@@ -81,6 +93,7 @@ const variantColumns: Column<AdminVariant>[] = [
   },
   {
     key: "store",
+    card: "field",
     header: "Loja do site",
     width: 200,
     render: (v) => <StoreLinkStatus variant={v} />,
