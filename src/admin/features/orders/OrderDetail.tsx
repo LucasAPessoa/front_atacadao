@@ -30,6 +30,7 @@ import {
 const itemColumns: Column<AdminOrderDetail["items"][number]>[] = [
   {
     key: "product",
+    card: "title",
     header: "Produto",
     width: 300,
     wrap: true,
@@ -40,10 +41,18 @@ const itemColumns: Column<AdminOrderDetail["items"][number]>[] = [
       </>
     ),
   },
-  { key: "sku", header: "SKU", width: 140, render: (item) => item.sku_snapshot },
-  { key: "quantity", header: "Qtd.", width: 88, align: "right", render: (item) => item.quantity },
+  { key: "sku", header: "SKU", width: 140, card: "field", render: (item) => item.sku_snapshot },
+  {
+    key: "quantity",
+    header: "Qtd.",
+    width: 88,
+    card: "field",
+    align: "right",
+    render: (item) => item.quantity,
+  },
   {
     key: "unit",
+    card: "field",
     header: "Preço unit.",
     width: 128,
     align: "right",
@@ -51,6 +60,7 @@ const itemColumns: Column<AdminOrderDetail["items"][number]>[] = [
   },
   {
     key: "subtotal",
+    card: "field",
     header: "Subtotal",
     width: 128,
     align: "right",

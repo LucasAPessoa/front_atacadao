@@ -11,7 +11,10 @@ export function StoreLinkStatus({ variant }: { variant: AdminVariant }) {
         {storeLinkLabels[variant.store_link]}
       </span>
       {linked && variant.store_price !== null && (
-        <span className="adm-muted"> · {formatBRL(variant.store_price)} na loja</span>
+        <span className="adm-muted" style={{ whiteSpace: "nowrap" }}>
+          {" "}
+          · {formatBRL(variant.store_price)} na loja
+        </span>
       )}
     </span>
   );
